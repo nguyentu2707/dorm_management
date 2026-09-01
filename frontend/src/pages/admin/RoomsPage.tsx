@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Eye, Plus, Search, Trash2, UsersRound } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Eye, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "../../components/common/PageHeader";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { Pagination } from "../../components/ui/Pagination";
@@ -20,31 +20,40 @@ export function RoomsPage() {
     [buildings, setBuildings] = useState<Building[]>([]),
     [types, setTypes] = useState<RoomType[]>([]),
     [result, setResult] = useState<Paginated<Room> | null>(null),
-    [loading, setLoading] = useState(false),
+    [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [open, setOpen] = useState(false),
     [deleting, setDeleting] = useState<Room | null>(null);
   const buildingId = params.get("buildingId") ?? "",
     page = Number(params.get("page") ?? 1);
+  const update = (key: string, value: string) => {
+    const next = new URLSearchParams(params);
+    value ? next.set(key, value) : next.delete(key);
+    next.set("page", "1");
+    setParams(next);
+  };
   useEffect(() => {
     Promise.all([buildingApi.list(), roomTypeApi.list()])
       .then(([b, t]) => {
         setBuildings(b);
         setTypes(t);
-        if (!buildingId && b[0]) setParams({ buildingId: b[0].id });
+        if (!buildingId && b[0]) update("buildingId", b[0].id);
       })
       .catch((e) => setError(normalizeApiError(e).message));
-  }, [buildingId, setParams]);
-  async function load() {
+  }, []);
+  const load = useCallback(async () => {
     if (!buildingId) return;
     setLoading(true);
+    setError("");
     try {
       setResult(
         await roomApi.list(buildingId, {
           page,
-          limit: 20,
-          search: params.get("search") ?? undefined,
-          status: params.get("status") ?? undefined,
+          limit: 12,
+          search: params.get("search") || undefined,
+          status: params.get("status") || undefined,
+          roomTypeId: params.get("roomTypeId") || undefined,
+          floor: params.get("floor") || undefined,
         }),
       );
     } catch (e) {
@@ -52,10 +61,10 @@ export function RoomsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [buildingId, page, params]);
   useEffect(() => {
     void load();
-  }, [buildingId, page, params]);
+  }, [load]);
   async function create(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -67,8 +76,8 @@ export function RoomsPage() {
       });
       setOpen(false);
       await load();
-    } catch (err) {
-      setError(normalizeApiError(err).message);
+    } catch (x) {
+      setError(normalizeApiError(x).message);
     }
   }
   async function remove() {
@@ -77,139 +86,203 @@ export function RoomsPage() {
       await roomApi.remove(deleting.id);
       setDeleting(null);
       await load();
-    } catch (e) {
-      const err = normalizeApiError(e);
-      setError(
-        err.code === "ROOM_HAS_OCCUPIED_BEDS"
-          ? "Không thể xóa vì phòng còn giường có sinh viên."
-          : err.code === "ROOM_HAS_EQUIPMENT"
-            ? "Không thể xóa vì phòng còn thiết bị."
-            : err.message,
-      );
+    } catch (x) {
+      setError(normalizeApiError(x).message);
       setDeleting(null);
     }
   }
   return (
     <>
       <PageHeader
-        title="Phòng"
-        description="Chọn tòa nhà để xem và quản lý phòng"
+        title="Quản lý phòng"
+        description="Theo dõi sức chứa, hạng phòng và trạng thái sử dụng."
         action={
           <button
             className="btn-primary"
-            disabled={!buildingId}
             onClick={() => setOpen(true)}
+            disabled={!buildingId}
           >
             <Plus size={17} />
             Tạo phòng
           </button>
         }
       />
-      <div className="card mb-5 grid gap-3 sm:grid-cols-3">
+      <section className="card mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <label className="relative xl:col-span-2">
+          <Search
+            className="absolute left-3 top-2.5 text-slate-400"
+            size={18}
+          />
+          <input
+            className="field pl-10"
+            placeholder="Mã phòng..."
+            defaultValue={params.get("search") ?? ""}
+            onKeyDown={(e) =>
+              e.key === "Enter" && update("search", e.currentTarget.value)
+            }
+          />
+        </label>
         <select
           className="field"
           value={buildingId}
-          onChange={(e) => setParams({ buildingId: e.target.value })}
+          onChange={(e) => update("buildingId", e.target.value)}
         >
-          <option value="">Chọn tòa nhà</option>
-          {buildings.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
+          {buildings.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.name}
             </option>
           ))}
         </select>
-        <input
+        <select
           className="field"
-          placeholder="Tìm số phòng..."
-          defaultValue={params.get("search") ?? ""}
-          onKeyDown={(e) => {
-            if (e.key === "Enter")
-              setParams({ buildingId, search: e.currentTarget.value });
-          }}
-        />
+          value={params.get("floor") ?? ""}
+          onChange={(e) => update("floor", e.target.value)}
+        >
+          <option value="">Tất cả tầng</option>
+          {[1, 2, 3, 4, 5].map((x) => (
+            <option key={x} value={x}>
+              Tầng {x}
+            </option>
+          ))}
+        </select>
         <select
           className="field"
           value={params.get("status") ?? ""}
-          onChange={(e) => setParams({ buildingId, status: e.target.value })}
+          onChange={(e) => update("status", e.target.value)}
         >
           <option value="">Tất cả trạng thái</option>
-          {["AVAILABLE", "FULL", "MAINTENANCE", "LOCKED"].map((s) => (
-            <option key={s}>{s}</option>
+          {["AVAILABLE", "FULL", "MAINTENANCE", "LOCKED"].map((x) => (
+            <option key={x}>{x}</option>
           ))}
         </select>
-      </div>
+        <select
+          className="field"
+          value={params.get("roomTypeId") ?? ""}
+          onChange={(e) => update("roomTypeId", e.target.value)}
+        >
+          <option value="">Tất cả hạng phòng</option>
+          {types.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.name}
+            </option>
+          ))}
+        </select>
+        <button
+          className="btn-secondary"
+          onClick={() => setParams(buildingId ? { buildingId } : {})}
+        >
+          Xóa bộ lọc
+        </button>
+      </section>
+      <p className="mb-4 text-sm text-slate-500">
+        Tìm thấy {result?.pagination.total ?? 0} phòng
+      </p>
       {loading ? (
         <LoadingState />
       ) : error ? (
         <ErrorState message={error} onRetry={load} />
       ) : !result?.items.length ? (
         <div className="card">
-          <EmptyState message="Chưa có phòng trong tòa nhà này" />
+          <EmptyState message="Không tìm thấy phòng phù hợp" />
         </div>
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b text-slate-500">
-                <th className="p-3">Số phòng</th>
-                <th>Tầng</th>
-                <th>Loại phòng</th>
-                <th>Trạng thái</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.items.map((room) => (
-                <tr className="border-b" key={room.id}>
-                  <td className="p-3 font-semibold">{room.roomNumber}</td>
-                  <td>{room.floor}</td>
-                  <td>
-                    {types.find((t) => t.id === room.roomTypeId)?.name ??
-                      room.roomTypeId}
-                  </td>
-                  <td>
-                    <StatusBadge status={room.status} />
-                  </td>
-                  <td>
-                    <div className="flex justify-end gap-2">
-                      <Link
-                        className="btn-secondary"
-                        to={`/admin/rooms/${room.id}`}
-                      >
-                        <Eye size={15} />
-                      </Link>
-                      <button
-                        className="btn-secondary text-red-600"
-                        onClick={() => setDeleting(room)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
+        <>
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {result.items.map((room) => {
+              const type = types.find((x) => x.id === room.roomTypeId),
+                o = room.occupancy ?? {
+                  total: type?.capacity ?? 0,
+                  occupied: 0,
+                  empty: type?.capacity ?? 0,
+                },
+                percent = o.total ? (o.occupied / o.total) * 100 : 0;
+              return (
+                <article
+                  className="card border-t-4 border-t-emerald-500"
+                  key={room.id}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold">{room.roomNumber}</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {buildings.find((x) => x.id === room.buildingId)?.name}{" "}
+                        · Tầng {room.floor}
+                      </p>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <StatusBadge status={room.status} />
+                  </div>
+                  <div className="mt-5 flex items-end justify-between">
+                    <span className="flex items-center gap-2 text-sm text-slate-500">
+                      <UsersRound size={16} />
+                      Sĩ số
+                    </span>
+                    <strong>
+                      {o.occupied}/{o.total} người
+                    </strong>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-emerald-500"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <span className="text-slate-500">Hạng phòng</span>
+                      <strong className="block">{type?.name ?? "—"}</strong>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <span className="text-slate-500">Còn trống</span>
+                      <strong className="block">{o.empty} giường</strong>
+                    </div>
+                  </div>
+                  <p className="mt-4 font-semibold text-brand-600">
+                    {type?.pricePerMonth.toLocaleString("vi-VN") ?? "—"}đ/tháng
+                  </p>
+                  <div className="mt-5 flex gap-2">
+                    <Link
+                      className="btn-secondary flex-1"
+                      to={`/admin/rooms/${room.id}`}
+                    >
+                      <Eye size={16} />
+                      Chi tiết
+                    </Link>
+                    <button
+                      className="btn-secondary text-red-600"
+                      onClick={() => setDeleting(room)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
           <Pagination
             meta={result.pagination}
-            onChange={(p) => setParams({ buildingId, page: String(p) })}
+            onChange={(p) => {
+              const next = new URLSearchParams(params);
+              next.set("page", String(p));
+              setParams(next);
+            }}
           />
-        </div>
+        </>
       )}
       <Modal open={open} title="Tạo phòng" onClose={() => setOpen(false)}>
         <form className="space-y-4" onSubmit={create}>
           <label>
-            <span className="label">Loại phòng</span>
+            <span className="label">Hạng phòng</span>
             <select name="roomTypeId" className="field" required>
-              {types.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} · {t.capacity} người
+              {types.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name} · {x.capacity} người ·{" "}
+                  {x.pricePerMonth.toLocaleString("vi-VN")}đ
                 </option>
               ))}
             </select>
           </label>
           <label>
-            <span className="label">Số phòng</span>
+            <span className="label">Mã phòng</span>
             <input name="roomNumber" className="field" required />
           </label>
           <label>
@@ -230,7 +303,7 @@ export function RoomsPage() {
       <ConfirmDialog
         open={!!deleting}
         title="Xóa phòng"
-        message="Thao tác chỉ thành công khi phòng không có giường đang sử dụng và không có thiết bị."
+        message="Chỉ có thể xóa phòng không có sinh viên và thiết bị."
         onClose={() => setDeleting(null)}
         onConfirm={remove}
       />

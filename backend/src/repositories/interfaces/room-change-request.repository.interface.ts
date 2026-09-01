@@ -23,6 +23,11 @@ export type RoomChangeRequestStatusMetadata = {
   rejectReason?: string;
 };
 export interface IRoomChangeRequestRepository {
+  findDisplaySummaries(ids: string[]): Promise<Map<string, {
+    student: { id: string; mssv: string; fullName: string };
+    currentRoom: { roomNumber: string; buildingName: string; bedNumber: string };
+    targetRoom: { roomNumber: string; buildingName: string; bedNumber: string };
+  }>>;
   findById(
     id: string,
     s?: ClientSession,

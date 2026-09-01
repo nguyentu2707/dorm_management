@@ -1,4 +1,4 @@
-import type { ClientSession, FilterQuery } from "mongoose";
+import { Types, type ClientSession, type FilterQuery } from "mongoose";
 import { ContractModel, type Contract } from "../../models/contract.model.js";
 import type {
   IContractRepository,
@@ -8,6 +8,103 @@ import type {
 } from "../interfaces/contract.repository.interface.js";
 import type { ContractStatus } from "../../models/contract.model.js";
 export class ContractRepository implements IContractRepository {
+  async findDisplaySummaries(ids: string[]) {
+    if (!ids.length) return new Map();
+    const rows = await ContractModel.aggregate([
+      { $match: { _id: { $in: ids.map((id) => new Types.ObjectId(id)) } } },
+      {
+        $lookup: {
+          from: "students",
+          localField: "studentId",
+          foreignField: "_id",
+          as: "student",
+        },
+      },
+      { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "student.userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "rooms",
+          localField: "roomId",
+          foreignField: "_id",
+          as: "room",
+        },
+      },
+      { $unwind: { path: "$room", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "buildings",
+          localField: "room.buildingId",
+          foreignField: "_id",
+          as: "building",
+        },
+      },
+      { $unwind: { path: "$building", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "beds",
+          localField: "bedId",
+          foreignField: "_id",
+          as: "bed",
+        },
+      },
+      { $unwind: { path: "$bed", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          contractId: { $toString: "$_id" },
+          student: {
+            id: { $toString: "$studentId" },
+            mssv: { $ifNull: ["$student.mssv", "—"] },
+            fullName: { $ifNull: ["$user.fullName", "Sinh viên"] },
+          },
+          room: {
+            id: { $toString: "$roomId" },
+            roomNumber: { $ifNull: ["$room.roomNumber", "—"] },
+            buildingName: { $ifNull: ["$building.name", "—"] },
+          },
+          bed: {
+            id: { $toString: "$bedId" },
+            bedNumber: { $ifNull: ["$bed.bedNumber", "—"] },
+          },
+        },
+      },
+    ]);
+    return new Map(
+      rows.map((row) => [
+        row.contractId,
+        { student: row.student, room: row.room, bed: row.bed },
+      ]),
+    );
+  }
+  async findActiveStudentIdsByBuildingId(
+    buildingId: string,
+    s?: ClientSession,
+  ) {
+    const { Types } = await import("mongoose");
+    const rows = await ContractModel.aggregate([
+      { $match: { status: "ACTIVE" } },
+      {
+        $lookup: {
+          from: "rooms",
+          localField: "roomId",
+          foreignField: "_id",
+          as: "room",
+        },
+      },
+      { $unwind: "$room" },
+      { $match: { "room.buildingId": new Types.ObjectId(buildingId) } },
+      { $group: { _id: "$studentId" } },
+    ]).session(s ?? null);
+    return rows.map((row) => row._id as import("mongoose").Types.ObjectId);
+  }
   findById(id: string, s?: ClientSession) {
     return ContractModel.findById(id)
       .session(s ?? null)

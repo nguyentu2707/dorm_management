@@ -12,7 +12,21 @@ npm install
 npm run dev
 ```
 
+## Tạo tài khoản Admin đầu tiên
+
+Khai báo `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_FULL_NAME` trong `.env`, sau đó chạy:
+
+```bash
+npm run seed:admin
+```
+
+Script có thể chạy lặp lại an toàn và không ghi mật khẩu ra log.
+
 MongoDB replica set được khuyến nghị để dùng transaction. Khi MongoDB standalone từ chối transaction tạo Room+Bed, service tự chạy fallback và xóa Room/Bed đã tạo nếu sinh Bed thất bại.
+
+## Seed cơ sở vật chất
+
+Chạy `npm run seed:dormitory` sau khi cấu hình MongoDB. Script idempotent theo từng Room, tái sử dụng Building/RoomType đã có và gọi RoomService để tự động tạo Beds.
 
 ## Endpoints
 

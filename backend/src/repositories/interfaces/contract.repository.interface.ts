@@ -1,4 +1,4 @@
-import type { ClientSession } from "mongoose";
+import type { ClientSession, Types } from "mongoose";
 import type {
   ContractDocument,
   ContractStatus,
@@ -32,9 +32,21 @@ export type ContractStatusMetadata = {
   approvedAt?: Date;
   endedAt?: Date;
 };
+export type ContractDisplaySummary = {
+  student: { id: string; mssv: string; fullName: string };
+  room: { id: string; roomNumber: string; buildingName: string };
+  bed: { id: string; bedNumber: string };
+};
 export interface IContractRepository {
+  findActiveStudentIdsByBuildingId(
+    buildingId: string,
+    session?: ClientSession,
+  ): Promise<Types.ObjectId[]>;
   findById(id: string, s?: ClientSession): Promise<ContractDocument | null>;
   findAll(q: ContractListQuery): Promise<PaginatedResult<ContractDocument>>;
+  findDisplaySummaries(
+    ids: string[],
+  ): Promise<Map<string, ContractDisplaySummary>>;
   findByStudentId(id: string): Promise<ContractDocument[]>;
   findActiveByStudentId(
     id: string,

@@ -3,21 +3,20 @@ import {
   Building2,
   ChevronDown,
   CircleUserRound,
-  FileText,
   Home,
   LogOut,
   MessageSquare,
-  RefreshCw,
   UserRound,
   Wrench,
 } from "lucide-react";
-import { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   SidebarNavGroup,
   type SidebarItem,
 } from "../components/layout/SidebarNavGroup";
 import { useAuth } from "../hooks/useAuth";
+import { studentNotificationApi } from "../features/notifications/api/notification.api";
 
 const groups: Array<{ title: string; items: SidebarItem[] }> = [
   {
@@ -28,20 +27,19 @@ const groups: Array<{ title: string; items: SidebarItem[] }> = [
     title: "Phòng của tôi",
     items: [
       { label: "Thông tin phòng", icon: Building2, to: "/student/room" },
-      { label: "Hợp đồng ở", icon: FileText, to: "/student/contracts" },
-      {
-        label: "Yêu cầu chuyển phòng",
-        icon: RefreshCw,
-        to: "/student/room-change-requests",
-      },
-      { label: "Báo hỏng thiết bị", icon: Wrench, disabled: true },
+      { label: "Báo hỏng thiết bị", icon: Wrench, to: "/student/maintenance" },
     ],
   },
   {
-    title: "Liên lạc",
+    title: "Hỗ trợ",
     items: [
-      { label: "Thông báo", icon: Bell, disabled: true },
-      { label: "Nhắn tin với BQL", icon: MessageSquare, disabled: true },
+      { label: "Thông báo", icon: Bell, to: "/student/notifications" },
+      {
+        label: "Trợ lý AI KTX",
+        icon: MessageSquare,
+        disabled: true,
+        title: "Tra cứu nội quy và hỗ trợ thông tin KTX bằng AI — sắp ra mắt.",
+      },
     ],
   },
   {
@@ -55,6 +53,24 @@ const groups: Array<{ title: string; items: SidebarItem[] }> = [
 export function StudentLayout() {
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const location = useLocation();
+  useEffect(() => {
+    const refresh = () =>
+      studentNotificationApi
+        .unreadCount()
+        .then((x) => setUnread(x.count))
+        .catch(() => setUnread(0));
+    refresh();
+    const timer = window.setInterval(refresh, 15_000);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("notification-read", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("notification-read", refresh);
+    };
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">
@@ -72,20 +88,33 @@ export function StudentLayout() {
         </div>
         <nav className="flex gap-6 overflow-x-auto px-3 pb-3 lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:py-3">
           {groups.map((group) => (
-            <SidebarNavGroup key={group.title} {...group} />
+            <SidebarNavGroup
+              key={group.title}
+              {...group}
+              items={group.items.map((item) =>
+                item.to === "/student/notifications"
+                  ? { ...item, badge: unread }
+                  : item,
+              )}
+            />
           ))}
         </nav>
       </aside>
 
       <div className="min-w-0 flex-1 lg:ml-72">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-end gap-3 border-b bg-white/95 px-5 backdrop-blur">
-          <button
-            disabled
-            title="Tính năng thông báo đang phát triển"
-            className="relative rounded-lg p-2 text-slate-400"
+          <Link
+            to="/student/notifications"
+            title="Thông báo"
+            className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"
           >
             <Bell size={20} />
-          </button>
+            {unread > 0 && (
+              <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs leading-5 text-white">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
+          </Link>
           <div className="relative">
             <button
               className="flex items-center gap-3 rounded-lg p-1.5 hover:bg-slate-50"

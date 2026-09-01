@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { Pagination } from "../../components/ui/Pagination";
@@ -11,6 +12,7 @@ import {
   LoadingState,
 } from "../../components/ui/States";
 import { contractApi } from "../../features/contracts/api/contract.api";
+import { AdminContractRegistrationModal } from "../../features/contracts/components/AdminContractRegistrationModal";
 import { normalizeApiError } from "../../services/api-client";
 import { formatDate, formatDateTime } from "../../utils/date";
 import type { Contract, Paginated } from "../../types/api";
@@ -26,6 +28,7 @@ export function AdminContractsPage() {
     [action, setAction] = useState<Action | null>(null),
     [createOpen, setCreateOpen] = useState(false),
     [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState("");
   const page = Number(search.get("page") ?? 1),
     status = search.get("status") ?? "";
   const load = useCallback(async () => {
@@ -63,6 +66,11 @@ export function AdminContractsPage() {
       if (action.kind === "end") await contractApi.end(action.contract.id);
       if (action.kind === "cancel")
         await contractApi.cancelActive(action.contract.id, reason ?? "");
+      setFeedback(
+        action.kind === "approve"
+          ? "Đã duyệt hợp đồng thành công."
+          : "Đã cập nhật hợp đồng thành công.",
+      );
       setAction(null);
       await load();
     } catch (e) {
@@ -80,25 +88,6 @@ export function AdminContractsPage() {
       setBusy(false);
     }
   }
-  async function create(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    setBusy(true);
-    try {
-      await contractApi.adminCreate({
-        studentId: String(f.get("studentId")),
-        bedId: String(f.get("bedId")),
-        startDate: String(f.get("startDate")),
-        endDate: String(f.get("endDate")),
-      });
-      setCreateOpen(false);
-      await load();
-    } catch (err) {
-      setError(normalizeApiError(err).message);
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <>
       <PageHeader
@@ -111,7 +100,12 @@ export function AdminContractsPage() {
           </button>
         }
       />
-      <div className="card mb-5 grid gap-3 sm:grid-cols-3">
+      {feedback && (
+        <p className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+          {feedback}
+        </p>
+      )}
+      <div className="card mb-5 max-w-sm">
         <select
           className="field"
           value={status}
@@ -122,24 +116,6 @@ export function AdminContractsPage() {
             <option key={s}>{s}</option>
           ))}
         </select>
-        <input
-          className="field"
-          placeholder="Student ID"
-          defaultValue={search.get("studentId") ?? ""}
-          onKeyDown={(e) => {
-            if (e.key === "Enter")
-              setSearch({ status, studentId: e.currentTarget.value });
-          }}
-        />
-        <input
-          className="field"
-          placeholder="Room ID"
-          defaultValue={search.get("roomId") ?? ""}
-          onKeyDown={(e) => {
-            if (e.key === "Enter")
-              setSearch({ status, roomId: e.currentTarget.value });
-          }}
-        />
       </div>
       {loading ? (
         <LoadingState />
@@ -165,12 +141,22 @@ export function AdminContractsPage() {
             <tbody>
               {result.items.map((c) => (
                 <tr className="border-b" key={c.id}>
-                  <td className="p-3">{c.studentId}</td>
+                  <td className="p-3">
+                    <strong className="block">
+                      {c.student?.fullName ?? "Sinh viên"}
+                    </strong>
+                    <span className="text-xs text-slate-500">
+                      {c.student?.mssv ?? "—"}
+                    </span>
+                  </td>
                   <td>
-                    {c.roomId}
+                    <strong>{c.room?.roomNumber ?? "—"}</strong>
+                    <span className="ml-2 text-xs text-slate-500">
+                      {c.room?.buildingName}
+                    </span>
                     <br />
                     <span className="text-xs text-slate-500">
-                      Bed: {c.bedId}
+                      Giường {c.bed?.bedNumber ?? "—"}
                     </span>
                   </td>
                   <td>
@@ -182,6 +168,12 @@ export function AdminContractsPage() {
                   <td>{formatDateTime(c.createdAt)}</td>
                   <td>
                     <div className="flex gap-2">
+                      <Link
+                        className="btn-secondary"
+                        to={`/admin/contracts/${c.id}`}
+                      >
+                        Xem
+                      </Link>
                       {c.status === "PENDING" && (
                         <>
                           <button
@@ -234,32 +226,11 @@ export function AdminContractsPage() {
           />
         </div>
       )}
-      <Modal
+      <AdminContractRegistrationModal
         open={createOpen}
-        title="Admin tạo hợp đồng"
         onClose={() => setCreateOpen(false)}
-      >
-        <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
-          Hợp đồng sẽ có hiệu lực ngay. Tạm nhập Student ID vì backend chưa có
-          API tìm sinh viên.
-        </div>
-        <form className="space-y-4" onSubmit={create}>
-          {[
-            ["studentId", "Student ID", "text"],
-            ["bedId", "Bed ID", "text"],
-            ["startDate", "Ngày bắt đầu", "date"],
-            ["endDate", "Ngày kết thúc", "date"],
-          ].map(([name, label, type]) => (
-            <label key={name}>
-              <span className="label">{label}</span>
-              <input className="field" name={name} type={type} required />
-            </label>
-          ))}
-          <button className="btn-primary w-full" disabled={busy}>
-            Tạo hợp đồng có hiệu lực ngay
-          </button>
-        </form>
-      </Modal>
+        onCreated={load}
+      />
       {action && (action.kind === "reject" || action.kind === "cancel") ? (
         <ReasonModal
           title={

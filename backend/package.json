@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "npm --prefix ../frontend run build && npm run build && node dist/server.js",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed:admin": "npm run build && node scripts/seed-admin.mjs",
+    "seed:dormitory": "tsc -p tsconfig.scripts.json && node dist-scripts/scripts/seed-dormitory-data.js",
+    "reset:dormitory": "node scripts/reset-dormitory-data.mjs && npm run seed:dormitory"
+    ,"test:recommendation": "npm run build && node --test tests/room-recommendation.test.mjs",
+    "seed:demo-students": "tsc -p tsconfig.scripts.json && node dist-scripts/scripts/seed-demo-students.js"
+    ,"db:init-replica": "node scripts/init-replica-set.mjs"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

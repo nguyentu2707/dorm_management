@@ -28,4 +28,19 @@ export class StudentProfileController {
       next(error);
     }
   };
+  changePassword: RequestHandler = async (req: AuthRequest, res, next) => {
+    try {
+      res.json({
+        success: true,
+        message: "Đổi mật khẩu thành công",
+        data: await this.service.changePassword(
+          req.user!.userId,
+          req.body.currentPassword,
+          req.body.newPassword,
+        ),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

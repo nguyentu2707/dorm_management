@@ -9,6 +9,7 @@ export type CreateUserData = {
   email?: string;
 };
 export type UpdateUserProfileData = {
+  fullName?: string;
   email?: string;
   phone?: string;
 };
@@ -20,6 +21,10 @@ export interface IUserRepository {
     id: string,
     data: UpdateUserProfileData,
     session?: ClientSession,
+  ): Promise<UserDocument | null>;
+  updatePassword(
+    id: string,
+    passwordHash: string,
   ): Promise<UserDocument | null>;
   deleteById(id: string, session?: ClientSession): Promise<void>;
 }

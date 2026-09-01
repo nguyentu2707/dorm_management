@@ -107,9 +107,12 @@ export function AdminRoomChangeRequestsPage() {
             <tbody>
               {result.items.map((i) => (
                 <tr className="border-b" key={i.id}>
-                  <td className="p-3">{i.studentId}</td>
-                  <td>{i.currentContractId}</td>
-                  <td>{i.targetBedId}</td>
+                  <td className="p-3">
+                    <strong className="block">{i.student?.fullName ?? "Sinh viên"}</strong>
+                    <span className="text-xs text-slate-500">{i.student?.mssv ?? "—"}</span>
+                  </td>
+                  <td>{i.currentRoom ? `${i.currentRoom.buildingName} / ${i.currentRoom.roomNumber} / Giường ${i.currentRoom.bedNumber}` : "—"}</td>
+                  <td>{i.targetRoom ? `${i.targetRoom.buildingName} / ${i.targetRoom.roomNumber} / Giường ${i.targetRoom.bedNumber}` : "—"}</td>
                   <td>{i.reason ?? "—"}</td>
                   <td>
                     <StatusBadge status={i.status} />

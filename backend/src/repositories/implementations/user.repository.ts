@@ -24,6 +24,13 @@ export class UserRepository implements IUserRepository {
       session: s,
     }).exec();
   }
+  updatePassword(id: string, passwordHash: string) {
+    return UserModel.findByIdAndUpdate(
+      id,
+      { passwordHash },
+      { new: true },
+    ).exec();
+  }
 
   async deleteById(id: string, s?: ClientSession) {
     await UserModel.findByIdAndDelete(id, { session: s });

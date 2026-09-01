@@ -8,6 +8,8 @@ export interface SidebarItem {
   to?: string;
   end?: boolean;
   disabled?: boolean;
+  title?: string;
+  badge?: number;
 }
 
 export function SidebarNavGroup({
@@ -23,12 +25,13 @@ export function SidebarNavGroup({
         {title}
       </p>
       <div className="space-y-1">
-        {items.map(({ label, icon: Icon, to, end, disabled }) =>
+        {items.map(({ label, icon: Icon, to, end, disabled, title, badge }) =>
           disabled || !to ? (
             <div
               key={label}
               title="Tính năng đang phát triển"
               className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-500"
+              aria-label={title}
             >
               <Icon size={17} />
               <span>{label}</span>
@@ -50,7 +53,12 @@ export function SidebarNavGroup({
               }
             >
               <Icon size={17} />
-              {label}
+              <span>{label}</span>
+              {!!badge && (
+                <span className="ml-auto min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
             </NavLink>
           ),
         )}

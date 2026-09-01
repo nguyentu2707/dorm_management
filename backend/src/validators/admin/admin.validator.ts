@@ -95,3 +95,29 @@ export const equipmentUpdate = wrap(
 export const equipmentCondition = wrap(
   z.object({ condition: z.enum(EQUIPMENT_CONDITIONS) }),
 );
+const paginationQuery = {
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+};
+export const studentList = wrap(
+  z.any(),
+  z.any(),
+  z.object({
+    ...paginationQuery,
+    search: z.string().trim().max(100).optional(),
+    faculty: z.string().trim().max(100).optional(),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+  }),
+);
+export const equipmentList = wrap(
+  z.any(),
+  z.any(),
+  z.object({
+    ...paginationQuery,
+    search: z.string().trim().max(100).optional(),
+    categoryId: id.optional(),
+    roomId: id.optional(),
+    buildingId: id.optional(),
+    condition: z.enum(EQUIPMENT_CONDITIONS).optional(),
+  }),
+);

@@ -41,6 +41,16 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
       .json({ success: false, message: "ID không hợp lệ", code: "INVALID_ID" });
     return;
   }
+  const errorMessage = err instanceof Error ? err.message : "";
+  if (/Transaction numbers are only allowed|replica set|mongos/i.test(errorMessage)) {
+    res.status(503).json({
+      success: false,
+      message:
+        "MongoDB local chưa bật replica set nên chưa thể thực hiện thao tác cần transaction.",
+      code: "TRANSACTIONS_UNAVAILABLE",
+    });
+    return;
+  }
   const e =
     err instanceof AppError
       ? err

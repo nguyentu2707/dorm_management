@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { Edit2, Plus, Trash2 } from "lucide-react";
+import {
+  Building2,
+  Edit2,
+  Hammer,
+  Plus,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { PageHeader } from "../../components/common/PageHeader";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import {
@@ -213,30 +220,69 @@ function ResourcePage({ config }: { config: Config }) {
   );
 }
 export function BuildingsPage() {
+  const [items, setItems] = useState<Building[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const load = useCallback(() => {
+    setLoading(true);
+    buildingApi
+      .list()
+      .then(setItems)
+      .catch((e) => setError(normalizeApiError(e).message))
+      .finally(() => setLoading(false));
+  }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const buildings = ["Tòa A", "Tòa B", "Tòa C"].map(
+    (name) => items.find((item) => item.name === name) ?? { id: name, name },
+  );
   return (
-    <ResourcePage
-      config={{
-        title: "Tòa nhà",
-        description: "Quản lý các tòa nhà trong ký túc xá",
-        columns: [
-          { key: "name", label: "Tên" },
-          { key: "address", label: "Địa chỉ" },
-          { key: "description", label: "Mô tả" },
-        ],
-        fields: [
-          { key: "name", label: "Tên tòa nhà", required: true },
-          { key: "address", label: "Địa chỉ" },
-          { key: "description", label: "Mô tả" },
-        ],
-        list: buildingApi.list,
-        create: buildingApi.create as never,
-        update: buildingApi.update as never,
-        remove: buildingApi.remove,
-        deleteErrors: {
-          BUILDING_HAS_ROOMS: "Không thể xóa tòa nhà vì vẫn còn phòng.",
-        },
-      }}
-    />
+    <>
+      <PageHeader
+        title="Tòa nhà"
+        description="Theo dõi trạng thái vận hành các khu nhà trong ký túc xá"
+      />
+      {loading ? (
+        <LoadingState />
+      ) : error ? (
+        <ErrorState message={error} onRetry={load} />
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {buildings.map((building) => {
+            const active = building.name !== "Tòa C";
+            return (
+              <article
+                className={`card border-t-4 ${active ? "border-t-emerald-500" : "border-t-amber-500"}`}
+                key={building.id}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div
+                    className={`rounded-xl p-3 ${active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
+                  >
+                    {active ? <Building2 size={28} /> : <Hammer size={28} />}
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${active ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+                  >
+                    {active ? "Đang hoạt động" : "Đang hoàn thiện"}
+                  </span>
+                </div>
+                <h2 className="mt-5 text-xl font-bold">{building.name}</h2>
+                <p className="mt-2 min-h-10 text-sm text-slate-500">
+                  {active
+                    ? "Khu nhà đang tiếp nhận và phục vụ sinh viên."
+                    : "Khu nhà đang trong giai đoạn hoàn thiện, chưa tiếp nhận sinh viên."}
+                </p>
+                <div className="mt-5 flex items-center gap-2 border-t pt-4 text-sm text-slate-500">
+                  <ShieldCheck size={17} /> Thông tin hệ thống cố định
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }
 export function RoomTypesPage() {

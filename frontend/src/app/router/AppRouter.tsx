@@ -5,7 +5,7 @@ import { AdminLayout } from "../../layouts/AppLayout";
 import { StudentLayout } from "../../layouts/StudentLayout";
 import { LoginPage } from "../../pages/auth/LoginPage";
 import { RegisterPage } from "../../pages/auth/RegisterPage";
-import { AdminDashboard } from "../../pages/DashboardPages";
+import { AdminDashboardPage } from "../../pages/admin/DashboardPage";
 import { StudentDashboardPage } from "../../pages/student/DashboardPage";
 import { StudentProfilePage } from "../../pages/student/ProfilePage";
 import { StudentRoomPage } from "../../pages/student/RoomPage";
@@ -19,9 +19,17 @@ import { RoomDetailPage } from "../../pages/admin/RoomDetailPage";
 import { EquipmentPage } from "../../pages/admin/EquipmentPage";
 import { AdminContractsPage } from "../../pages/admin/ContractsPage";
 import { AdminRoomChangeRequestsPage } from "../../pages/admin/RoomChangeRequestsPage";
-import { StudentContractsPage } from "../../pages/student/ContractsPage";
+import { AdminStudentsPage } from "../../pages/admin/StudentsPage";
+import { AdminStudentDetailPage } from "../../pages/admin/StudentDetailPage";
+import { AdminContractDetailPage } from "../../pages/admin/ContractDetailPage";
 import { StudentRoomChangePage } from "../../pages/student/RoomChangePage";
 import { NotFoundPage, UnauthorizedPage } from "../../pages/SystemPages";
+import { StudentNotificationsPage } from "../../pages/student/NotificationsPage";
+import { AdminNotificationsPage } from "../../pages/admin/NotificationsPage";
+import { StudentMaintenancePage } from "../../pages/student/MaintenancePage";
+import { AdminMaintenancePage } from "../../pages/admin/MaintenancePage";
+import { StudentRoomRegistrationPage } from "../../pages/student/RoomRegistrationPage";
+import { StudentSchedulePage } from "../../pages/student/SchedulePage";
 import { useAuth } from "../../hooks/useAuth";
 const admin = (node: React.ReactNode) => (
   <ProtectedRoute>
@@ -66,7 +74,7 @@ export function AppRouter() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
       <Route path="/admin" element={admin(<AdminLayout />)}>
-        <Route index element={<AdminDashboard />} />
+        <Route index element={<AdminDashboardPage />} />
         <Route path="buildings" element={<BuildingsPage />} />
         <Route path="room-types" element={<RoomTypesPage />} />
         <Route path="rooms" element={<RoomsPage />} />
@@ -76,7 +84,12 @@ export function AppRouter() {
           element={<EquipmentCategoriesPage />}
         />
         <Route path="equipment" element={<EquipmentPage />} />
+        <Route path="students" element={<AdminStudentsPage />} />
+        <Route path="students/:id" element={<AdminStudentDetailPage />} />
         <Route path="contracts" element={<AdminContractsPage />} />
+        <Route path="contracts/:id" element={<AdminContractDetailPage />} />
+        <Route path="notifications" element={<AdminNotificationsPage />} />
+        <Route path="maintenance" element={<AdminMaintenancePage />} />
         <Route
           path="room-change-requests"
           element={<AdminRoomChangeRequestsPage />}
@@ -85,8 +98,15 @@ export function AppRouter() {
       <Route path="/student" element={student(<StudentLayout />)}>
         <Route index element={<StudentDashboardPage />} />
         <Route path="room" element={<StudentRoomPage />} />
+        <Route path="room/register" element={<StudentRoomRegistrationPage />} />
         <Route path="profile" element={<StudentProfilePage />} />
-        <Route path="contracts" element={<StudentContractsPage />} />
+        <Route
+          path="contracts"
+          element={<Navigate to="/student/room" replace />}
+        />
+        <Route path="notifications" element={<StudentNotificationsPage />} />
+        <Route path="maintenance" element={<StudentMaintenancePage />} />
+        <Route path="schedule" element={<StudentSchedulePage />} />
         <Route
           path="room-change-requests"
           element={<StudentRoomChangePage />}

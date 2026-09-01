@@ -3,6 +3,28 @@ import type { EquipmentItemService } from "../../services/admin/equipment-item.s
 import { paginationFrom } from "../../types/common.types.js";
 export class EquipmentItemController {
   constructor(private s: EquipmentItemService) {}
+  listAll: RequestHandler = async (q, r, n) => {
+    try {
+      const p = paginationFrom(
+        Number(q.query.page) || 1,
+        Number(q.query.limit) || 20,
+      );
+      r.json({
+        success: true,
+        message: "Danh sách thiết bị",
+        data: await this.s.listAll({
+          ...p,
+          search: q.query.search as string | undefined,
+          categoryId: q.query.categoryId as string | undefined,
+          roomId: q.query.roomId as string | undefined,
+          buildingId: q.query.buildingId as string | undefined,
+          condition: q.query.condition as never,
+        }),
+      });
+    } catch (e) {
+      n(e);
+    }
+  };
   list: RequestHandler = async (q, r, n) => {
     try {
       const p = paginationFrom(

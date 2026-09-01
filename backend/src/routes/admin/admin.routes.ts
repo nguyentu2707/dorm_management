@@ -3,6 +3,14 @@ import { container as c } from "../../config/container.js";
 import { validate } from "../../middlewares/validate.js";
 import * as v from "../../validators/admin/admin.validator.js";
 export const adminRouter = Router();
+adminRouter.get("/dashboard/summary", c.adminDashboardController.summary);
+adminRouter
+  .get("/students", validate(v.studentList), c.adminStudentController.list)
+  .get(
+    "/students/:studentId",
+    validate(v.idParams("studentId")),
+    c.adminStudentController.get,
+  );
 adminRouter
   .get("/buildings", c.buildingController.list)
   .get(
@@ -60,6 +68,11 @@ adminRouter
     c.equipmentCategoryController.delete,
   );
 adminRouter
+  .get(
+    "/equipment",
+    validate(v.equipmentList),
+    c.equipmentItemController.listAll,
+  )
   .get("/rooms/:roomId/equipment", c.equipmentItemController.list)
   .post(
     "/rooms/:roomId/equipment",

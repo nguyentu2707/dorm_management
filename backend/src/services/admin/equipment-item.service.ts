@@ -1,6 +1,7 @@
 import type {
   IEquipmentItemRepository,
   EquipmentItemData,
+  EquipmentListQuery,
 } from "../../repositories/interfaces/equipment-item.repository.interface.js";
 import type { IEquipmentCategoryRepository } from "../../repositories/interfaces/equipment-category.repository.interface.js";
 import type { IRoomRepository } from "../../repositories/interfaces/room.repository.interface.js";
@@ -13,6 +14,9 @@ export class EquipmentItemService {
     private categories: IEquipmentCategoryRepository,
     private rooms: IRoomRepository,
   ) {}
+  listAll(query: EquipmentListQuery) {
+    return this.repo.findAll(query);
+  }
   async list(roomId: string, page: number, limit: number) {
     if (!(await this.rooms.findById(roomId)))
       throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");

@@ -67,15 +67,10 @@ export function ContractRegistrationModal({
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
     setSubmitting(true);
     setError("");
     try {
-      await contractApi.create({
-        bedId,
-        startDate: String(form.get("startDate")),
-        endDate: String(form.get("endDate")),
-      });
+      await contractApi.create({ bedId });
       onClose();
       await onCreated();
     } catch (requestError) {
@@ -83,7 +78,9 @@ export function ContractRegistrationModal({
       setError(
         apiError.code === "BED_NOT_AVAILABLE"
           ? "Giường vừa được người khác chọn. Danh sách đã được cập nhật."
-          : apiError.message,
+          : apiError.errors?.length
+            ? `${apiError.message}: ${apiError.errors.map((item) => `${item.field} — ${item.message}`).join(", ")}`
+            : apiError.message,
       );
       if (apiError.code === "BED_NOT_AVAILABLE" && roomId) {
         setBeds(await studentFacilityApi.emptyBeds(roomId));
@@ -166,15 +163,14 @@ export function ContractRegistrationModal({
         {roomId && !loading && beds.length === 0 && (
           <EmptyState message="Phòng hiện không còn giường trống" />
         )}
-        <div className="grid grid-cols-2 gap-3">
-          <label>
-            <span className="label">Ngày bắt đầu</span>
-            <input className="field" type="date" name="startDate" required />
-          </label>
-          <label>
-            <span className="label">Ngày kết thúc</span>
-            <input className="field" type="date" name="endDate" required />
-          </label>
+        <div className="rounded-lg bg-brand-50 p-4 text-sm text-brand-800">
+          <strong>Thời hạn hợp đồng</strong>
+          <p className="mt-1">
+            Bắt đầu từ ngày đăng ký và kết thúc dự kiến sau 6 tháng.
+          </p>
+          <p className="mt-1 text-xs">
+            Thời hạn: 1 kỳ ở 6 tháng theo quy định ký túc xá.
+          </p>
         </div>
         {error && (
           <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">

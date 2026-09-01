@@ -6,8 +6,10 @@ import type {
 import type { ITransactionManager } from "./transaction-manager.js";
 import { AppError } from "../errors/AppError.js";
 import { StudentProfileMapper } from "../mappers/student-profile.mapper.js";
+import type { IPasswordHasher } from "./password-hasher.service.js";
 
 export type UpdateStudentProfileInput = UpdateStudentProfileData & {
+  fullName?: string;
   email?: string;
   phone?: string;
 };
@@ -17,6 +19,7 @@ export class StudentProfileService {
     private users: IUserRepository,
     private students: IStudentRepository,
     private transactionManager: ITransactionManager,
+    private passwords: IPasswordHasher,
   ) {}
 
   private transactionUnsupported(error: unknown): boolean {
@@ -45,6 +48,8 @@ export class StudentProfileService {
   async updateProfile(userId: string, input: UpdateStudentProfileInput) {
     const { student } = await this.entities(userId);
     const studentData: UpdateStudentProfileData = {
+      dob: input.dob,
+      gender: input.gender,
       emergencyContactName: input.emergencyContactName,
       emergencyContactPhone: input.emergencyContactPhone,
       permanentAddress: input.permanentAddress,
@@ -59,7 +64,7 @@ export class StudentProfileService {
         );
         const updatedUser = await this.users.updateProfile(
           userId,
-          { email: input.email, phone: input.phone },
+          { fullName: input.fullName, email: input.email, phone: input.phone },
           session,
         );
         if (!updatedUser || !updatedStudent) {
@@ -79,6 +84,7 @@ export class StudentProfileService {
         studentData,
       );
       const updatedUser = await this.users.updateProfile(userId, {
+        fullName: input.fullName,
         email: input.email,
         phone: input.phone,
       });
@@ -91,5 +97,27 @@ export class StudentProfileService {
       }
       return StudentProfileMapper.toResponse(updatedUser, updatedStudent);
     }
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.users.findById(userId);
+    if (
+      !user ||
+      !(await this.passwords.compare(currentPassword, user.passwordHash))
+    )
+      throw new AppError(
+        400,
+        "CURRENT_PASSWORD_INCORRECT",
+        "Mật khẩu hiện tại không đúng",
+      );
+    await this.users.updatePassword(
+      userId,
+      await this.passwords.hash(newPassword),
+    );
+    return { changed: true };
   }
 }

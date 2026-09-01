@@ -1,5 +1,11 @@
 import { apiClient, dataOf } from "../../../services/api-client";
-import type { Equipment, EquipmentCategory, Status } from "../../../types/api";
+import type {
+  AdminEquipment,
+  Equipment,
+  EquipmentCategory,
+  Paginated,
+  Status,
+} from "../../../types/api";
 export type CategoryInput = Pick<
   EquipmentCategory,
   "name" | "unit" | "defaultLifespanMonths"
@@ -24,6 +30,10 @@ export const categoryApi = {
     dataOf(apiClient.delete(`/admin/equipment-categories/${id}`)),
 };
 export const equipmentApi = {
+  list: (params: Record<string, string | number | undefined>) =>
+    dataOf<Paginated<AdminEquipment>>(
+      apiClient.get("/admin/equipment", { params }),
+    ),
   create: (roomId: string, i: EquipmentInput) =>
     dataOf<Equipment>(apiClient.post(`/admin/rooms/${roomId}/equipment`, i)),
   get: (id: string) =>

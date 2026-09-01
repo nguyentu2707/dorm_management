@@ -17,6 +17,8 @@ const labels: Record<Status, string> = {
   DAMAGED: "Hư hỏng",
   BROKEN: "Không hoạt động",
   LOST: "Thất lạc",
+  IN_PROGRESS: "Đang xử lý",
+  RESOLVED: "Đã xử lý",
 };
 const colors: Partial<Record<Status, string>> = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
@@ -32,6 +34,8 @@ const colors: Partial<Record<Status, string>> = {
   LOCKED: "bg-red-100 text-red-700",
   BROKEN: "bg-red-100 text-red-700",
   LOST: "bg-red-100 text-red-700",
+  IN_PROGRESS: "bg-blue-100 text-blue-700",
+  RESOLVED: "bg-emerald-100 text-emerald-700",
 };
 export function StatusBadge({ status }: { status: Status }) {
   return (

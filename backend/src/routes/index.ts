@@ -10,6 +10,11 @@ import { studentProfileRouter } from "./student/profile.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 import { container } from "../config/container.js";
+import { adminNotificationRouter } from "./admin/notification.routes.js";
+import { studentNotificationRouter } from "./student/notification.routes.js";
+import { studentMaintenanceRouter } from "./student/maintenance-request.routes.js";
+import { adminMaintenanceRouter } from "./admin/maintenance-request.routes.js";
+import { studentPersonalizationRouter } from "./student/personalization.routes.js";
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
 apiRouter.use(
@@ -20,6 +25,9 @@ apiRouter.use(
   studentRoomChangeRouter,
   studentFacilityRouter,
   studentProfileRouter,
+  studentNotificationRouter,
+  studentMaintenanceRouter,
+  studentPersonalizationRouter,
 );
 apiRouter.use(
   "/admin",
@@ -27,5 +35,7 @@ apiRouter.use(
   authorize("ADMIN"),
   adminContractRouter,
   adminRoomChangeRouter,
+  adminNotificationRouter,
+  adminMaintenanceRouter,
   adminRouter,
 );

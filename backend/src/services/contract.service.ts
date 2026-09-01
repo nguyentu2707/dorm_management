@@ -9,13 +9,14 @@ import type { ITransactionManager } from "./transaction-manager.js";
 import type { ClientSession } from "mongoose";
 import { AppError } from "../errors/AppError.js";
 import { ContractMapper } from "../mappers/contract.mapper.js";
+import { createDefaultContractPeriod } from "../utils/contract-period.js";
 export type CreateContractInput = {
   bedId: string;
-  startDate: Date;
-  endDate: Date;
 };
 export type AdminCreateContractInput = CreateContractInput & {
   studentId: string;
+  startDate?: Date;
+  endDate?: Date;
 };
 export class ContractService {
   constructor(
@@ -25,13 +26,24 @@ export class ContractService {
     private rooms: IRoomRepository,
     private tx: ITransactionManager,
   ) {}
-  private dates(i: CreateContractInput) {
-    if (i.endDate <= i.startDate)
+  private period(i: { startDate?: Date; endDate?: Date }) {
+    if (!!i.startDate !== !!i.endDate)
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        "startDate và endDate phải được cung cấp cùng nhau.",
+      );
+    const period =
+      i.startDate && i.endDate
+        ? { startDate: i.startDate, endDate: i.endDate }
+        : createDefaultContractPeriod();
+    if (period.endDate <= period.startDate)
       throw new AppError(
         400,
         "INVALID_DATE_RANGE",
         "Ngày kết thúc phải sau ngày bắt đầu",
       );
+    return period;
   }
   private async studentFromUser(userId: string) {
     const s = await this.students.findByUserId(userId);
@@ -67,7 +79,7 @@ export class ContractService {
       await this.rooms.updateStatus(roomId, "AVAILABLE", s);
   }
   async createContract(userId: string, i: CreateContractInput) {
-    this.dates(i);
+    const period = createDefaultContractPeriod();
     const student = await this.studentFromUser(userId);
     const bed = await this.beds.findById(i.bedId);
     if (!bed) throw new AppError(404, "BED_NOT_FOUND", "Không tìm thấy giường");
@@ -92,8 +104,8 @@ export class ContractService {
         studentId: student._id.toString(),
         bedId: i.bedId,
         roomId: bed.roomId.toString(),
-        startDate: i.startDate,
-        endDate: i.endDate,
+        startDate: period.startDate,
+        endDate: period.endDate,
         status: "PENDING",
       }),
     );
@@ -134,13 +146,23 @@ export class ContractService {
   }
   async getContracts(q: ContractListQuery) {
     const r = await this.contracts.findAll(q);
-    return { ...r, items: r.items.map(ContractMapper.toResponse) };
+    const summaries = await this.contracts.findDisplaySummaries(
+      r.items.map((item) => item.id),
+    );
+    return {
+      ...r,
+      items: r.items.map((item) => ({
+        ...ContractMapper.toResponse(item),
+        ...summaries.get(item.id),
+      })),
+    };
   }
   async getContractById(id: string) {
     const c = await this.contracts.findById(id);
     if (!c)
       throw new AppError(404, "CONTRACT_NOT_FOUND", "Không tìm thấy hợp đồng");
-    return ContractMapper.toResponse(c);
+    const summaries = await this.contracts.findDisplaySummaries([c.id]);
+    return { ...ContractMapper.toResponse(c), ...summaries.get(c.id) };
   }
   async approveContract(id: string, adminId: string) {
     const result = await this.tx.runInTransaction(async (s) => {
@@ -257,7 +279,7 @@ export class ContractService {
     return this.closeActive(id, "CANCELLED", reason);
   }
   async adminCreateContract(adminId: string, i: AdminCreateContractInput) {
-    this.dates(i);
+    const period = this.period(i);
     if (!(await this.students.findById(i.studentId)))
       throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
     if (await this.contracts.findPendingOrActiveByStudentId(i.studentId))
@@ -291,8 +313,8 @@ export class ContractService {
           studentId: i.studentId,
           bedId: i.bedId,
           roomId: bed.roomId.toString(),
-          startDate: i.startDate,
-          endDate: i.endDate,
+          startDate: period.startDate,
+          endDate: period.endDate,
           status: "ACTIVE",
           approvedBy: adminId,
           approvedAt: new Date(),

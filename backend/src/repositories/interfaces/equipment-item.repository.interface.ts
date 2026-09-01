@@ -12,13 +12,27 @@ export type EquipmentItemData = {
   purchaseDate?: Date;
   purchasePrice?: number;
 };
+export type EquipmentListQuery = {
+  page: number;
+  limit: number;
+  search?: string;
+  categoryId?: string;
+  roomId?: string;
+  buildingId?: string;
+  condition?: EquipmentCondition;
+};
+export type AdminEquipmentRecord = Record<string, unknown>;
 export interface IEquipmentItemRepository {
   findById(id: string): Promise<EquipmentItemDocument | null>;
+  findBySerialNumber(serial: string): Promise<EquipmentItemDocument | null>;
   findByRoomId(
     id: string,
     page: number,
     limit: number,
   ): Promise<PaginatedResult<EquipmentItemDocument>>;
+  findAll(
+    q: EquipmentListQuery,
+  ): Promise<PaginatedResult<AdminEquipmentRecord>>;
   countByCategoryId(id: string): Promise<number>;
   countByRoomId(id: string): Promise<number>;
   create(

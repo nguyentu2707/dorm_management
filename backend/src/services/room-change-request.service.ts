@@ -114,7 +114,8 @@ export class RoomChangeRequestService {
   }
   async getRequests(q: RoomChangeRequestListQuery) {
     const r = await this.requests.findAll(q);
-    return { ...r, items: r.items.map(RoomChangeRequestMapper.toResponse) };
+    const summaries = await this.requests.findDisplaySummaries(r.items.map((item) => item.id));
+    return { ...r, items: r.items.map((item) => ({ ...RoomChangeRequestMapper.toResponse(item), ...summaries.get(item.id) })) };
   }
   async getRequestById(id: string) {
     const r = await this.requests.findById(id);

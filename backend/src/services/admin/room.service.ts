@@ -24,7 +24,20 @@ export class RoomService {
     if (!(await this.buildings.findById(buildingId)))
       throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
     const r = await this.rooms.findByBuildingId(buildingId, q);
-    return { ...r, items: r.items.map(EntityMapper.toResponse) };
+    const summaries = await this.beds.summarizeByRoomIds(
+      r.items.map((room) => room.id),
+    );
+    return {
+      ...r,
+      items: r.items.map((room) => ({
+        ...EntityMapper.toResponse(room),
+        occupancy: summaries.get(room.id) ?? {
+          total: 0,
+          occupied: 0,
+          empty: 0,
+        },
+      })),
+    };
   }
   async get(id: string) {
     const x = await this.rooms.findById(id);
@@ -94,7 +107,9 @@ export class RoomService {
       );
     if (await this.equipment.countByRoomId(id))
       throw new AppError(409, "ROOM_HAS_EQUIPMENT", "Phòng còn thiết bị");
-    await this.beds.deleteByRoomId(id);
-    await this.rooms.deleteById(id);
+    await this.tx.runInTransaction(async (session) => {
+      await this.beds.deleteByRoomId(id, session);
+      await this.rooms.deleteById(id, session);
+    });
   }
 }

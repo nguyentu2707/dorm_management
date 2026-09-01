@@ -20,6 +20,9 @@ export class StudentProfileMapper {
       permanentAddress: student.permanentAddress,
       emergencyContactName: student.emergencyContactName,
       emergencyContactPhone: student.emergencyContactPhone,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 }

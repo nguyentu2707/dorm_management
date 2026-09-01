@@ -2,11 +2,11 @@ import { apiClient, dataOf } from "../../../services/api-client";
 import type { Contract, Paginated } from "../../../types/api";
 export interface CreateContractInput {
   bedId: string;
-  startDate: string;
-  endDate: string;
 }
 export interface AdminCreateContractInput extends CreateContractInput {
   studentId: string;
+  startDate?: string;
+  endDate?: string;
 }
 export const contractApi = {
   mine: () => dataOf<Contract[]>(apiClient.get("/student/contracts/me")),

@@ -35,6 +35,26 @@ import { StudentFacilityService } from "../services/student-facility.service.js"
 import { StudentProfileService } from "../services/student-profile.service.js";
 import { StudentFacilityController } from "../controllers/student/facility.controller.js";
 import { StudentProfileController } from "../controllers/student/profile.controller.js";
+import { AdminStudentService } from "../services/admin/student.service.js";
+import { AdminStudentController } from "../controllers/admin/student.controller.js";
+import { AdminDashboardService } from "../services/admin/dashboard.service.js";
+import { AdminDashboardController } from "../controllers/admin/dashboard.controller.js";
+import { NotificationRepository } from "../repositories/implementations/notification.repository.js";
+import { NotificationRecipientRepository } from "../repositories/implementations/notification-recipient.repository.js";
+import { NotificationService } from "../services/notification.service.js";
+import { AdminNotificationController } from "../controllers/admin/notification.controller.js";
+import { StudentNotificationController } from "../controllers/student/notification.controller.js";
+import { MaintenanceRequestRepository } from "../repositories/implementations/maintenance-request.repository.js";
+import { StaffRepository } from "../repositories/implementations/staff.repository.js";
+import { MaintenanceRequestService } from "../services/maintenance-request.service.js";
+import { AdminMaintenanceRequestController } from "../controllers/admin/maintenance-request.controller.js";
+import { StudentMaintenanceRequestController } from "../controllers/student/maintenance-request.controller.js";
+import { RoomPreferenceRepository } from "../repositories/implementations/room-preference.repository.js";
+import { ClassScheduleRepository } from "../repositories/implementations/class-schedule.repository.js";
+import { RoomRecommendationRepository } from "../repositories/implementations/room-recommendation.repository.js";
+import { StudentPersonalizationService } from "../services/student-personalization.service.js";
+import { RoomRecommendationService } from "../services/room-recommendation.service.js";
+import { StudentPersonalizationController } from "../controllers/student/personalization.controller.js";
 const tokenService = new JwtTokenService(),
   passwordHasher = new BcryptPasswordHasher(),
   transactionManager = new MongoTransactionManager();
@@ -48,6 +68,26 @@ const userRepository = new UserRepository(),
   equipmentItemRepository = new EquipmentItemRepository(),
   contractRepository = new ContractRepository(),
   roomChangeRequestRepository = new RoomChangeRequestRepository();
+const notificationRepository = new NotificationRepository(),
+  notificationRecipientRepository = new NotificationRecipientRepository();
+const notificationService = new NotificationService(
+  notificationRepository,
+  notificationRecipientRepository,
+  studentRepository,
+  contractRepository,
+  buildingRepository,
+  transactionManager,
+);
+const maintenanceRequestRepository = new MaintenanceRequestRepository();
+const roomPreferenceRepository = new RoomPreferenceRepository();
+const classScheduleRepository = new ClassScheduleRepository();
+const maintenanceRequestService = new MaintenanceRequestService(
+  maintenanceRequestRepository,
+  studentRepository,
+  contractRepository,
+  equipmentItemRepository,
+  new StaffRepository(),
+);
 const contractService = new ContractService(
   contractRepository,
   studentRepository,
@@ -73,9 +113,26 @@ const studentProfileService = new StudentProfileService(
   userRepository,
   studentRepository,
   transactionManager,
+  passwordHasher,
 );
 export const container = {
   tokenService,
+  studentPersonalizationController: new StudentPersonalizationController(
+    new StudentPersonalizationService(studentRepository, roomPreferenceRepository, classScheduleRepository),
+    new RoomRecommendationService(studentRepository, contractRepository, roomPreferenceRepository, classScheduleRepository, new RoomRecommendationRepository()),
+  ),
+  adminNotificationController: new AdminNotificationController(
+    notificationService,
+  ),
+  studentNotificationController: new StudentNotificationController(
+    notificationService,
+  ),
+  adminMaintenanceRequestController: new AdminMaintenanceRequestController(
+    maintenanceRequestService,
+  ),
+  studentMaintenanceRequestController: new StudentMaintenanceRequestController(
+    maintenanceRequestService,
+  ),
   authController: new AuthController(
     new AuthService(
       userRepository,
@@ -116,6 +173,12 @@ export const container = {
       equipmentCategoryRepository,
       roomRepository,
     ),
+  ),
+  adminStudentController: new AdminStudentController(
+    new AdminStudentService(studentRepository),
+  ),
+  adminDashboardController: new AdminDashboardController(
+    new AdminDashboardService(),
   ),
   studentContractController: new StudentContractController(contractService),
   adminContractController: new AdminContractController(contractService),

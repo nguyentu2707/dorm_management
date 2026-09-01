@@ -1,7 +1,28 @@
 import { BedModel } from "../../models/bed.model.js";
 import type { IBedRepository } from "../interfaces/bed.repository.interface.js";
-import type { ClientSession } from "mongoose";
+import { Types, type ClientSession } from "mongoose";
 export class BedRepository implements IBedRepository {
+  async summarizeByRoomIds(ids: string[]) {
+    const rows = await BedModel.aggregate([
+      { $match: { roomId: { $in: ids.map((id) => new Types.ObjectId(id)) } } },
+      {
+        $group: {
+          _id: "$roomId",
+          total: { $sum: 1 },
+          occupied: {
+            $sum: { $cond: [{ $eq: ["$status", "OCCUPIED"] }, 1, 0] },
+          },
+          empty: { $sum: { $cond: [{ $eq: ["$status", "EMPTY"] }, 1, 0] } },
+        },
+      },
+    ]);
+    return new Map(
+      rows.map((row) => [
+        row._id.toString(),
+        { total: row.total, occupied: row.occupied, empty: row.empty },
+      ]),
+    );
+  }
   findById(id: string, s?: ClientSession) {
     return BedModel.findById(id)
       .session(s ?? null)
@@ -22,6 +43,17 @@ export class BedRepository implements IBedRepository {
       })),
       { session: s },
     );
+  }
+  async ensureCapacity(id: string, count: number, s?: ClientSession) {
+    const existing = new Set(
+      (await this.findByRoomId(id, s)).map((bed) => bed.bedNumber),
+    );
+    const missing = Array.from({ length: count }, (_, i) => String(i + 1))
+      .filter((bedNumber) => !existing.has(bedNumber))
+      .map((bedNumber) => ({ roomId: id, bedNumber, status: "EMPTY" as const }));
+    if (!missing.length) return 0;
+    await BedModel.insertMany(missing, { session: s });
+    return missing.length;
   }
   countOccupiedByRoomId(id: string, s?: ClientSession) {
     return BedModel.countDocuments({ roomId: id, status: "OCCUPIED" }).session(
