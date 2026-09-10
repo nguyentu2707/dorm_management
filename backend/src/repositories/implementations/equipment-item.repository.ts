@@ -1,168 +1,141 @@
+import type { IEquipmentItemRepository } from "../interfaces/equipment-item.repository.interface.js";
+import type { EquipmentItemDocument } from "../../models/equipment-item.model.js";
 import {
-  EquipmentItemModel,
-  type EquipmentCondition,
-} from "../../models/equipment-item.model.js";
-import type {
-  IEquipmentItemRepository,
-  EquipmentItemData,
-  EquipmentListQuery,
-  AdminEquipmentRecord,
-} from "../interfaces/equipment-item.repository.interface.js";
-import type { ClientSession } from "mongoose";
-export class EquipmentItemRepository implements IEquipmentItemRepository {
-  findBySerialNumber(serialNumber: string) {
-    return EquipmentItemModel.findOne({ serialNumber }).exec();
-  }
-  async findAll(q: EquipmentListQuery) {
-    const match: Record<string, unknown> = {};
-    if (q.search)
-      match.serialNumber = {
-        $regex: q.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-        $options: "i",
-      };
-    if (q.categoryId)
-      match.categoryId = new (await import("mongoose")).Types.ObjectId(
-        q.categoryId,
-      );
-    if (q.roomId)
-      match.roomId = new (await import("mongoose")).Types.ObjectId(q.roomId);
-    if (q.condition) match.condition = q.condition;
-    const pipeline: Record<string, unknown>[] = [
-      { $match: match },
-      {
-        $lookup: {
-          from: "rooms",
-          localField: "roomId",
-          foreignField: "_id",
-          as: "room",
-        },
-      },
-      { $unwind: "$room" },
-      {
-        $lookup: {
-          from: "buildings",
-          localField: "room.buildingId",
-          foreignField: "_id",
-          as: "building",
-        },
-      },
-      { $unwind: "$building" },
-      {
-        $lookup: {
-          from: "equipmentcategories",
-          localField: "categoryId",
-          foreignField: "_id",
-          as: "category",
-        },
-      },
-      { $unwind: "$category" },
-    ];
-    if (q.buildingId)
-      pipeline.push({
-        $match: {
-          "building._id": new (await import("mongoose")).Types.ObjectId(
-            q.buildingId,
-          ),
-        },
-      });
-    pipeline.push({
-      $project: {
-        _id: 0,
-        id: { $toString: "$_id" },
-        serialNumber: 1,
-        condition: 1,
-        purchaseDate: 1,
-        purchasePrice: 1,
-        category: {
-          id: { $toString: "$category._id" },
-          name: "$category.name",
-        },
-        room: {
-          id: { $toString: "$room._id" },
-          roomNumber: "$room.roomNumber",
-          buildingId: { $toString: "$building._id" },
-          buildingName: "$building.name",
-        },
-      },
-    });
-    const aggregatePipeline = [
-      ...pipeline,
-      {
-        $facet: {
-          items: [
-            { $sort: { serialNumber: 1 } },
-            { $skip: (q.page - 1) * q.limit },
-            { $limit: q.limit },
-          ],
-          meta: [{ $count: "total" }],
-        },
-      },
-    ];
-    const [result] = await EquipmentItemModel.aggregate(
-      aggregatePipeline as never,
+  query,
+  rows,
+  one,
+  required,
+  count,
+  page,
+  contains,
+} from "../../database/query.js";
+export class PostgresEquipmentItemRepository implements IEquipmentItemRepository {
+  async findById(
+    ...[id]: Parameters<IEquipmentItemRepository["findById"]>
+  ): ReturnType<IEquipmentItemRepository["findById"]> {
+    return one<EquipmentItemDocument>(
+      `SELECT * FROM equipment_items WHERE id=$1`,
+      [id],
+      undefined,
     );
-    const items = (result?.items ?? []) as AdminEquipmentRecord[];
-    const total = result?.meta?.[0]?.total ?? 0;
-    return {
-      items,
-      pagination: {
-        page: q.page,
-        limit: q.limit,
-        total,
-        totalPages: Math.ceil(total / q.limit),
-      },
-    };
   }
-  findById(id: string) {
-    return EquipmentItemModel.findById(id).exec();
+  async findBySerialNumber(
+    ...[serial]: Parameters<IEquipmentItemRepository["findBySerialNumber"]>
+  ): ReturnType<IEquipmentItemRepository["findBySerialNumber"]> {
+    return one<EquipmentItemDocument>(
+      `SELECT * FROM equipment_items WHERE serial_number=$1`,
+      [serial],
+      undefined,
+    );
   }
-  async findByRoomId(id: string, page: number, limit: number) {
-    const f = { roomId: id };
-    const [items, total] = await Promise.all([
-      EquipmentItemModel.find(f)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .sort({ createdAt: -1 }),
-      EquipmentItemModel.countDocuments(f),
-    ]);
-    return {
-      items,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+  async create(
+    ...[d, s]: Parameters<IEquipmentItemRepository["create"]>
+  ): ReturnType<IEquipmentItemRepository["create"]> {
+    return required<EquipmentItemDocument>(
+      `INSERT INTO equipment_items (category_id, room_id, serial_number, condition, purchase_date, purchase_price)
+      VALUES ($1, $2, $3, COALESCE($4, 'NEW'), $5, $6)
+      RETURNING *`,
+      [
+        d.categoryId,
+        d.roomId,
+        typeof d.serialNumber === "string"
+          ? d.serialNumber.trim()
+          : d.serialNumber,
+        d.condition,
+        d.purchaseDate,
+        d.purchasePrice,
+      ],
+      s,
+    );
   }
-  countByCategoryId(id: string) {
-    return EquipmentItemModel.countDocuments({ categoryId: id });
+  async update(
+    ...[id, d, s]: Parameters<IEquipmentItemRepository["update"]>
+  ): ReturnType<IEquipmentItemRepository["update"]> {
+    return one<EquipmentItemDocument>(
+      `UPDATE equipment_items
+      SET category_id = CASE WHEN $2::boolean THEN $3 ELSE category_id END, serial_number = CASE WHEN $4::boolean THEN $5 ELSE serial_number END, purchase_date = CASE WHEN $6::boolean THEN $7 ELSE purchase_date END, purchase_price = CASE WHEN $8::boolean THEN $9 ELSE purchase_price END, condition = CASE WHEN $10::boolean THEN $11 ELSE condition END, updated_at = now()
+      WHERE id = $1
+      RETURNING *`,
+      [
+        id,
+        d.categoryId !== undefined,
+        d.categoryId,
+        d.serialNumber !== undefined,
+        d.serialNumber,
+        d.purchaseDate !== undefined,
+        d.purchaseDate,
+        d.purchasePrice !== undefined,
+        d.purchasePrice,
+        d.condition !== undefined,
+        d.condition,
+      ],
+      s,
+    );
   }
-  countByRoomId(id: string) {
-    return EquipmentItemModel.countDocuments({ roomId: id });
+  async updateCondition(
+    ...[id, condition, s]: Parameters<
+      IEquipmentItemRepository["updateCondition"]
+    >
+  ): ReturnType<IEquipmentItemRepository["updateCondition"]> {
+    return one<EquipmentItemDocument>(
+      `UPDATE equipment_items SET condition=$2,updated_at=now() WHERE id=$1 RETURNING *`,
+      [id, condition],
+      s,
+    );
   }
-  async create(d: EquipmentItemData, s?: ClientSession) {
-    const [x] = await EquipmentItemModel.create([d], { session: s });
-    return x!;
+  async deleteById(
+    ...[id, s]: Parameters<IEquipmentItemRepository["deleteById"]>
+  ): ReturnType<IEquipmentItemRepository["deleteById"]> {
+    await query(`DELETE FROM equipment_items WHERE id=$1`, [id], s);
   }
-  update(
-    id: string,
-    d: Partial<Omit<EquipmentItemData, "roomId">>,
-    s?: ClientSession,
-  ) {
-    return EquipmentItemModel.findByIdAndUpdate(id, d, {
-      new: true,
-      runValidators: true,
-      session: s,
-    }).exec();
+  async countByCategoryId(
+    ...[id]: Parameters<IEquipmentItemRepository["countByCategoryId"]>
+  ): ReturnType<IEquipmentItemRepository["countByCategoryId"]> {
+    return count(
+      `SELECT count(*) FROM equipment_items WHERE category_id=$1`,
+      [id],
+      undefined,
+    );
   }
-  updateCondition(
-    id: string,
-    condition: EquipmentCondition,
-    s?: ClientSession,
-  ) {
-    return EquipmentItemModel.findByIdAndUpdate(
-      id,
-      { condition },
-      { new: true, runValidators: true, session: s },
-    ).exec();
+  async countByRoomId(
+    ...[id]: Parameters<IEquipmentItemRepository["countByRoomId"]>
+  ): ReturnType<IEquipmentItemRepository["countByRoomId"]> {
+    return count(
+      `SELECT count(*) FROM equipment_items WHERE room_id=$1`,
+      [id],
+      undefined,
+    );
   }
-  async deleteById(id: string, s?: ClientSession) {
-    await EquipmentItemModel.findByIdAndDelete(id, { session: s });
+  async findByRoomId(
+    ...[id, pageNumber, limit]: Parameters<
+      IEquipmentItemRepository["findByRoomId"]
+    >
+  ): ReturnType<IEquipmentItemRepository["findByRoomId"]> {
+    return page<EquipmentItemDocument>(
+      `SELECT * FROM equipment_items WHERE room_id=$1`,
+      [id],
+      { page: pageNumber, limit },
+      "created_at DESC,id",
+    );
+  }
+  async findAll(
+    ...[q]: Parameters<IEquipmentItemRepository["findAll"]>
+  ): ReturnType<IEquipmentItemRepository["findAll"]> {
+    return page<Record<string, unknown>>(
+      `SELECT e.id,e.serial_number,e.condition,e.purchase_date,e.purchase_price,
+ json_build_object('id',c.id,'name',c.name) AS category,
+ json_build_object('id',r.id,'roomNumber',r.room_number,'buildingId',b.id,'buildingName',b.name) AS room
+
+      FROM equipment_items e
+      JOIN equipment_categories c ON c.id=e.category_id
+      JOIN rooms r ON r.id=e.room_id
+      JOIN buildings b ON b.id=r.building_id
+
+      WHERE ($1::text IS NULL OR e.serial_number ILIKE $1) AND ($2::uuid IS NULL OR e.category_id=$2) AND ($3::uuid IS NULL OR e.room_id=$3) AND ($4::uuid IS NULL OR r.building_id=$4) AND ($5::text IS NULL OR e.condition=$5)`,
+      [contains(q.search), q.categoryId, q.roomId, q.buildingId, q.condition],
+      q,
+      "serial_number NULLS FIRST,id",
+    );
   }
 }
+export { PostgresEquipmentItemRepository as EquipmentItemRepository };

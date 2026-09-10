@@ -2,7 +2,9 @@ import { apiClient, dataOf } from "../../../services/api-client";
 import type {
   Equipment,
   MaintenanceCategory,
+  MaintenanceDamageCause,
   MaintenanceRequest,
+  MaintenanceResolutionMethod,
   Paginated,
 } from "../../../types/api";
 export const studentMaintenanceApi = {
@@ -38,11 +40,19 @@ export const adminMaintenanceApi = {
     dataOf<MaintenanceRequest>(
       apiClient.patch(`/admin/maintenance-requests/${id}/assign`, { staffId }),
     ),
-  resolve: (id: string, resolutionNote: string) =>
+  resolve: (
+    id: string,
+    input: {
+      resolutionMethod: MaintenanceResolutionMethod;
+      damageCause: MaintenanceDamageCause;
+      damageCauseDetail?: string;
+      resolutionReason: string;
+      resolutionCost: number;
+      resolutionNote?: string;
+    },
+  ) =>
     dataOf<MaintenanceRequest>(
-      apiClient.patch(`/admin/maintenance-requests/${id}/resolve`, {
-        resolutionNote,
-      }),
+      apiClient.patch(`/admin/maintenance-requests/${id}/resolve`, input),
     ),
   cancel: (id: string, reason?: string) =>
     dataOf<MaintenanceRequest>(

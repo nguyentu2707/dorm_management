@@ -1,57 +1,51 @@
-import { RoomModel } from "../../models/room.model.js";
-import type { IRoomRecommendationRepository, RecommendationCandidate } from "../interfaces/room-recommendation.repository.interface.js";
+import type { IRoomRecommendationRepository } from "../interfaces/room-recommendation.repository.interface.js";
+import type { RecommendationCandidate } from "../interfaces/room-recommendation.repository.interface.js";
+import {
+  query,
+  rows,
+  one,
+  required,
+  count,
+  page,
+  contains,
+} from "../../database/query.js";
+export class PostgresRoomRecommendationRepository implements IRoomRecommendationRepository {
+  async findCandidates(
+    ...[gender]: Parameters<IRoomRecommendationRepository["findCandidates"]>
+  ): ReturnType<IRoomRecommendationRepository["findCandidates"]> {
+    const result = await rows<
+      RecommendationCandidate & { price: number }
+    >(`SELECT
+ json_build_object('id',r.id,'roomNumber',r.room_number,'building',json_build_object('id',b.id,'name',b.name),'capacity',rt.capacity) AS room,
+ rt.price_per_month AS price,stats.empty AS "availableBedCount",stats.occupied AS "occupiedBedCount",
+ EXISTS(SELECT 1
+      FROM equipment_items e
+      JOIN equipment_categories ec ON ec.id=e.category_id
+      WHERE e.room_id=r.id AND e.condition IN ('NEW','GOOD') AND lower(ec.name)=lower('Bình nóng lạnh')) AS "hasHotWater",
+ COALESCE((SELECT json_agg(res.entries)
+      FROM (SELECT COALESCE((SELECT json_agg(json_build_object('dayOfWeek',ce.day_of_week,'startPeriod',ce.start_period,'endPeriod',ce.end_period)
+      ORDER BY ce.ordinal)
+      FROM class_schedule_entries ce
+      WHERE ce.schedule_id=cs.id),'[]'::json) AS entries
+      FROM contracts c
+      JOIN class_schedules cs ON cs.student_id=c.student_id
+      WHERE c.room_id=r.id AND c.status='ACTIVE') res),'[]'::json) AS "residentSchedules"
 
-export class RoomRecommendationRepository implements IRoomRecommendationRepository {
-  async findCandidates() {
-    const rows = await RoomModel.aggregate([
-      { $match: { status: "AVAILABLE" } },
-      { $lookup: { from: "buildings", localField: "buildingId", foreignField: "_id", as: "building" } },
-      { $unwind: "$building" },
-      { $lookup: { from: "roomtypes", localField: "roomTypeId", foreignField: "_id", as: "roomType" } },
-      { $unwind: "$roomType" },
-      { $lookup: { from: "beds", localField: "_id", foreignField: "roomId", as: "beds" } },
-      { $set: {
-        emptyBeds: { $filter: { input: "$beds", as: "bed", cond: { $eq: ["$$bed.status", "EMPTY"] } } },
-        occupiedBeds: { $filter: { input: "$beds", as: "bed", cond: { $eq: ["$$bed.status", "OCCUPIED"] } } },
-      } },
-      { $match: { "emptyBeds.0": { $exists: true } } },
-      { $lookup: {
-        from: "equipmentitems",
-        let: { roomId: "$_id" },
-        pipeline: [
-          { $match: { $expr: { $and: [{ $eq: ["$roomId", "$$roomId"] }, { $in: ["$condition", ["NEW", "GOOD"]] }] } } },
-          { $lookup: { from: "equipmentcategories", localField: "categoryId", foreignField: "_id", as: "category" } },
-          { $unwind: "$category" },
-          { $match: { "category.name": { $regex: /^bình nóng lạnh$/i } } },
-          { $limit: 1 },
-        ],
-        as: "hotWaterItems",
-      } },
-      { $lookup: {
-        from: "contracts",
-        let: { roomId: "$_id" },
-        pipeline: [
-          { $match: { $expr: { $and: [{ $eq: ["$roomId", "$$roomId"] }, { $eq: ["$status", "ACTIVE"] }] } } },
-          { $lookup: { from: "classschedules", localField: "studentId", foreignField: "studentId", as: "schedule" } },
-          { $set: { schedule: { $first: "$schedule" } } },
-          { $project: { entries: "$schedule.entries" } },
-        ],
-        as: "residents",
-      } },
-      { $project: {
-        _id: 0,
-        room: {
-          id: { $toString: "$_id" }, roomNumber: "$roomNumber",
-          building: { id: { $toString: "$building._id" }, name: "$building.name" },
-          pricePerMonth: "$roomType.pricePerMonth", capacity: "$roomType.capacity",
-        },
-        availableBedCount: { $size: "$emptyBeds" },
-        occupiedBedCount: { $size: "$occupiedBeds" },
-        hasHotWater: { $gt: [{ $size: "$hotWaterItems" }, 0] },
-        residentSchedules: { $map: { input: { $filter: { input: "$residents", as: "resident", cond: { $isArray: "$$resident.entries" } } }, as: "resident", in: "$$resident.entries" } },
-      } },
-      { $sort: { "room.building.name": 1, "room.roomNumber": 1 } },
-    ]);
-    return rows as RecommendationCandidate[];
+      FROM rooms r
+      JOIN buildings b ON b.id=r.building_id
+      JOIN room_types rt ON rt.id=r.room_type_id
+
+      JOIN LATERAL (SELECT count(*) FILTER(WHERE status='EMPTY') AS empty,count(*) FILTER(WHERE status='OCCUPIED') AS occupied
+      FROM beds
+      WHERE room_id=r.id) stats ON stats.empty>0
+
+      WHERE r.status='AVAILABLE' AND b.status='ACTIVE'
+        AND (b.allowed_gender='MIXED' OR b.allowed_gender=$1)
+      ORDER BY b.name,r.room_number,r.id`, [gender]);
+    return result.map(({ price, ...row }) => ({
+      ...row,
+      room: { ...row.room, pricePerMonth: price },
+    }));
   }
 }
+export { PostgresRoomRecommendationRepository as RoomRecommendationRepository };

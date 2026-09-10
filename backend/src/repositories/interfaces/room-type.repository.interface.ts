@@ -1,4 +1,4 @@
-import type { ClientSession } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type { RoomTypeDocument } from "../../models/room-type.model.js";
 export type RoomTypeData = {
   name: string;
@@ -8,15 +8,22 @@ export type RoomTypeData = {
 };
 export interface IRoomTypeRepository {
   findAll(): Promise<RoomTypeDocument[]>;
-  findById(id: string): Promise<RoomTypeDocument | null>;
+  findById(
+    id: string,
+    session?: TransactionContext,
+  ): Promise<RoomTypeDocument | null>;
+  findByIdForUpdate(
+    id: string,
+    session: TransactionContext,
+  ): Promise<RoomTypeDocument | null>;
   create(
     data: RoomTypeData,
-    session?: ClientSession,
+    session?: TransactionContext,
   ): Promise<RoomTypeDocument>;
   update(
     id: string,
     data: Partial<RoomTypeData>,
-    session?: ClientSession,
+    session?: TransactionContext,
   ): Promise<RoomTypeDocument | null>;
-  deleteById(id: string, session?: ClientSession): Promise<void>;
+  deleteById(id: string, session?: TransactionContext): Promise<void>;
 }

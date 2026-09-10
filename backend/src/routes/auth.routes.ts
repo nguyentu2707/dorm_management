@@ -6,12 +6,23 @@ import {
   registerSchema,
   loginSchema,
   refreshSchema,
+  logoutSchema,
 } from "../validators/auth.validator.js";
 export const authRouter = Router();
 authRouter.post(
   "/register",
   validate(registerSchema),
   container.authController.register,
+);
+authRouter.post(
+  "/logout",
+  validate(logoutSchema),
+  container.authController.logout,
+);
+authRouter.post(
+  "/logout-all",
+  authenticate(container.tokenService, container.userRepository),
+  container.authController.logoutAll,
 );
 authRouter.post(
   "/login",
@@ -25,6 +36,6 @@ authRouter.post(
 );
 authRouter.get(
   "/me",
-  authenticate(container.tokenService),
+  authenticate(container.tokenService, container.userRepository),
   container.authController.me,
 );

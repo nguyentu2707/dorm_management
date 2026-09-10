@@ -9,18 +9,23 @@ import {
   Search,
   UsersRound,
   Bell,
+  ReceiptText,
+  ClipboardList,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   SidebarNavGroup,
   type SidebarItem,
 } from "../components/layout/SidebarNavGroup";
 import { useAuth } from "../hooks/useAuth";
 import { adminStudentApi } from "../features/students/api/student.api";
-import type { AdminStudent } from "../types/api";
+import { dashboardApi } from "../features/dashboard/api/dashboard.api";
+import type { AdminStudent, DashboardSummary } from "../types/api";
 
-const groups: Array<{ title: string; items: SidebarItem[] }> = [
+const createGroups = (
+  summary: DashboardSummary | null,
+): Array<{ title: string; items: SidebarItem[] }> => [
   {
     title: "Tổng quan",
     items: [{ label: "Dashboard", icon: Home, to: "/admin", end: true }],
@@ -36,11 +41,24 @@ const groups: Array<{ title: string; items: SidebarItem[] }> = [
     title: "Sinh viên & Hợp đồng",
     items: [
       { label: "Sinh viên", icon: UsersRound, to: "/admin/students" },
-      { label: "Hợp đồng", icon: FileText, to: "/admin/contracts" },
+      { label: "Xác minh sinh viên", icon: ClipboardList, to: "/admin/student-registry" },
+      {
+        label: "Hợp đồng",
+        icon: FileText,
+        to: "/admin/contracts",
+        badge: summary?.contracts.pending,
+      },
       {
         label: "Yêu cầu chuyển phòng",
         icon: RefreshCw,
         to: "/admin/room-change-requests",
+        badge: summary?.roomChangeRequests.pending,
+      },
+      {
+        label: "Yêu cầu trả phòng",
+        icon: LogOut,
+        to: "/admin/checkout-requests",
+        badge: summary?.checkoutRequests.pending,
       },
     ],
   },
@@ -50,7 +68,21 @@ const groups: Array<{ title: string; items: SidebarItem[] }> = [
   },
   {
     title: "Vận hành",
-    items: [{ label: "Bảo trì", icon: RefreshCw, to: "/admin/maintenance" }],
+    items: [
+      {
+        label: "Bảo trì",
+        icon: RefreshCw,
+        to: "/admin/maintenance",
+        badge: summary?.maintenanceRequests.pending,
+      },
+    ],
+  },
+  {
+    title: "Tài chính",
+    items: [
+      { label: "Hóa đơn", icon: ReceiptText, to: "/admin/billing" },
+      { label: "Thanh toán", icon: ReceiptText, to: "/admin/payments" },
+    ],
   },
 ];
 
@@ -129,7 +161,33 @@ function GlobalStudentSearch() {
 
 export function AdminLayout() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = () => {
+      void dashboardApi
+        .summary()
+        .then((value) => {
+          if (active) setSummary(value);
+        })
+        .catch(() => undefined);
+    };
+
+    refresh();
+    const timer = window.setInterval(refresh, 15_000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [location.pathname]);
+
+  const groups = createGroups(summary);
+  const pendingTotal = summary?.studentRequests.pendingTotal ?? 0;
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">
@@ -156,29 +214,44 @@ export function AdminLayout() {
       <div className="min-w-0 flex-1 lg:ml-72">
         <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-4 border-b bg-white/95 px-5 py-2 backdrop-blur">
           <GlobalStudentSearch />
-          <div className="relative shrink-0">
-            <button
-              className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-50"
-              onClick={() => setMenuOpen((value) => !value)}
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+              to="/admin"
+              title={`${pendingTotal} yêu cầu mới từ sinh viên`}
+              aria-label={`${pendingTotal} yêu cầu mới từ sinh viên`}
             >
-              <span className="hidden text-right sm:block">
-                <strong className="block text-sm">{user?.fullName}</strong>
-                <span className="text-xs text-slate-500">ADMIN</span>
-              </span>
-              <ChevronDown size={16} />
-            </button>
+              <Bell size={20} />
+              {pendingTotal > 0 && (
+                <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1 text-center text-[10px] font-bold leading-5 text-white">
+                  {pendingTotal > 99 ? "99+" : pendingTotal}
+                </span>
+              )}
+            </Link>
+            <div className="relative">
+              <button
+                className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-50"
+                onClick={() => setMenuOpen((value) => !value)}
+              >
+                <span className="hidden text-right sm:block">
+                  <strong className="block text-sm">{user?.fullName}</strong>
+                  <span className="text-xs text-slate-500">ADMIN</span>
+                </span>
+                <ChevronDown size={16} />
+              </button>
 
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-44 rounded-xl border bg-white p-2 shadow-lg">
-                <button
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                  onClick={logout}
-                >
-                  <LogOut size={16} />
-                  Đăng xuất
-                </button>
-              </div>
-            )}
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-44 rounded-xl border bg-white p-2 shadow-lg">
+                  <button
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    onClick={logout}
+                  >
+                    <LogOut size={16} />
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

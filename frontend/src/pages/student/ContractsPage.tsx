@@ -66,7 +66,11 @@ export function StudentContractsPage() {
                   <div className="mb-2">
                     <StatusBadge status={contract.status} />
                   </div>
-                  <p className="font-semibold">Giường: {contract.bedId}</p>
+                  <p className="font-semibold">
+                    {contract.room
+                      ? `${contract.room.buildingName} - ${contract.room.roomNumber} · Giường ${contract.bed?.bedNumber ?? "—"}`
+                      : "Thông tin phòng không còn khả dụng"}
+                  </p>
                   <p className="text-sm text-slate-500">
                     {formatDate(contract.startDate)} –{" "}
                     {formatDate(contract.endDate)}

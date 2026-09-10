@@ -4,7 +4,11 @@ export class AdminMaintenanceRequestController {
   constructor(private s: MaintenanceRequestService) {}
   staff: RequestHandler = async (_q, r, n) => {
     try {
-      r.json({ success: true, message: "Danh sách nhân viên bảo trì", data: await this.s.maintenanceStaff() });
+      r.json({
+        success: true,
+        message: "Danh sách nhân viên bảo trì",
+        data: await this.s.maintenanceStaff(),
+      });
     } catch (e) {
       n(e);
     }
@@ -47,7 +51,7 @@ export class AdminMaintenanceRequestController {
       r.json({
         success: true,
         message: "Đã xử lý",
-        data: await this.s.resolve(q.params.id!, q.body.resolutionNote),
+        data: await this.s.resolve(q.params.id!, q.body),
       });
     } catch (e) {
       n(e);

@@ -1,4 +1,4 @@
-import type { ClientSession } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type { EquipmentCategoryDocument } from "../../models/equipment-category.model.js";
 export type EquipmentCategoryData = {
   name: string;
@@ -10,12 +10,12 @@ export interface IEquipmentCategoryRepository {
   findById(id: string): Promise<EquipmentCategoryDocument | null>;
   create(
     d: EquipmentCategoryData,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<EquipmentCategoryDocument>;
   update(
     id: string,
     d: Partial<EquipmentCategoryData>,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<EquipmentCategoryDocument | null>;
-  deleteById(id: string, s?: ClientSession): Promise<void>;
+  deleteById(id: string, s?: TransactionContext): Promise<void>;
 }

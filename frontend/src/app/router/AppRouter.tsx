@@ -16,6 +16,7 @@ import {
 } from "../../pages/admin/ResourcePages";
 import { RoomsPage } from "../../pages/admin/RoomsPage";
 import { RoomDetailPage } from "../../pages/admin/RoomDetailPage";
+import { BuildingDetailPage } from "../../pages/admin/BuildingDetailPage";
 import { EquipmentPage } from "../../pages/admin/EquipmentPage";
 import { AdminContractsPage } from "../../pages/admin/ContractsPage";
 import { AdminRoomChangeRequestsPage } from "../../pages/admin/RoomChangeRequestsPage";
@@ -28,6 +29,11 @@ import { StudentNotificationsPage } from "../../pages/student/NotificationsPage"
 import { AdminNotificationsPage } from "../../pages/admin/NotificationsPage";
 import { StudentMaintenancePage } from "../../pages/student/MaintenancePage";
 import { AdminMaintenancePage } from "../../pages/admin/MaintenancePage";
+import { AdminCheckoutRequestsPage } from "../../pages/admin/CheckoutRequestsPage";
+import { AdminBillingPage } from "../../pages/admin/BillingPage";
+import { AdminPaymentsPage } from "../../pages/admin/PaymentsPage";
+import { AdminStudentRegistryPage } from "../../pages/admin/StudentRegistryPage";
+import { StudentInvoicesPage } from "../../pages/student/InvoicesPage";
 import { StudentRoomRegistrationPage } from "../../pages/student/RoomRegistrationPage";
 import { StudentSchedulePage } from "../../pages/student/SchedulePage";
 import { useAuth } from "../../hooks/useAuth";
@@ -76,6 +82,8 @@ export function AppRouter() {
       <Route path="/admin" element={admin(<AdminLayout />)}>
         <Route index element={<AdminDashboardPage />} />
         <Route path="buildings" element={<BuildingsPage />} />
+        <Route path="buildings/:buildingId" element={<BuildingDetailPage />} />
+        <Route path="buildings/:buildingId/floors/:floor/rooms" element={<RoomsPage />} />
         <Route path="room-types" element={<RoomTypesPage />} />
         <Route path="rooms" element={<RoomsPage />} />
         <Route path="rooms/:id" element={<RoomDetailPage />} />
@@ -85,11 +93,18 @@ export function AppRouter() {
         />
         <Route path="equipment" element={<EquipmentPage />} />
         <Route path="students" element={<AdminStudentsPage />} />
+        <Route path="student-registry" element={<AdminStudentRegistryPage />} />
         <Route path="students/:id" element={<AdminStudentDetailPage />} />
         <Route path="contracts" element={<AdminContractsPage />} />
         <Route path="contracts/:id" element={<AdminContractDetailPage />} />
         <Route path="notifications" element={<AdminNotificationsPage />} />
         <Route path="maintenance" element={<AdminMaintenancePage />} />
+        <Route path="billing" element={<AdminBillingPage />} />
+        <Route path="payments" element={<AdminPaymentsPage />} />
+        <Route
+          path="checkout-requests"
+          element={<AdminCheckoutRequestsPage />}
+        />
         <Route
           path="room-change-requests"
           element={<AdminRoomChangeRequestsPage />}
@@ -107,6 +122,7 @@ export function AppRouter() {
         <Route path="notifications" element={<StudentNotificationsPage />} />
         <Route path="maintenance" element={<StudentMaintenancePage />} />
         <Route path="schedule" element={<StudentSchedulePage />} />
+        <Route path="invoices" element={<StudentInvoicesPage />} />
         <Route
           path="room-change-requests"
           element={<StudentRoomChangePage />}

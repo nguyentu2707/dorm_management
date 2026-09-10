@@ -10,36 +10,45 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { ErrorState, LoadingState } from "../../components/ui/States";
-import { ConfirmDialog } from "../../components/ui/Modal";
+import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { contractApi } from "../../features/contracts/api/contract.api";
 import { studentFacilityApi } from "../../features/student-facilities/api/student-facility.api";
 import { roomChangeApi } from "../../features/room-change-requests/api/room-change.api";
+import { checkoutApi } from "../../features/checkout-requests/api/checkout.api";
+import { ResidenceHistorySection } from "../../features/residence-history/components/ResidenceHistorySection";
+import { StudentUtilitySection } from "../../features/utility-readings/components/StudentUtilitySection";
 import { normalizeApiError } from "../../services/api-client";
 import { formatDate, formatDateTime } from "../../utils/date";
 import type {
   Bed,
   Contract,
   RoomChangeRequest,
+  CheckoutRequest,
   StudentRoom,
 } from "../../types/api";
 export function StudentRoomPage() {
   const [contracts, setContracts] = useState<Contract[]>([]),
     [changes, setChanges] = useState<RoomChangeRequest[]>([]),
+    [checkouts, setCheckouts] = useState<CheckoutRequest[]>([]),
     [room, setRoom] = useState<StudentRoom | null>(null),
     [bed, setBed] = useState<Bed | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
-    [cancel, setCancel] = useState(false);
+    [cancel, setCancel] = useState(false),
+    [checkoutOpen, setCheckoutOpen] = useState(false),
+    [checkoutCancel, setCheckoutCancel] = useState(false);
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [all, requests] = await Promise.all([
+      const [all, requests, checkoutRequests] = await Promise.all([
         contractApi.mine(),
         roomChangeApi.mine(),
+        checkoutApi.mine(),
       ]);
       setContracts(all);
       setChanges(requests);
+      setCheckouts(checkoutRequests);
       const current =
         all.find((x) => x.status === "ACTIVE") ??
         all.find((x) => x.status === "PENDING");
@@ -84,6 +93,7 @@ export function StudentRoomPage() {
             Đăng ký phòng
           </Link>
         </div>
+        <ResidenceHistorySection />
       </>
     );
   if (pending)
@@ -110,6 +120,7 @@ export function StudentRoomPage() {
             Hủy đăng ký
           </button>
         </section>
+        <ResidenceHistorySection />
         <ConfirmDialog
           open={cancel}
           title="Hủy đăng ký"
@@ -124,6 +135,7 @@ export function StudentRoomPage() {
       </>
     );
   const pendingChange = changes.find((x) => x.status === "PENDING");
+  const pendingCheckout = checkouts.find((x) => x.status === "PENDING");
   return (
     <>
       <PageHeader
@@ -159,7 +171,6 @@ export function StudentRoomPage() {
           <StatusBadge status="ACTIVE" />
         </div>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Info label="Mã hợp đồng" value={active?.id} />
           <Info
             label="Thời hạn"
             value={`${formatDate(active?.startDate)} → ${formatDate(active?.endDate)}`}
@@ -171,6 +182,44 @@ export function StudentRoomPage() {
           <Info label="Trạng thái phòng" value={room?.status} />
         </dl>
       </section>
+      <section className="card mt-6">
+        <h2 className="text-lg font-bold">Trả phòng</h2>
+        {pendingCheckout ? (
+          <div className="mt-4 rounded-xl bg-amber-50 p-4">
+            <StatusBadge status="PENDING" />
+            <p className="mt-2 font-medium">Yêu cầu trả phòng đang chờ duyệt</p>
+            <p className="text-sm text-slate-600">
+              {pendingCheckout.room
+                ? `${pendingCheckout.room.buildingName} - ${pendingCheckout.room.roomNumber} · Giường ${pendingCheckout.bed?.bedNumber ?? "—"}`
+                : "—"}
+            </p>
+            <p className="text-sm text-slate-600">
+              Ngày gửi: {formatDateTime(pendingCheckout.createdAt)}
+            </p>
+            <p className="text-sm text-slate-600">
+              {pendingCheckout.reason || "Không có lý do"}
+            </p>
+            <button
+              className="btn-secondary mt-3 text-red-600"
+              onClick={() => setCheckoutCancel(true)}
+            >
+              Hủy yêu cầu
+            </button>
+          </div>
+        ) : pendingChange ? (
+          <p className="mt-3 text-sm text-slate-500">
+            Bạn đang có yêu cầu chuyển phòng chờ xử lý. Hãy hủy yêu cầu đó trước
+            khi yêu cầu trả phòng.
+          </p>
+        ) : (
+          <button
+            className="btn-danger mt-4"
+            onClick={() => setCheckoutOpen(true)}
+          >
+            Trả phòng
+          </button>
+        )}
+      </section>
       <section id="room-change" className="card mt-6">
         <h2 className="text-lg font-bold">Chuyển phòng</h2>
         {pendingChange ? (
@@ -178,7 +227,10 @@ export function StudentRoomPage() {
             <StatusBadge status="PENDING" />
             <p className="mt-2 font-medium">Yêu cầu đang chờ duyệt</p>
             <p className="text-sm text-slate-600">
-              Giường đích: {pendingChange.targetBedId}
+              Đến:{" "}
+              {pendingChange.targetRoom
+                ? `${pendingChange.targetRoom.buildingName} - ${pendingChange.targetRoom.roomNumber} · Giường ${pendingChange.targetRoom.bedNumber}`
+                : "—"}
             </p>
             <p className="text-sm text-slate-600">
               {pendingChange.reason || "Không có lý do"}
@@ -218,6 +270,63 @@ export function StudentRoomPage() {
       <Link className="btn-secondary mt-6" to="/student/maintenance">
         <Wrench size={17} /> Báo hỏng thiết bị
       </Link>
+      <Modal
+        open={checkoutOpen && !pendingCheckout && !pendingChange}
+        title="Yêu cầu trả phòng"
+        onClose={() => setCheckoutOpen(false)}
+      >
+        <div className="rounded-lg bg-slate-50 p-4 text-sm">
+          <strong>Phòng hiện tại</strong>
+          <p>
+            {room?.building?.name} - {room?.roomNumber} · Giường{" "}
+            {bed?.bedNumber}
+          </p>
+          <p className="mt-2">
+            Thời hạn: {formatDate(active?.startDate)} →{" "}
+            {formatDate(active?.endDate)}
+          </p>
+        </div>
+        <form
+          className="mt-4 space-y-4"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await checkoutApi.create(
+              String(new FormData(e.currentTarget).get("reason") || "") ||
+                undefined,
+            );
+            setCheckoutOpen(false);
+            await load();
+          }}
+        >
+          <label>
+            <span className="label">Lý do</span>
+            <textarea className="field" name="reason" maxLength={1000} />
+          </label>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setCheckoutOpen(false)}
+            >
+              Hủy
+            </button>
+            <button className="btn-danger">Gửi yêu cầu</button>
+          </div>
+        </form>
+      </Modal>
+      <ConfirmDialog
+        open={checkoutCancel}
+        title="Hủy yêu cầu trả phòng"
+        message="Bạn có chắc muốn hủy yêu cầu đang chờ?"
+        onClose={() => setCheckoutCancel(false)}
+        onConfirm={async () => {
+          if (pendingCheckout) await checkoutApi.cancel(pendingCheckout.id);
+          setCheckoutCancel(false);
+          await load();
+        }}
+      />
+      <ResidenceHistorySection />
+      <StudentUtilitySection />
     </>
   );
 }

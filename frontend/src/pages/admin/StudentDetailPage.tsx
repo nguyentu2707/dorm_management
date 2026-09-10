@@ -6,6 +6,7 @@ import { StatusBadge } from "../../components/ui/StatusBadge";
 import { adminStudentApi } from "../../features/students/api/student.api";
 import { normalizeApiError } from "../../services/api-client";
 import type { AdminStudent } from "../../types/api";
+import { ResidenceHistorySection } from "../../features/residence-history/components/ResidenceHistorySection";
 
 export function AdminStudentDetailPage() {
   const { id = "" } = useParams();
@@ -84,6 +85,7 @@ export function AdminStudentDetailPage() {
           ))}
         </dl>
       </div>
+      <ResidenceHistorySection studentId={student.id} />
     </>
   );
 }

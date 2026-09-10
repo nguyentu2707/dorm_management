@@ -1,34 +1,19 @@
-import { RoomModel } from "../../models/room.model.js";
-import { BedModel } from "../../models/bed.model.js";
-import { ContractModel } from "../../models/contract.model.js";
-import { RoomChangeRequestModel } from "../../models/room-change-request.model.js";
-import { MaintenanceRequestModel } from "../../models/maintenance-request.model.js";
-
+import type { IDashboardRepository } from "../../repositories/interfaces/dashboard.repository.interface.js";
 export class AdminDashboardService {
+  constructor(private repository: IDashboardRepository) {}
   async summary() {
-    const [rooms, beds, contracts, roomChanges, maintenance] =
-      await Promise.all([
-        RoomModel.aggregate([
-          { $group: { _id: "$status", count: { $sum: 1 } } },
-        ]),
-        BedModel.aggregate([
-          { $group: { _id: "$status", count: { $sum: 1 } } },
-        ]),
-        ContractModel.aggregate([
-          { $match: { status: { $in: ["PENDING", "ACTIVE"] } } },
-          { $group: { _id: "$status", count: { $sum: 1 } } },
-        ]),
-        RoomChangeRequestModel.countDocuments({ status: "PENDING" }),
-        MaintenanceRequestModel.aggregate([
-          { $match: { status: { $in: ["PENDING", "IN_PROGRESS"] } } },
-          { $group: { _id: "$status", count: { $sum: 1 } } },
-        ]),
-      ]);
-
+    const {
+      rooms,
+      beds,
+      contracts,
+      roomChanges,
+      checkoutRequests,
+      maintenance,
+    } = await this.repository.counts();
     const count = (
-      rows: Array<{ _id: string; count: number }>,
+      rows: Array<{ status: string; count: number }>,
       status: string,
-    ) => rows.find((row) => row._id === status)?.count ?? 0;
+    ) => rows.find((row) => row.status === status)?.count ?? 0;
 
     return {
       rooms: {
@@ -48,9 +33,17 @@ export class AdminDashboardService {
         active: count(contracts, "ACTIVE"),
       },
       roomChangeRequests: { pending: roomChanges },
+      checkoutRequests: { pending: checkoutRequests },
       maintenanceRequests: {
         pending: count(maintenance, "PENDING"),
         inProgress: count(maintenance, "IN_PROGRESS"),
+      },
+      studentRequests: {
+        pendingTotal:
+          count(contracts, "PENDING") +
+          roomChanges +
+          checkoutRequests +
+          count(maintenance, "PENDING"),
       },
     };
   }

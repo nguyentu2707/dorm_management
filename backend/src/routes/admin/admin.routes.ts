@@ -10,6 +10,11 @@ adminRouter
     "/students/:studentId",
     validate(v.idParams("studentId")),
     c.adminStudentController.get,
+  )
+  .patch(
+    "/students/:studentId/account-status",
+    validate(v.studentAccountStatus),
+    c.adminStudentController.accountStatus,
   );
 adminRouter
   .get("/buildings", c.buildingController.list)
@@ -17,6 +22,11 @@ adminRouter
     "/buildings/:buildingId",
     validate(v.idParams("buildingId")),
     c.buildingController.get,
+  )
+  .get(
+    "/buildings/:buildingId/overview",
+    validate(v.idParams("buildingId")),
+    c.buildingController.overview,
   )
   .post("/buildings", validate(v.buildingCreate), c.buildingController.create)
   .patch(

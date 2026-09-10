@@ -1,9 +1,11 @@
 import { z } from "zod";
 import {
   MAINTENANCE_CATEGORIES,
+  MAINTENANCE_DAMAGE_CAUSES,
+  MAINTENANCE_RESOLUTION_METHODS,
   MAINTENANCE_STATUSES,
 } from "../models/maintenance-request.model.js";
-const id = z.string().regex(/^[a-f\d]{24}$/i, "INVALID_ID"),
+const id = z.string().uuid("INVALID_ID"),
   empty = z.object({});
 const wrap = (
   body: z.ZodType = empty,
@@ -29,7 +31,25 @@ export const assignMaintenance = wrap(
   z.object({ id }),
 );
 export const resolveMaintenance = wrap(
-  z.object({ resolutionNote: z.string().trim().min(1).max(2000) }),
+  z
+    .object({
+      resolutionMethod: z.enum(MAINTENANCE_RESOLUTION_METHODS),
+      damageCause: z.enum(MAINTENANCE_DAMAGE_CAUSES),
+      damageCauseDetail: z.string().trim().max(1000).optional(),
+      resolutionReason: z.string().trim().min(1).max(2000),
+      resolutionCost: z.coerce.number().finite().min(0).max(1_000_000_000),
+      resolutionNote: z.string().trim().max(2000).optional(),
+    })
+    .strict()
+    .superRefine((value, context) => {
+      if (value.damageCause === "OTHER" && !value.damageCauseDetail) {
+        context.addIssue({
+          code: "custom",
+          path: ["damageCauseDetail"],
+          message: "DAMAGE_CAUSE_DETAIL_REQUIRED",
+        });
+      }
+    }),
   z.object({ id }),
 );
 export const listMaintenance = wrap(

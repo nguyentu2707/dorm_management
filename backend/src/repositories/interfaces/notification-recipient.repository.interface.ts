@@ -1,4 +1,4 @@
-import type { ClientSession, Types } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type { PaginatedResult } from "../../types/common.types.js";
 export type StudentNotificationRecord = {
   notificationId: string;
@@ -11,8 +11,8 @@ export type StudentNotificationRecord = {
 };
 export interface INotificationRecipientRepository {
   createMany(
-    data: Array<{ notificationId: Types.ObjectId; studentId: Types.ObjectId }>,
-    session?: ClientSession,
+    data: Array<{ notificationId: string; studentId: string }>,
+    session?: TransactionContext,
   ): Promise<void>;
   findByStudentId(
     studentId: string,

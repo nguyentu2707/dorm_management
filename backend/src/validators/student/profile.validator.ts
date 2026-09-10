@@ -9,7 +9,6 @@ export const updateStudentProfileSchema = z.object({
       email: z.union([z.literal(""), z.email("Email không hợp lệ")]).optional(),
       fullName: z.string().trim().min(2).max(100).optional(),
       dob: z.coerce.date().optional(),
-      gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
       phone: optionalText(20),
       permanentAddress: optionalText(300),
       emergencyContactName: optionalText(100),

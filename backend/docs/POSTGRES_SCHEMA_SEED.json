@@ -1,0 +1,6698 @@
+{
+  "capturedAt": "2026-09-07T00:05:24.797Z",
+  "version": "PostgreSQL 18.4 on x86_64-windows, compiled by msvc-19.44.35226, 64-bit",
+  "tables": [
+    "beds",
+    "buildings",
+    "checkout_requests",
+    "class_schedule_entries",
+    "class_schedules",
+    "contracts",
+    "equipment_categories",
+    "equipment_items",
+    "invoice_items",
+    "invoices",
+    "maintenance_requests",
+    "monthly_billings",
+    "notification_recipients",
+    "notifications",
+    "room_billing_cursors",
+    "room_change_requests",
+    "room_preferences",
+    "room_types",
+    "rooms",
+    "schema_migrations",
+    "staff",
+    "students",
+    "users",
+    "utility_readings"
+  ],
+  "counts": {
+    "beds": 40,
+    "buildings": 2,
+    "checkout_requests": 0,
+    "class_schedule_entries": 120,
+    "class_schedules": 24,
+    "contracts": 34,
+    "equipment_categories": 4,
+    "equipment_items": 65,
+    "invoice_items": 0,
+    "invoices": 0,
+    "maintenance_requests": 0,
+    "monthly_billings": 0,
+    "notification_recipients": 0,
+    "notifications": 0,
+    "room_billing_cursors": 10,
+    "room_change_requests": 0,
+    "room_preferences": 19,
+    "room_types": 2,
+    "rooms": 10,
+    "schema_migrations": 2,
+    "staff": 0,
+    "students": 36,
+    "users": 37,
+    "utility_readings": 0
+  },
+  "columns": [
+    {
+      "table_name": "beds",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "beds",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "beds",
+      "column_name": "bed_number",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "beds",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'EMPTY'::text"
+    },
+    {
+      "table_name": "beds",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "beds",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "buildings",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "buildings",
+      "column_name": "name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "buildings",
+      "column_name": "address",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "buildings",
+      "column_name": "description",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "buildings",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "buildings",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "contract_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "processed_by",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "processed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "reject_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "cancel_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "checkout_requests",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "class_schedule_entries",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "class_schedule_entries",
+      "column_name": "schedule_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "class_schedule_entries",
+      "column_name": "ordinal",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "class_schedule_entries",
+      "column_name": "day_of_week",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "class_schedule_entries",
+      "column_name": "start_period",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "class_schedule_entries",
+      "column_name": "end_period",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "class_schedules",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "class_schedules",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "class_schedules",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "class_schedules",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "bed_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "start_date",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "end_date",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "reject_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "cancel_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "approved_by",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "approved_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "ended_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "contracts",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "equipment_categories",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "equipment_categories",
+      "column_name": "name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_categories",
+      "column_name": "unit",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_categories",
+      "column_name": "default_lifespan_months",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_categories",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "equipment_categories",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "category_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "serial_number",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "condition",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'NEW'::text"
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "purchase_date",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "purchase_price",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "equipment_items",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "invoice_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "type",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "description",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "amount",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "calculation_note",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "invoice_items",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "monthly_billing_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "contract_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "billing_period",
+      "data_type": "character varying",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "building_name_snapshot",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "room_number_snapshot",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "student_full_name_snapshot",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "mssv_snapshot",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "resident_days",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "days_in_month",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "room_monthly_price",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "room_fee",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "electricity_share",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "water_share",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "wifi_share",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "trash_share",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "total_amount",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "invoices",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "equipment_item_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "category",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "description",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'PENDING'::text"
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "assigned_staff_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "processing_started_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "resolved_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "resolution_note",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "resolution_method",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "resolution_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "resolution_cost",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "damage_cause",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "damage_cause_detail",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "cancelled_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "cancel_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "maintenance_requests",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "billing_period",
+      "data_type": "character varying",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'DRAFT'::text"
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "draft_electricity_previous",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "draft_electricity_current",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "draft_water_previous",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "draft_water_current",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "building_name_snapshot",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "room_number_snapshot",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "electricity_previous",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "electricity_current",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "electricity_usage",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "electricity_unit_price",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "electricity_amount",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "water_previous",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "water_current",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "water_usage",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "water_unit_price",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "water_amount",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "wifi_fee",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "trash_fee",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "shared_service_total",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "total_invoice_amount",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "finalized_by",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "finalized_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "cancelled_by",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "cancelled_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "cancel_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "monthly_billings",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "notification_recipients",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "notification_recipients",
+      "column_name": "notification_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notification_recipients",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notification_recipients",
+      "column_name": "is_read",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "table_name": "notification_recipients",
+      "column_name": "read_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "notification_recipients",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "notification_recipients",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "title",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "content",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "target_scope",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "target_building_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "target_student_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "created_by",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "notifications",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_billing_cursors",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_billing_cursors",
+      "column_name": "latest_finalized_billing_period",
+      "data_type": "character varying",
+      "is_nullable": "YES",
+      "column_default": "NULL::character varying"
+    },
+    {
+      "table_name": "room_billing_cursors",
+      "column_name": "version",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "room_billing_cursors",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_billing_cursors",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "current_contract_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "target_bed_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "processed_by",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "processed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "reject_reason",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_change_requests",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_preferences",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "room_preferences",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_preferences",
+      "column_name": "price_preference",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_preferences",
+      "column_name": "wants_hot_water",
+      "data_type": "boolean",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_preferences",
+      "column_name": "occupancy_preference",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_preferences",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_preferences",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_types",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "room_types",
+      "column_name": "name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_types",
+      "column_name": "capacity",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_types",
+      "column_name": "price_per_month",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "room_types",
+      "column_name": "description",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "room_types",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "room_types",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "building_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "room_type_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "room_number",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "floor",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'AVAILABLE'::text"
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "rooms",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "schema_migrations",
+      "column_name": "version",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "schema_migrations",
+      "column_name": "checksum",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "schema_migrations",
+      "column_name": "applied_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "staff",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "staff",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "staff",
+      "column_name": "position",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "staff",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "staff",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "students",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "students",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "mssv",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "class_name",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "faculty",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "gender",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "dob",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "cccd",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "permanent_address",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "emergency_contact_name",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "emergency_contact_phone",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "students",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "users",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "users",
+      "column_name": "username",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "password_hash",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "role",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "full_name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "email",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "phone",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "avatar_url",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'ACTIVE'::text"
+    },
+    {
+      "table_name": "users",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "users",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "room_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "billing_period",
+      "data_type": "character varying",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "electricity_previous",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "electricity_current",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "electricity_usage",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "electricity_unit_price",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "electricity_amount",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "water_previous",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "water_current",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "water_usage",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "water_unit_price",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "water_amount",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "recorded_by",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "utility_readings",
+      "column_name": "monthly_billing_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    }
+  ],
+  "constraints": [
+    {
+      "conname": "beds_bed_number_not_null",
+      "contype": "n",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL bed_number",
+      "columns": [
+        "bed_number"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "beds_created_at_not_null",
+      "contype": "n",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "beds_id_not_null",
+      "contype": "n",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "beds_room_id_not_null",
+      "contype": "n",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "beds_status_not_null",
+      "contype": "n",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "beds_updated_at_not_null",
+      "contype": "n",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_beds_bed_number_nonempty",
+      "contype": "c",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(bed_number) > 0))",
+      "columns": [
+        "bed_number"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_beds_status",
+      "contype": "c",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['EMPTY'::text, 'OCCUPIED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_beds_room",
+      "contype": "f",
+      "table_name": "beds",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_beds",
+      "contype": "p",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_beds_id_room",
+      "contype": "u",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (id, room_id)",
+      "columns": [
+        "id",
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_beds_room_bed_number",
+      "contype": "u",
+      "table_name": "beds",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (room_id, bed_number)",
+      "columns": [
+        "room_id",
+        "bed_number"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "buildings_created_at_not_null",
+      "contype": "n",
+      "table_name": "buildings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "buildings_id_not_null",
+      "contype": "n",
+      "table_name": "buildings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "buildings_name_not_null",
+      "contype": "n",
+      "table_name": "buildings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL name",
+      "columns": [
+        "name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "buildings_updated_at_not_null",
+      "contype": "n",
+      "table_name": "buildings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_buildings_name_nonempty",
+      "contype": "c",
+      "table_name": "buildings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(name) > 0))",
+      "columns": [
+        "name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_buildings",
+      "contype": "p",
+      "table_name": "buildings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "checkout_requests_contract_id_not_null",
+      "contype": "n",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL contract_id",
+      "columns": [
+        "contract_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "checkout_requests_created_at_not_null",
+      "contype": "n",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "checkout_requests_id_not_null",
+      "contype": "n",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "checkout_requests_room_id_not_null",
+      "contype": "n",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "checkout_requests_status_not_null",
+      "contype": "n",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "checkout_requests_student_id_not_null",
+      "contype": "n",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "checkout_requests_updated_at_not_null",
+      "contype": "n",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_checkout_requests_status",
+      "contype": "c",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['PENDING'::text, 'APPROVED'::text, 'REJECTED'::text, 'CANCELLED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_checkout_requests_status_nonempty",
+      "contype": "c",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(status) > 0))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_checkout_requests_contract",
+      "contype": "f",
+      "table_name": "checkout_requests",
+      "target": "contracts",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE RESTRICT",
+      "columns": [
+        "contract_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_checkout_requests_processed_by",
+      "contype": "f",
+      "table_name": "checkout_requests",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "processed_by"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_checkout_requests_room",
+      "contype": "f",
+      "table_name": "checkout_requests",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_checkout_requests_student",
+      "contype": "f",
+      "table_name": "checkout_requests",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_checkout_requests",
+      "contype": "p",
+      "table_name": "checkout_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_class_schedule_entries_day",
+      "contype": "c",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((day_of_week = ANY (ARRAY['MONDAY'::text, 'TUESDAY'::text, 'WEDNESDAY'::text, 'THURSDAY'::text, 'FRIDAY'::text, 'SATURDAY'::text, 'SUNDAY'::text])))",
+      "columns": [
+        "day_of_week"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_class_schedule_entries_ordinal",
+      "contype": "c",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((ordinal >= 0))",
+      "columns": [
+        "ordinal"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_class_schedule_entries_period",
+      "contype": "c",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((start_period >= 1) AND (end_period >= start_period)))",
+      "columns": [
+        "start_period",
+        "end_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedule_entries_day_of_week_not_null",
+      "contype": "n",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL day_of_week",
+      "columns": [
+        "day_of_week"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedule_entries_end_period_not_null",
+      "contype": "n",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL end_period",
+      "columns": [
+        "end_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedule_entries_id_not_null",
+      "contype": "n",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedule_entries_ordinal_not_null",
+      "contype": "n",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL ordinal",
+      "columns": [
+        "ordinal"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedule_entries_schedule_id_not_null",
+      "contype": "n",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL schedule_id",
+      "columns": [
+        "schedule_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedule_entries_start_period_not_null",
+      "contype": "n",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL start_period",
+      "columns": [
+        "start_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_class_schedule_entries_schedule",
+      "contype": "f",
+      "table_name": "class_schedule_entries",
+      "target": "class_schedules",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (schedule_id) REFERENCES class_schedules(id) ON DELETE CASCADE",
+      "columns": [
+        "schedule_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_class_schedule_entries",
+      "contype": "p",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_class_schedule_entries_order",
+      "contype": "u",
+      "table_name": "class_schedule_entries",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (schedule_id, ordinal)",
+      "columns": [
+        "schedule_id",
+        "ordinal"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedules_created_at_not_null",
+      "contype": "n",
+      "table_name": "class_schedules",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedules_id_not_null",
+      "contype": "n",
+      "table_name": "class_schedules",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedules_student_id_not_null",
+      "contype": "n",
+      "table_name": "class_schedules",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "class_schedules_updated_at_not_null",
+      "contype": "n",
+      "table_name": "class_schedules",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_class_schedules_student",
+      "contype": "f",
+      "table_name": "class_schedules",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_class_schedules",
+      "contype": "p",
+      "table_name": "class_schedules",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_class_schedules_student_id",
+      "contype": "u",
+      "table_name": "class_schedules",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (student_id)",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_contracts_date_range",
+      "contype": "c",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((end_date > start_date))",
+      "columns": [
+        "end_date",
+        "start_date"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_contracts_status",
+      "contype": "c",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['PENDING'::text, 'ACTIVE'::text, 'ENDED'::text, 'CANCELLED'::text, 'REJECTED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_contracts_status_nonempty",
+      "contype": "c",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(status) > 0))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_bed_id_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL bed_id",
+      "columns": [
+        "bed_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_created_at_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_end_date_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL end_date",
+      "columns": [
+        "end_date"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_id_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_room_id_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_start_date_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL start_date",
+      "columns": [
+        "start_date"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_status_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_student_id_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "contracts_updated_at_not_null",
+      "contype": "n",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_contracts_approved_by",
+      "contype": "f",
+      "table_name": "contracts",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "approved_by"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_contracts_bed_room",
+      "contype": "f",
+      "table_name": "contracts",
+      "target": "beds",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (bed_id, room_id) REFERENCES beds(id, room_id) ON DELETE RESTRICT",
+      "columns": [
+        "bed_id",
+        "room_id"
+      ],
+      "target_columns": [
+        "id",
+        "room_id"
+      ]
+    },
+    {
+      "conname": "fk_contracts_room",
+      "contype": "f",
+      "table_name": "contracts",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_contracts_student",
+      "contype": "f",
+      "table_name": "contracts",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_contracts",
+      "contype": "p",
+      "table_name": "contracts",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_equipment_categories_default_lifespan_months",
+      "contype": "c",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((default_lifespan_months >= 1))",
+      "columns": [
+        "default_lifespan_months"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_equipment_categories_name_nonempty",
+      "contype": "c",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(name) > 0))",
+      "columns": [
+        "name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_equipment_categories_unit_nonempty",
+      "contype": "c",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(unit) > 0))",
+      "columns": [
+        "unit"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_categories_created_at_not_null",
+      "contype": "n",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_categories_id_not_null",
+      "contype": "n",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_categories_name_not_null",
+      "contype": "n",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL name",
+      "columns": [
+        "name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_categories_unit_not_null",
+      "contype": "n",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL unit",
+      "columns": [
+        "unit"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_categories_updated_at_not_null",
+      "contype": "n",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_equipment_categories",
+      "contype": "p",
+      "table_name": "equipment_categories",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_equipment_items_condition",
+      "contype": "c",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((condition = ANY (ARRAY['NEW'::text, 'GOOD'::text, 'DAMAGED'::text, 'BROKEN'::text, 'LOST'::text])))",
+      "columns": [
+        "condition"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_equipment_items_purchase_price",
+      "contype": "c",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((purchase_price >= (0)::numeric) AND ((purchase_price >= ('-9007199254740991'::bigint)::numeric) AND (purchase_price <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "purchase_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_items_category_id_not_null",
+      "contype": "n",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL category_id",
+      "columns": [
+        "category_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_items_condition_not_null",
+      "contype": "n",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL condition",
+      "columns": [
+        "condition"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_items_created_at_not_null",
+      "contype": "n",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_items_id_not_null",
+      "contype": "n",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_items_room_id_not_null",
+      "contype": "n",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "equipment_items_updated_at_not_null",
+      "contype": "n",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_equipment_items_category",
+      "contype": "f",
+      "table_name": "equipment_items",
+      "target": "equipment_categories",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (category_id) REFERENCES equipment_categories(id) ON DELETE RESTRICT",
+      "columns": [
+        "category_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_equipment_items_room",
+      "contype": "f",
+      "table_name": "equipment_items",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_equipment_items",
+      "contype": "p",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_equipment_items_serial_number",
+      "contype": "u",
+      "table_name": "equipment_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (serial_number)",
+      "columns": [
+        "serial_number"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoice_items_amount",
+      "contype": "c",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((amount >= (0)::numeric) AND ((amount >= ('-9007199254740991'::bigint)::numeric) AND (amount <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoice_items_calculation_note_nonempty",
+      "contype": "c",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(calculation_note) > 0))",
+      "columns": [
+        "calculation_note"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoice_items_description_nonempty",
+      "contype": "c",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(description) > 0))",
+      "columns": [
+        "description"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoice_items_type",
+      "contype": "c",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((type = ANY (ARRAY['ROOM_FEE'::text, 'ELECTRICITY'::text, 'WATER'::text, 'WIFI'::text, 'TRASH'::text])))",
+      "columns": [
+        "type"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoice_items_type_nonempty",
+      "contype": "c",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(type) > 0))",
+      "columns": [
+        "type"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_invoice_items_invoice",
+      "contype": "f",
+      "table_name": "invoice_items",
+      "target": "invoices",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE",
+      "columns": [
+        "invoice_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "invoice_items_amount_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL amount",
+      "columns": [
+        "amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoice_items_calculation_note_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL calculation_note",
+      "columns": [
+        "calculation_note"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoice_items_created_at_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoice_items_description_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL description",
+      "columns": [
+        "description"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoice_items_id_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoice_items_invoice_id_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL invoice_id",
+      "columns": [
+        "invoice_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoice_items_type_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL type",
+      "columns": [
+        "type"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoice_items_updated_at_not_null",
+      "contype": "n",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_invoice_items",
+      "contype": "p",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_invoice_items_invoice_id_type",
+      "contype": "u",
+      "table_name": "invoice_items",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (invoice_id, type)",
+      "columns": [
+        "invoice_id",
+        "type"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_billing_period",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((billing_period)::text ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'::text))",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_billing_period_nonempty",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length((billing_period)::text) > 0))",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_building_name_snapshot_nonempty",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(building_name_snapshot) > 0))",
+      "columns": [
+        "building_name_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_days_in_month",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((days_in_month >= 1))",
+      "columns": [
+        "days_in_month"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_electricity_share",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_share >= (0)::numeric) AND ((electricity_share >= ('-9007199254740991'::bigint)::numeric) AND (electricity_share <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_mssv_snapshot_nonempty",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(mssv_snapshot) > 0))",
+      "columns": [
+        "mssv_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_resident_days",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((resident_days >= 1))",
+      "columns": [
+        "resident_days"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_room_fee",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((room_fee >= (0)::numeric) AND ((room_fee >= ('-9007199254740991'::bigint)::numeric) AND (room_fee <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "room_fee"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_room_monthly_price",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((room_monthly_price >= (0)::numeric) AND ((room_monthly_price >= ('-9007199254740991'::bigint)::numeric) AND (room_monthly_price <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "room_monthly_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_room_number_snapshot_nonempty",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(room_number_snapshot) > 0))",
+      "columns": [
+        "room_number_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_status",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['UNPAID'::text, 'CANCELLED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_status_nonempty",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(status) > 0))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_student_full_name_snapshot_nonempty",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(student_full_name_snapshot) > 0))",
+      "columns": [
+        "student_full_name_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_total_amount",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((total_amount >= (0)::numeric) AND ((total_amount >= ('-9007199254740991'::bigint)::numeric) AND (total_amount <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "total_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_trash_share",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((trash_share >= (0)::numeric) AND ((trash_share >= ('-9007199254740991'::bigint)::numeric) AND (trash_share <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "trash_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_water_share",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_share >= (0)::numeric) AND ((water_share >= ('-9007199254740991'::bigint)::numeric) AND (water_share <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_invoices_wifi_share",
+      "contype": "c",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((wifi_share >= (0)::numeric) AND ((wifi_share >= ('-9007199254740991'::bigint)::numeric) AND (wifi_share <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "wifi_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_invoices_contract",
+      "contype": "f",
+      "table_name": "invoices",
+      "target": "contracts",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE RESTRICT",
+      "columns": [
+        "contract_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_invoices_monthly_billing",
+      "contype": "f",
+      "table_name": "invoices",
+      "target": "monthly_billings",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (monthly_billing_id) REFERENCES monthly_billings(id) ON DELETE RESTRICT",
+      "columns": [
+        "monthly_billing_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_invoices_student",
+      "contype": "f",
+      "table_name": "invoices",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "invoices_billing_period_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL billing_period",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_building_name_snapshot_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL building_name_snapshot",
+      "columns": [
+        "building_name_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_contract_id_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL contract_id",
+      "columns": [
+        "contract_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_created_at_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_days_in_month_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL days_in_month",
+      "columns": [
+        "days_in_month"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_electricity_share_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL electricity_share",
+      "columns": [
+        "electricity_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_id_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_monthly_billing_id_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL monthly_billing_id",
+      "columns": [
+        "monthly_billing_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_mssv_snapshot_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL mssv_snapshot",
+      "columns": [
+        "mssv_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_resident_days_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL resident_days",
+      "columns": [
+        "resident_days"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_room_fee_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_fee",
+      "columns": [
+        "room_fee"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_room_monthly_price_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_monthly_price",
+      "columns": [
+        "room_monthly_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_room_number_snapshot_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_number_snapshot",
+      "columns": [
+        "room_number_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_status_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_student_full_name_snapshot_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_full_name_snapshot",
+      "columns": [
+        "student_full_name_snapshot"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_student_id_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_total_amount_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL total_amount",
+      "columns": [
+        "total_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_trash_share_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL trash_share",
+      "columns": [
+        "trash_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_updated_at_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_water_share_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL water_share",
+      "columns": [
+        "water_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "invoices_wifi_share_not_null",
+      "contype": "n",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL wifi_share",
+      "columns": [
+        "wifi_share"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_invoices",
+      "contype": "p",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_invoices_monthly_billing_id_contract_id",
+      "contype": "u",
+      "table_name": "invoices",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (monthly_billing_id, contract_id)",
+      "columns": [
+        "monthly_billing_id",
+        "contract_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_category",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((category = ANY (ARRAY['ELECTRICAL'::text, 'PLUMBING'::text, 'FURNITURE'::text, 'APPLIANCE'::text, 'OTHER'::text])))",
+      "columns": [
+        "category"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_category_nonempty",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(category) > 0))",
+      "columns": [
+        "category"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_damage_cause",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((damage_cause = ANY (ARRAY['WEAR_AND_TEAR'::text, 'STUDENT_CAUSED'::text, 'OTHER'::text])))",
+      "columns": [
+        "damage_cause"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_damage_cause_detail_length",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(damage_cause_detail) <= 1000))",
+      "columns": [
+        "damage_cause_detail"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_description_length",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(description) <= 2000))",
+      "columns": [
+        "description"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_description_nonempty",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(description) > 0))",
+      "columns": [
+        "description"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_resolution_cost",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((resolution_cost >= (0)::numeric) AND ((resolution_cost >= ('-9007199254740991'::bigint)::numeric) AND (resolution_cost <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "resolution_cost"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_resolution_method",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((resolution_method = ANY (ARRAY['REPAIR'::text, 'REPLACE'::text])))",
+      "columns": [
+        "resolution_method"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_resolution_reason_length",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(resolution_reason) <= 2000))",
+      "columns": [
+        "resolution_reason"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_maintenance_requests_status",
+      "contype": "c",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['PENDING'::text, 'IN_PROGRESS'::text, 'RESOLVED'::text, 'CANCELLED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_maintenance_requests_assigned_staff",
+      "contype": "f",
+      "table_name": "maintenance_requests",
+      "target": "staff",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (assigned_staff_id) REFERENCES staff(id) ON DELETE RESTRICT",
+      "columns": [
+        "assigned_staff_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_maintenance_requests_equipment_item",
+      "contype": "f",
+      "table_name": "maintenance_requests",
+      "target": "equipment_items",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (equipment_item_id) REFERENCES equipment_items(id) ON DELETE RESTRICT",
+      "columns": [
+        "equipment_item_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_maintenance_requests_room",
+      "contype": "f",
+      "table_name": "maintenance_requests",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_maintenance_requests_student",
+      "contype": "f",
+      "table_name": "maintenance_requests",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "maintenance_requests_category_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL category",
+      "columns": [
+        "category"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "maintenance_requests_created_at_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "maintenance_requests_description_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL description",
+      "columns": [
+        "description"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "maintenance_requests_id_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "maintenance_requests_room_id_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "maintenance_requests_status_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "maintenance_requests_student_id_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "maintenance_requests_updated_at_not_null",
+      "contype": "n",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_maintenance_requests",
+      "contype": "p",
+      "table_name": "maintenance_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_billing_period",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((billing_period)::text ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'::text))",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_billing_period_nonempty",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length((billing_period)::text) > 0))",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_draft_electricity_current",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((draft_electricity_current >= (0)::numeric) AND ((draft_electricity_current >= ('-9007199254740991'::bigint)::numeric) AND (draft_electricity_current <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "draft_electricity_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_draft_electricity_previous",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((draft_electricity_previous >= (0)::numeric) AND ((draft_electricity_previous >= ('-9007199254740991'::bigint)::numeric) AND (draft_electricity_previous <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "draft_electricity_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_draft_water_current",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((draft_water_current >= (0)::numeric) AND ((draft_water_current >= ('-9007199254740991'::bigint)::numeric) AND (draft_water_current <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "draft_water_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_draft_water_previous",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((draft_water_previous >= (0)::numeric) AND ((draft_water_previous >= ('-9007199254740991'::bigint)::numeric) AND (draft_water_previous <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "draft_water_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_electricity_amount",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_amount >= (0)::numeric) AND ((electricity_amount >= ('-9007199254740991'::bigint)::numeric) AND (electricity_amount <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_electricity_current",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_current >= (0)::numeric) AND ((electricity_current >= ('-9007199254740991'::bigint)::numeric) AND (electricity_current <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_electricity_previous",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_previous >= (0)::numeric) AND ((electricity_previous >= ('-9007199254740991'::bigint)::numeric) AND (electricity_previous <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_electricity_unit_price",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_unit_price >= (0)::numeric) AND ((electricity_unit_price >= ('-9007199254740991'::bigint)::numeric) AND (electricity_unit_price <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_unit_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_electricity_usage",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_usage >= (0)::numeric) AND ((electricity_usage >= ('-9007199254740991'::bigint)::numeric) AND (electricity_usage <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_usage"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_shared_service_total",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((shared_service_total >= (0)::numeric) AND ((shared_service_total >= ('-9007199254740991'::bigint)::numeric) AND (shared_service_total <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "shared_service_total"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_status",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['DRAFT'::text, 'FINALIZED'::text, 'CANCELLED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_status_nonempty",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(status) > 0))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_total_invoice_amount",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((total_invoice_amount >= (0)::numeric) AND ((total_invoice_amount >= ('-9007199254740991'::bigint)::numeric) AND (total_invoice_amount <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "total_invoice_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_trash_fee",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((trash_fee >= (0)::numeric) AND ((trash_fee >= ('-9007199254740991'::bigint)::numeric) AND (trash_fee <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "trash_fee"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_water_amount",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_amount >= (0)::numeric) AND ((water_amount >= ('-9007199254740991'::bigint)::numeric) AND (water_amount <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_water_current",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_current >= (0)::numeric) AND ((water_current >= ('-9007199254740991'::bigint)::numeric) AND (water_current <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_water_previous",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_previous >= (0)::numeric) AND ((water_previous >= ('-9007199254740991'::bigint)::numeric) AND (water_previous <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_water_unit_price",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_unit_price >= (0)::numeric) AND ((water_unit_price >= ('-9007199254740991'::bigint)::numeric) AND (water_unit_price <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_unit_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_water_usage",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_usage >= (0)::numeric) AND ((water_usage >= ('-9007199254740991'::bigint)::numeric) AND (water_usage <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_usage"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_monthly_billings_wifi_fee",
+      "contype": "c",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((wifi_fee >= (0)::numeric) AND ((wifi_fee >= ('-9007199254740991'::bigint)::numeric) AND (wifi_fee <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "wifi_fee"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_monthly_billings_cancelled_by",
+      "contype": "f",
+      "table_name": "monthly_billings",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (cancelled_by) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "cancelled_by"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_monthly_billings_finalized_by",
+      "contype": "f",
+      "table_name": "monthly_billings",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (finalized_by) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "finalized_by"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_monthly_billings_room",
+      "contype": "f",
+      "table_name": "monthly_billings",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "monthly_billings_billing_period_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL billing_period",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_created_at_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_draft_electricity_current_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL draft_electricity_current",
+      "columns": [
+        "draft_electricity_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_draft_electricity_previous_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL draft_electricity_previous",
+      "columns": [
+        "draft_electricity_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_draft_water_current_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL draft_water_current",
+      "columns": [
+        "draft_water_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_draft_water_previous_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL draft_water_previous",
+      "columns": [
+        "draft_water_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_id_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_room_id_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_status_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "monthly_billings_updated_at_not_null",
+      "contype": "n",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_monthly_billings",
+      "contype": "p",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_monthly_billings_room_period",
+      "contype": "u",
+      "table_name": "monthly_billings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (room_id, billing_period)",
+      "columns": [
+        "room_id",
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_notification_recipients_notification",
+      "contype": "f",
+      "table_name": "notification_recipients",
+      "target": "notifications",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE",
+      "columns": [
+        "notification_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_notification_recipients_student",
+      "contype": "f",
+      "table_name": "notification_recipients",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "notification_recipients_created_at_not_null",
+      "contype": "n",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notification_recipients_id_not_null",
+      "contype": "n",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notification_recipients_is_read_not_null",
+      "contype": "n",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL is_read",
+      "columns": [
+        "is_read"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notification_recipients_notification_id_not_null",
+      "contype": "n",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL notification_id",
+      "columns": [
+        "notification_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notification_recipients_student_id_not_null",
+      "contype": "n",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notification_recipients_updated_at_not_null",
+      "contype": "n",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_notification_recipients",
+      "contype": "p",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_notification_recipients_notification_id_student_id",
+      "contype": "u",
+      "table_name": "notification_recipients",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (notification_id, student_id)",
+      "columns": [
+        "notification_id",
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_notifications_content_length",
+      "contype": "c",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(content) <= 2000))",
+      "columns": [
+        "content"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_notifications_content_nonempty",
+      "contype": "c",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(content) > 0))",
+      "columns": [
+        "content"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_notifications_target_scope",
+      "contype": "c",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((target_scope = ANY (ARRAY['ALL'::text, 'BUILDING'::text, 'SPECIFIC_STUDENT'::text])))",
+      "columns": [
+        "target_scope"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_notifications_target_scope_nonempty",
+      "contype": "c",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(target_scope) > 0))",
+      "columns": [
+        "target_scope"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_notifications_title_length",
+      "contype": "c",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(title) <= 200))",
+      "columns": [
+        "title"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_notifications_title_nonempty",
+      "contype": "c",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(title) > 0))",
+      "columns": [
+        "title"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_notifications_created_by",
+      "contype": "f",
+      "table_name": "notifications",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "created_by"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_notifications_target_building",
+      "contype": "f",
+      "table_name": "notifications",
+      "target": "buildings",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (target_building_id) REFERENCES buildings(id) ON DELETE RESTRICT",
+      "columns": [
+        "target_building_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_notifications_target_student",
+      "contype": "f",
+      "table_name": "notifications",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (target_student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "target_student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "notifications_content_not_null",
+      "contype": "n",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL content",
+      "columns": [
+        "content"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notifications_created_at_not_null",
+      "contype": "n",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notifications_created_by_not_null",
+      "contype": "n",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_by",
+      "columns": [
+        "created_by"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notifications_id_not_null",
+      "contype": "n",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notifications_target_scope_not_null",
+      "contype": "n",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL target_scope",
+      "columns": [
+        "target_scope"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notifications_title_not_null",
+      "contype": "n",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL title",
+      "columns": [
+        "title"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "notifications_updated_at_not_null",
+      "contype": "n",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_notifications",
+      "contype": "p",
+      "table_name": "notifications",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_billing_cursors_latest_finalized_billing_period",
+      "contype": "c",
+      "table_name": "room_billing_cursors",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((latest_finalized_billing_period)::text ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'::text))",
+      "columns": [
+        "latest_finalized_billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_room_billing_cursors_room",
+      "contype": "f",
+      "table_name": "room_billing_cursors",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_room_billing_cursors",
+      "contype": "p",
+      "table_name": "room_billing_cursors",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (room_id)",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_billing_cursors_created_at_not_null",
+      "contype": "n",
+      "table_name": "room_billing_cursors",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_billing_cursors_room_id_not_null",
+      "contype": "n",
+      "table_name": "room_billing_cursors",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_billing_cursors_updated_at_not_null",
+      "contype": "n",
+      "table_name": "room_billing_cursors",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_billing_cursors_version_not_null",
+      "contype": "n",
+      "table_name": "room_billing_cursors",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL version",
+      "columns": [
+        "version"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_change_requests_status",
+      "contype": "c",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['PENDING'::text, 'APPROVED'::text, 'REJECTED'::text, 'CANCELLED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_change_requests_status_nonempty",
+      "contype": "c",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(status) > 0))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_room_change_requests_current_contract",
+      "contype": "f",
+      "table_name": "room_change_requests",
+      "target": "contracts",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (current_contract_id) REFERENCES contracts(id) ON DELETE RESTRICT",
+      "columns": [
+        "current_contract_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_room_change_requests_processed_by",
+      "contype": "f",
+      "table_name": "room_change_requests",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "processed_by"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_room_change_requests_student",
+      "contype": "f",
+      "table_name": "room_change_requests",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_room_change_requests_target_bed",
+      "contype": "f",
+      "table_name": "room_change_requests",
+      "target": "beds",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (target_bed_id) REFERENCES beds(id) ON DELETE RESTRICT",
+      "columns": [
+        "target_bed_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_room_change_requests",
+      "contype": "p",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_change_requests_created_at_not_null",
+      "contype": "n",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_change_requests_current_contract_id_not_null",
+      "contype": "n",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL current_contract_id",
+      "columns": [
+        "current_contract_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_change_requests_id_not_null",
+      "contype": "n",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_change_requests_status_not_null",
+      "contype": "n",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_change_requests_student_id_not_null",
+      "contype": "n",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_change_requests_target_bed_id_not_null",
+      "contype": "n",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL target_bed_id",
+      "columns": [
+        "target_bed_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_change_requests_updated_at_not_null",
+      "contype": "n",
+      "table_name": "room_change_requests",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_preferences_occupancy_preference",
+      "contype": "c",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((occupancy_preference = ANY (ARRAY['MORE_EMPTY'::text, 'MORE_OCCUPIED'::text, 'ANY'::text])))",
+      "columns": [
+        "occupancy_preference"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_preferences_price_preference",
+      "contype": "c",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((price_preference = ANY (ARRAY['LOW'::text, 'MEDIUM'::text, 'ANY'::text])))",
+      "columns": [
+        "price_preference"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_room_preferences_student",
+      "contype": "f",
+      "table_name": "room_preferences",
+      "target": "students",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_room_preferences",
+      "contype": "p",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_preferences_created_at_not_null",
+      "contype": "n",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_preferences_id_not_null",
+      "contype": "n",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_preferences_student_id_not_null",
+      "contype": "n",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL student_id",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_preferences_updated_at_not_null",
+      "contype": "n",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_room_preferences_student_id",
+      "contype": "u",
+      "table_name": "room_preferences",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (student_id)",
+      "columns": [
+        "student_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_types_capacity",
+      "contype": "c",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((capacity >= 1))",
+      "columns": [
+        "capacity"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_types_name_nonempty",
+      "contype": "c",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(name) > 0))",
+      "columns": [
+        "name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_room_types_price_per_month",
+      "contype": "c",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((price_per_month >= (0)::numeric) AND ((price_per_month >= ('-9007199254740991'::bigint)::numeric) AND (price_per_month <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "price_per_month"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_room_types",
+      "contype": "p",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_types_capacity_not_null",
+      "contype": "n",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL capacity",
+      "columns": [
+        "capacity"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_types_created_at_not_null",
+      "contype": "n",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_types_id_not_null",
+      "contype": "n",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_types_name_not_null",
+      "contype": "n",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL name",
+      "columns": [
+        "name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_types_price_per_month_not_null",
+      "contype": "n",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL price_per_month",
+      "columns": [
+        "price_per_month"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "room_types_updated_at_not_null",
+      "contype": "n",
+      "table_name": "room_types",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_rooms_floor",
+      "contype": "c",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((floor >= 0))",
+      "columns": [
+        "floor"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_rooms_room_number_nonempty",
+      "contype": "c",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(room_number) > 0))",
+      "columns": [
+        "room_number"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_rooms_status",
+      "contype": "c",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['AVAILABLE'::text, 'FULL'::text, 'MAINTENANCE'::text, 'LOCKED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_rooms_building",
+      "contype": "f",
+      "table_name": "rooms",
+      "target": "buildings",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (building_id) REFERENCES buildings(id) ON DELETE RESTRICT",
+      "columns": [
+        "building_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_rooms_room_type",
+      "contype": "f",
+      "table_name": "rooms",
+      "target": "room_types",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_type_id) REFERENCES room_types(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_type_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_rooms",
+      "contype": "p",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_building_id_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL building_id",
+      "columns": [
+        "building_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_created_at_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_floor_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL floor",
+      "columns": [
+        "floor"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_id_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_room_number_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_number",
+      "columns": [
+        "room_number"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_room_type_id_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_type_id",
+      "columns": [
+        "room_type_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_status_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "rooms_updated_at_not_null",
+      "contype": "n",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_rooms_building_room_number",
+      "contype": "u",
+      "table_name": "rooms",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (building_id, room_number)",
+      "columns": [
+        "building_id",
+        "room_number"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_schema_migrations",
+      "contype": "p",
+      "table_name": "schema_migrations",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (version)",
+      "columns": [
+        "version"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "schema_migrations_applied_at_not_null",
+      "contype": "n",
+      "table_name": "schema_migrations",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL applied_at",
+      "columns": [
+        "applied_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "schema_migrations_checksum_not_null",
+      "contype": "n",
+      "table_name": "schema_migrations",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL checksum",
+      "columns": [
+        "checksum"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "schema_migrations_version_not_null",
+      "contype": "n",
+      "table_name": "schema_migrations",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL version",
+      "columns": [
+        "version"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_staff_position",
+      "contype": "c",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((\"position\" = ANY (ARRAY['MAINTENANCE'::text, 'SECURITY'::text, 'RECEPTIONIST'::text, 'MANAGER'::text])))",
+      "columns": [
+        "position"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_staff_position_nonempty",
+      "contype": "c",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(\"position\") > 0))",
+      "columns": [
+        "position"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_staff_user",
+      "contype": "f",
+      "table_name": "staff",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "user_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_staff",
+      "contype": "p",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "staff_created_at_not_null",
+      "contype": "n",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "staff_id_not_null",
+      "contype": "n",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "staff_position_not_null",
+      "contype": "n",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL \"position\"",
+      "columns": [
+        "position"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "staff_updated_at_not_null",
+      "contype": "n",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "staff_user_id_not_null",
+      "contype": "n",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL user_id",
+      "columns": [
+        "user_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_staff_user_id",
+      "contype": "u",
+      "table_name": "staff",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (user_id)",
+      "columns": [
+        "user_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_students_gender",
+      "contype": "c",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((gender = ANY (ARRAY['MALE'::text, 'FEMALE'::text, 'OTHER'::text])))",
+      "columns": [
+        "gender"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_students_mssv_nonempty",
+      "contype": "c",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(mssv) > 0))",
+      "columns": [
+        "mssv"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_students_user",
+      "contype": "f",
+      "table_name": "students",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "user_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_students",
+      "contype": "p",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "students_created_at_not_null",
+      "contype": "n",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "students_id_not_null",
+      "contype": "n",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "students_mssv_not_null",
+      "contype": "n",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL mssv",
+      "columns": [
+        "mssv"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "students_updated_at_not_null",
+      "contype": "n",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "students_user_id_not_null",
+      "contype": "n",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL user_id",
+      "columns": [
+        "user_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_students_mssv",
+      "contype": "u",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (mssv)",
+      "columns": [
+        "mssv"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_students_user_id",
+      "contype": "u",
+      "table_name": "students",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (user_id)",
+      "columns": [
+        "user_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_users_full_name_nonempty",
+      "contype": "c",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(full_name) > 0))",
+      "columns": [
+        "full_name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_users_password_hash_nonempty",
+      "contype": "c",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(password_hash) > 0))",
+      "columns": [
+        "password_hash"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_users_role",
+      "contype": "c",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((role = ANY (ARRAY['STUDENT'::text, 'ADMIN'::text, 'STAFF'::text])))",
+      "columns": [
+        "role"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_users_role_nonempty",
+      "contype": "c",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(role) > 0))",
+      "columns": [
+        "role"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_users_status",
+      "contype": "c",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((status = ANY (ARRAY['ACTIVE'::text, 'LOCKED'::text])))",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_users_username_nonempty",
+      "contype": "c",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length(username) > 0))",
+      "columns": [
+        "username"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "pk_users",
+      "contype": "p",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_users_email",
+      "contype": "u",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (email)",
+      "columns": [
+        "email"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_users_username",
+      "contype": "u",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (username)",
+      "columns": [
+        "username"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_created_at_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_full_name_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL full_name",
+      "columns": [
+        "full_name"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_id_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_password_hash_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL password_hash",
+      "columns": [
+        "password_hash"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_role_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL role",
+      "columns": [
+        "role"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_status_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL status",
+      "columns": [
+        "status"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_updated_at_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "users_username_not_null",
+      "contype": "n",
+      "table_name": "users",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL username",
+      "columns": [
+        "username"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_billing_period",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((billing_period)::text ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'::text))",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_billing_period_nonempty",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((length((billing_period)::text) > 0))",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_electricity_amount",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_amount >= (0)::numeric) AND ((electricity_amount >= ('-9007199254740991'::bigint)::numeric) AND (electricity_amount <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_electricity_chain",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((electricity_current >= electricity_previous))",
+      "columns": [
+        "electricity_current",
+        "electricity_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_electricity_current",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_current >= (0)::numeric) AND ((electricity_current >= ('-9007199254740991'::bigint)::numeric) AND (electricity_current <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_electricity_previous",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_previous >= (0)::numeric) AND ((electricity_previous >= ('-9007199254740991'::bigint)::numeric) AND (electricity_previous <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_electricity_unit_price",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_unit_price >= (0)::numeric) AND ((electricity_unit_price >= ('-9007199254740991'::bigint)::numeric) AND (electricity_unit_price <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_unit_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_electricity_usage",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((electricity_usage >= (0)::numeric) AND ((electricity_usage >= ('-9007199254740991'::bigint)::numeric) AND (electricity_usage <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "electricity_usage"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_water_amount",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_amount >= (0)::numeric) AND ((water_amount >= ('-9007199254740991'::bigint)::numeric) AND (water_amount <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_water_chain",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK ((water_current >= water_previous))",
+      "columns": [
+        "water_current",
+        "water_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_water_current",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_current >= (0)::numeric) AND ((water_current >= ('-9007199254740991'::bigint)::numeric) AND (water_current <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_water_previous",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_previous >= (0)::numeric) AND ((water_previous >= ('-9007199254740991'::bigint)::numeric) AND (water_previous <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_water_unit_price",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_unit_price >= (0)::numeric) AND ((water_unit_price >= ('-9007199254740991'::bigint)::numeric) AND (water_unit_price <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_unit_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "ck_utility_readings_water_usage",
+      "contype": "c",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "CHECK (((water_usage >= (0)::numeric) AND ((water_usage >= ('-9007199254740991'::bigint)::numeric) AND (water_usage <= ('9007199254740991'::bigint)::numeric))))",
+      "columns": [
+        "water_usage"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "fk_utility_readings_monthly_billing",
+      "contype": "f",
+      "table_name": "utility_readings",
+      "target": "monthly_billings",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (monthly_billing_id) REFERENCES monthly_billings(id) ON DELETE RESTRICT",
+      "columns": [
+        "monthly_billing_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_utility_readings_recorded_by",
+      "contype": "f",
+      "table_name": "utility_readings",
+      "target": "users",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (recorded_by) REFERENCES users(id) ON DELETE RESTRICT",
+      "columns": [
+        "recorded_by"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "fk_utility_readings_room",
+      "contype": "f",
+      "table_name": "utility_readings",
+      "target": "rooms",
+      "convalidated": true,
+      "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": [
+        "id"
+      ]
+    },
+    {
+      "conname": "pk_utility_readings",
+      "contype": "p",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "PRIMARY KEY (id)",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_utility_readings_monthly_billing",
+      "contype": "u",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (monthly_billing_id)",
+      "columns": [
+        "monthly_billing_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "uq_utility_readings_room_period",
+      "contype": "u",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "UNIQUE (room_id, billing_period)",
+      "columns": [
+        "room_id",
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_billing_period_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL billing_period",
+      "columns": [
+        "billing_period"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_created_at_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL created_at",
+      "columns": [
+        "created_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_electricity_amount_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL electricity_amount",
+      "columns": [
+        "electricity_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_electricity_current_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL electricity_current",
+      "columns": [
+        "electricity_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_electricity_previous_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL electricity_previous",
+      "columns": [
+        "electricity_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_electricity_unit_price_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL electricity_unit_price",
+      "columns": [
+        "electricity_unit_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_electricity_usage_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL electricity_usage",
+      "columns": [
+        "electricity_usage"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_id_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL id",
+      "columns": [
+        "id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_monthly_billing_id_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL monthly_billing_id",
+      "columns": [
+        "monthly_billing_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_recorded_by_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL recorded_by",
+      "columns": [
+        "recorded_by"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_room_id_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL room_id",
+      "columns": [
+        "room_id"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_updated_at_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL updated_at",
+      "columns": [
+        "updated_at"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_water_amount_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL water_amount",
+      "columns": [
+        "water_amount"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_water_current_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL water_current",
+      "columns": [
+        "water_current"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_water_previous_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL water_previous",
+      "columns": [
+        "water_previous"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_water_unit_price_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL water_unit_price",
+      "columns": [
+        "water_unit_price"
+      ],
+      "target_columns": []
+    },
+    {
+      "conname": "utility_readings_water_usage_not_null",
+      "contype": "n",
+      "table_name": "utility_readings",
+      "target": "-",
+      "convalidated": true,
+      "definition": "NOT NULL water_usage",
+      "columns": [
+        "water_usage"
+      ],
+      "target_columns": []
+    }
+  ],
+  "indexes": [
+    {
+      "tablename": "beds",
+      "indexname": "ix_beds_room_status",
+      "indexdef": "CREATE INDEX ix_beds_room_status ON public.beds USING btree (room_id, status)"
+    },
+    {
+      "tablename": "beds",
+      "indexname": "pk_beds",
+      "indexdef": "CREATE UNIQUE INDEX pk_beds ON public.beds USING btree (id)"
+    },
+    {
+      "tablename": "beds",
+      "indexname": "uq_beds_id_room",
+      "indexdef": "CREATE UNIQUE INDEX uq_beds_id_room ON public.beds USING btree (id, room_id)"
+    },
+    {
+      "tablename": "beds",
+      "indexname": "uq_beds_room_bed_number",
+      "indexdef": "CREATE UNIQUE INDEX uq_beds_room_bed_number ON public.beds USING btree (room_id, bed_number)"
+    },
+    {
+      "tablename": "buildings",
+      "indexname": "pk_buildings",
+      "indexdef": "CREATE UNIQUE INDEX pk_buildings ON public.buildings USING btree (id)"
+    },
+    {
+      "tablename": "checkout_requests",
+      "indexname": "ix_checkout_requests_contract_id_status",
+      "indexdef": "CREATE INDEX ix_checkout_requests_contract_id_status ON public.checkout_requests USING btree (contract_id, status)"
+    },
+    {
+      "tablename": "checkout_requests",
+      "indexname": "ix_checkout_requests_room_id_status_created_at",
+      "indexdef": "CREATE INDEX ix_checkout_requests_room_id_status_created_at ON public.checkout_requests USING btree (room_id, status, created_at DESC)"
+    },
+    {
+      "tablename": "checkout_requests",
+      "indexname": "ix_checkout_requests_student_id_status_created_at",
+      "indexdef": "CREATE INDEX ix_checkout_requests_student_id_status_created_at ON public.checkout_requests USING btree (student_id, status, created_at DESC)"
+    },
+    {
+      "tablename": "checkout_requests",
+      "indexname": "pk_checkout_requests",
+      "indexdef": "CREATE UNIQUE INDEX pk_checkout_requests ON public.checkout_requests USING btree (id)"
+    },
+    {
+      "tablename": "checkout_requests",
+      "indexname": "uq_checkout_requests_pending_student",
+      "indexdef": "CREATE UNIQUE INDEX uq_checkout_requests_pending_student ON public.checkout_requests USING btree (student_id) WHERE (status = 'PENDING'::text)"
+    },
+    {
+      "tablename": "class_schedule_entries",
+      "indexname": "pk_class_schedule_entries",
+      "indexdef": "CREATE UNIQUE INDEX pk_class_schedule_entries ON public.class_schedule_entries USING btree (id)"
+    },
+    {
+      "tablename": "class_schedule_entries",
+      "indexname": "uq_class_schedule_entries_order",
+      "indexdef": "CREATE UNIQUE INDEX uq_class_schedule_entries_order ON public.class_schedule_entries USING btree (schedule_id, ordinal)"
+    },
+    {
+      "tablename": "class_schedules",
+      "indexname": "pk_class_schedules",
+      "indexdef": "CREATE UNIQUE INDEX pk_class_schedules ON public.class_schedules USING btree (id)"
+    },
+    {
+      "tablename": "class_schedules",
+      "indexname": "uq_class_schedules_student_id",
+      "indexdef": "CREATE UNIQUE INDEX uq_class_schedules_student_id ON public.class_schedules USING btree (student_id)"
+    },
+    {
+      "tablename": "contracts",
+      "indexname": "ix_contracts_bed_id_status",
+      "indexdef": "CREATE INDEX ix_contracts_bed_id_status ON public.contracts USING btree (bed_id, status)"
+    },
+    {
+      "tablename": "contracts",
+      "indexname": "ix_contracts_room_id_status",
+      "indexdef": "CREATE INDEX ix_contracts_room_id_status ON public.contracts USING btree (room_id, status)"
+    },
+    {
+      "tablename": "contracts",
+      "indexname": "ix_contracts_student_id_status",
+      "indexdef": "CREATE INDEX ix_contracts_student_id_status ON public.contracts USING btree (student_id, status)"
+    },
+    {
+      "tablename": "contracts",
+      "indexname": "pk_contracts",
+      "indexdef": "CREATE UNIQUE INDEX pk_contracts ON public.contracts USING btree (id)"
+    },
+    {
+      "tablename": "contracts",
+      "indexname": "uq_contracts_active_bed",
+      "indexdef": "CREATE UNIQUE INDEX uq_contracts_active_bed ON public.contracts USING btree (bed_id) WHERE (status = 'ACTIVE'::text)"
+    },
+    {
+      "tablename": "contracts",
+      "indexname": "uq_contracts_open_student",
+      "indexdef": "CREATE UNIQUE INDEX uq_contracts_open_student ON public.contracts USING btree (student_id) WHERE (status = ANY (ARRAY['PENDING'::text, 'ACTIVE'::text]))"
+    },
+    {
+      "tablename": "equipment_categories",
+      "indexname": "pk_equipment_categories",
+      "indexdef": "CREATE UNIQUE INDEX pk_equipment_categories ON public.equipment_categories USING btree (id)"
+    },
+    {
+      "tablename": "equipment_items",
+      "indexname": "ix_equipment_items_category",
+      "indexdef": "CREATE INDEX ix_equipment_items_category ON public.equipment_items USING btree (category_id)"
+    },
+    {
+      "tablename": "equipment_items",
+      "indexname": "ix_equipment_items_room",
+      "indexdef": "CREATE INDEX ix_equipment_items_room ON public.equipment_items USING btree (room_id)"
+    },
+    {
+      "tablename": "equipment_items",
+      "indexname": "pk_equipment_items",
+      "indexdef": "CREATE UNIQUE INDEX pk_equipment_items ON public.equipment_items USING btree (id)"
+    },
+    {
+      "tablename": "equipment_items",
+      "indexname": "uq_equipment_items_serial_number",
+      "indexdef": "CREATE UNIQUE INDEX uq_equipment_items_serial_number ON public.equipment_items USING btree (serial_number)"
+    },
+    {
+      "tablename": "invoice_items",
+      "indexname": "pk_invoice_items",
+      "indexdef": "CREATE UNIQUE INDEX pk_invoice_items ON public.invoice_items USING btree (id)"
+    },
+    {
+      "tablename": "invoice_items",
+      "indexname": "uq_invoice_items_invoice_id_type",
+      "indexdef": "CREATE UNIQUE INDEX uq_invoice_items_invoice_id_type ON public.invoice_items USING btree (invoice_id, type)"
+    },
+    {
+      "tablename": "invoices",
+      "indexname": "ix_invoices_student_id_billing_period",
+      "indexdef": "CREATE INDEX ix_invoices_student_id_billing_period ON public.invoices USING btree (student_id, billing_period DESC)"
+    },
+    {
+      "tablename": "invoices",
+      "indexname": "pk_invoices",
+      "indexdef": "CREATE UNIQUE INDEX pk_invoices ON public.invoices USING btree (id)"
+    },
+    {
+      "tablename": "invoices",
+      "indexname": "uq_invoices_monthly_billing_id_contract_id",
+      "indexdef": "CREATE UNIQUE INDEX uq_invoices_monthly_billing_id_contract_id ON public.invoices USING btree (monthly_billing_id, contract_id)"
+    },
+    {
+      "tablename": "maintenance_requests",
+      "indexname": "ix_maintenance_requests_assigned_staff_id_status",
+      "indexdef": "CREATE INDEX ix_maintenance_requests_assigned_staff_id_status ON public.maintenance_requests USING btree (assigned_staff_id, status)"
+    },
+    {
+      "tablename": "maintenance_requests",
+      "indexname": "ix_maintenance_requests_room_id_status_created_at",
+      "indexdef": "CREATE INDEX ix_maintenance_requests_room_id_status_created_at ON public.maintenance_requests USING btree (room_id, status, created_at DESC)"
+    },
+    {
+      "tablename": "maintenance_requests",
+      "indexname": "ix_maintenance_requests_student_id_status_created_at",
+      "indexdef": "CREATE INDEX ix_maintenance_requests_student_id_status_created_at ON public.maintenance_requests USING btree (student_id, status, created_at DESC)"
+    },
+    {
+      "tablename": "maintenance_requests",
+      "indexname": "pk_maintenance_requests",
+      "indexdef": "CREATE UNIQUE INDEX pk_maintenance_requests ON public.maintenance_requests USING btree (id)"
+    },
+    {
+      "tablename": "monthly_billings",
+      "indexname": "ix_monthly_billings_period",
+      "indexdef": "CREATE INDEX ix_monthly_billings_period ON public.monthly_billings USING btree (billing_period DESC)"
+    },
+    {
+      "tablename": "monthly_billings",
+      "indexname": "pk_monthly_billings",
+      "indexdef": "CREATE UNIQUE INDEX pk_monthly_billings ON public.monthly_billings USING btree (id)"
+    },
+    {
+      "tablename": "monthly_billings",
+      "indexname": "uq_monthly_billings_room_period",
+      "indexdef": "CREATE UNIQUE INDEX uq_monthly_billings_room_period ON public.monthly_billings USING btree (room_id, billing_period)"
+    },
+    {
+      "tablename": "notification_recipients",
+      "indexname": "ix_notification_recipients_student_id_is_read_created_at",
+      "indexdef": "CREATE INDEX ix_notification_recipients_student_id_is_read_created_at ON public.notification_recipients USING btree (student_id, is_read, created_at DESC)"
+    },
+    {
+      "tablename": "notification_recipients",
+      "indexname": "pk_notification_recipients",
+      "indexdef": "CREATE UNIQUE INDEX pk_notification_recipients ON public.notification_recipients USING btree (id)"
+    },
+    {
+      "tablename": "notification_recipients",
+      "indexname": "uq_notification_recipients_notification_id_student_id",
+      "indexdef": "CREATE UNIQUE INDEX uq_notification_recipients_notification_id_student_id ON public.notification_recipients USING btree (notification_id, student_id)"
+    },
+    {
+      "tablename": "notifications",
+      "indexname": "ix_notifications_created_at",
+      "indexdef": "CREATE INDEX ix_notifications_created_at ON public.notifications USING btree (created_at DESC)"
+    },
+    {
+      "tablename": "notifications",
+      "indexname": "ix_notifications_target_scope_created_at",
+      "indexdef": "CREATE INDEX ix_notifications_target_scope_created_at ON public.notifications USING btree (target_scope, created_at DESC)"
+    },
+    {
+      "tablename": "notifications",
+      "indexname": "pk_notifications",
+      "indexdef": "CREATE UNIQUE INDEX pk_notifications ON public.notifications USING btree (id)"
+    },
+    {
+      "tablename": "room_billing_cursors",
+      "indexname": "pk_room_billing_cursors",
+      "indexdef": "CREATE UNIQUE INDEX pk_room_billing_cursors ON public.room_billing_cursors USING btree (room_id)"
+    },
+    {
+      "tablename": "room_change_requests",
+      "indexname": "ix_room_change_requests_status_created_at",
+      "indexdef": "CREATE INDEX ix_room_change_requests_status_created_at ON public.room_change_requests USING btree (status, created_at DESC)"
+    },
+    {
+      "tablename": "room_change_requests",
+      "indexname": "ix_room_change_requests_student_id_status",
+      "indexdef": "CREATE INDEX ix_room_change_requests_student_id_status ON public.room_change_requests USING btree (student_id, status)"
+    },
+    {
+      "tablename": "room_change_requests",
+      "indexname": "pk_room_change_requests",
+      "indexdef": "CREATE UNIQUE INDEX pk_room_change_requests ON public.room_change_requests USING btree (id)"
+    },
+    {
+      "tablename": "room_change_requests",
+      "indexname": "uq_room_change_requests_pending_student",
+      "indexdef": "CREATE UNIQUE INDEX uq_room_change_requests_pending_student ON public.room_change_requests USING btree (student_id) WHERE (status = 'PENDING'::text)"
+    },
+    {
+      "tablename": "room_preferences",
+      "indexname": "pk_room_preferences",
+      "indexdef": "CREATE UNIQUE INDEX pk_room_preferences ON public.room_preferences USING btree (id)"
+    },
+    {
+      "tablename": "room_preferences",
+      "indexname": "uq_room_preferences_student_id",
+      "indexdef": "CREATE UNIQUE INDEX uq_room_preferences_student_id ON public.room_preferences USING btree (student_id)"
+    },
+    {
+      "tablename": "room_types",
+      "indexname": "pk_room_types",
+      "indexdef": "CREATE UNIQUE INDEX pk_room_types ON public.room_types USING btree (id)"
+    },
+    {
+      "tablename": "rooms",
+      "indexname": "ix_rooms_building_floor_number",
+      "indexdef": "CREATE INDEX ix_rooms_building_floor_number ON public.rooms USING btree (building_id, floor, room_number)"
+    },
+    {
+      "tablename": "rooms",
+      "indexname": "ix_rooms_room_type",
+      "indexdef": "CREATE INDEX ix_rooms_room_type ON public.rooms USING btree (room_type_id)"
+    },
+    {
+      "tablename": "rooms",
+      "indexname": "pk_rooms",
+      "indexdef": "CREATE UNIQUE INDEX pk_rooms ON public.rooms USING btree (id)"
+    },
+    {
+      "tablename": "rooms",
+      "indexname": "uq_rooms_building_room_number",
+      "indexdef": "CREATE UNIQUE INDEX uq_rooms_building_room_number ON public.rooms USING btree (building_id, room_number)"
+    },
+    {
+      "tablename": "schema_migrations",
+      "indexname": "pk_schema_migrations",
+      "indexdef": "CREATE UNIQUE INDEX pk_schema_migrations ON public.schema_migrations USING btree (version)"
+    },
+    {
+      "tablename": "staff",
+      "indexname": "pk_staff",
+      "indexdef": "CREATE UNIQUE INDEX pk_staff ON public.staff USING btree (id)"
+    },
+    {
+      "tablename": "staff",
+      "indexname": "uq_staff_user_id",
+      "indexdef": "CREATE UNIQUE INDEX uq_staff_user_id ON public.staff USING btree (user_id)"
+    },
+    {
+      "tablename": "students",
+      "indexname": "pk_students",
+      "indexdef": "CREATE UNIQUE INDEX pk_students ON public.students USING btree (id)"
+    },
+    {
+      "tablename": "students",
+      "indexname": "uq_students_mssv",
+      "indexdef": "CREATE UNIQUE INDEX uq_students_mssv ON public.students USING btree (mssv)"
+    },
+    {
+      "tablename": "students",
+      "indexname": "uq_students_user_id",
+      "indexdef": "CREATE UNIQUE INDEX uq_students_user_id ON public.students USING btree (user_id)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "pk_users",
+      "indexdef": "CREATE UNIQUE INDEX pk_users ON public.users USING btree (id)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "uq_users_email",
+      "indexdef": "CREATE UNIQUE INDEX uq_users_email ON public.users USING btree (email)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "uq_users_username",
+      "indexdef": "CREATE UNIQUE INDEX uq_users_username ON public.users USING btree (username)"
+    },
+    {
+      "tablename": "utility_readings",
+      "indexname": "pk_utility_readings",
+      "indexdef": "CREATE UNIQUE INDEX pk_utility_readings ON public.utility_readings USING btree (id)"
+    },
+    {
+      "tablename": "utility_readings",
+      "indexname": "uq_utility_readings_monthly_billing",
+      "indexdef": "CREATE UNIQUE INDEX uq_utility_readings_monthly_billing ON public.utility_readings USING btree (monthly_billing_id)"
+    },
+    {
+      "tablename": "utility_readings",
+      "indexname": "uq_utility_readings_room_period",
+      "indexdef": "CREATE UNIQUE INDEX uq_utility_readings_room_period ON public.utility_readings USING btree (room_id, billing_period)"
+    }
+  ],
+  "missingPK": [],
+  "orphans": {
+    "fk_beds_room": 0,
+    "fk_checkout_requests_contract": 0,
+    "fk_checkout_requests_processed_by": 0,
+    "fk_checkout_requests_room": 0,
+    "fk_checkout_requests_student": 0,
+    "fk_class_schedule_entries_schedule": 0,
+    "fk_class_schedules_student": 0,
+    "fk_contracts_approved_by": 0,
+    "fk_contracts_bed_room": 0,
+    "fk_contracts_room": 0,
+    "fk_contracts_student": 0,
+    "fk_equipment_items_category": 0,
+    "fk_equipment_items_room": 0,
+    "fk_invoice_items_invoice": 0,
+    "fk_invoices_contract": 0,
+    "fk_invoices_monthly_billing": 0,
+    "fk_invoices_student": 0,
+    "fk_maintenance_requests_assigned_staff": 0,
+    "fk_maintenance_requests_equipment_item": 0,
+    "fk_maintenance_requests_room": 0,
+    "fk_maintenance_requests_student": 0,
+    "fk_monthly_billings_cancelled_by": 0,
+    "fk_monthly_billings_finalized_by": 0,
+    "fk_monthly_billings_room": 0,
+    "fk_notification_recipients_notification": 0,
+    "fk_notification_recipients_student": 0,
+    "fk_notifications_created_by": 0,
+    "fk_notifications_target_building": 0,
+    "fk_notifications_target_student": 0,
+    "fk_room_billing_cursors_room": 0,
+    "fk_room_change_requests_current_contract": 0,
+    "fk_room_change_requests_processed_by": 0,
+    "fk_room_change_requests_student": 0,
+    "fk_room_change_requests_target_bed": 0,
+    "fk_room_preferences_student": 0,
+    "fk_rooms_building": 0,
+    "fk_rooms_room_type": 0,
+    "fk_staff_user": 0,
+    "fk_students_user": 0,
+    "fk_utility_readings_monthly_billing": 0,
+    "fk_utility_readings_recorded_by": 0,
+    "fk_utility_readings_room": 0
+  },
+  "invariants": {
+    "bed_contract_mismatches": "0",
+    "missing_cursors": "0",
+    "contract_room_mismatches": "0",
+    "cursor_history_mismatches": "0",
+    "financial_allocation_mismatches": "0"
+  }
+}

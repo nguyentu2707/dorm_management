@@ -4,8 +4,8 @@ import type { UserDocument } from "../models/user.model.js";
 export class StudentProfileMapper {
   static toResponse(user: UserDocument, student: StudentDocument) {
     return {
-      id: student._id.toString(),
-      userId: user._id.toString(),
+      id: student.id.toString(),
+      userId: user.id.toString(),
       username: user.username,
       fullName: user.fullName,
       email: user.email,

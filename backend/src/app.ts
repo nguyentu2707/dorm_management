@@ -3,12 +3,18 @@ import cors from "cors";
 import path from "node:path";
 import { apiRouter } from "./routes/index.js";
 import { errorHandler } from "./middlewares/error-handler.js";
+import { env } from "./config/env.js";
 
 export const app = express();
 const frontendDist = path.resolve(process.cwd(), "../frontend/dist");
 
 app.disable("x-powered-by");
-app.use(cors());
+app.use(
+  cors({
+    origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()),
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.get("/health", (_q, r) =>
   r.json({ success: true, message: "OK", data: {} }),

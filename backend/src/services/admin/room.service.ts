@@ -45,50 +45,68 @@ export class RoomService {
     return EntityMapper.toResponse(x);
   }
   async create(d: RoomData) {
-    if (!(await this.buildings.findById(d.buildingId)))
-      throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
-    const type = await this.types.findById(d.roomTypeId);
-    if (!type)
-      throw new AppError(
-        404,
-        "ROOM_TYPE_NOT_FOUND",
-        "Không tìm thấy loại phòng",
-      );
-    try {
-      const room = await this.tx.runInTransaction(async (s) => {
-        const r = await this.rooms.create(d, s);
-        await this.beds.createMany(r._id.toString(), type.capacity, s);
-        return r;
-      });
-      return EntityMapper.toResponse(room);
-    } catch (error) {
-      if (!this.transactionUnsupported(error)) throw error;
-      const room = await this.rooms.create(d);
-      try {
-        await this.beds.createMany(room._id.toString(), type.capacity);
-        return EntityMapper.toResponse(room);
-      } catch (bedError) {
-        await this.beds.deleteByRoomId(room._id.toString());
-        await this.rooms.deleteById(room._id.toString());
-        throw bedError;
-      }
-    }
-  }
-  private transactionUnsupported(error: unknown) {
-    const message = error instanceof Error ? error.message : "";
-    return /Transaction numbers are only allowed|replica set|mongos/i.test(
-      message,
-    );
+    const room = await this.tx.runInTransaction(async (s) => {
+      if (!(await this.buildings.findById(d.buildingId, s)))
+        throw new AppError(
+          404,
+          "BUILDING_NOT_FOUND",
+          "Không tìm thấy tòa nhà",
+        );
+      // Serialize room creation with capacity edits of the selected type.
+      const type = await this.types.findByIdForUpdate(d.roomTypeId, s);
+      if (!type)
+        throw new AppError(
+          404,
+          "ROOM_TYPE_NOT_FOUND",
+          "Không tìm thấy loại phòng",
+        );
+      const r = await this.rooms.create(d, s);
+      const createdBeds = await this.beds.createMany(r.id, type.capacity, s);
+      if (createdBeds.length !== type.capacity)
+        throw new AppError(
+          409,
+          "ROOM_BED_CAPACITY_INCONSISTENT",
+          "Không thể tạo đủ giường theo sức chứa loại phòng",
+        );
+      return r;
+    });
+    return EntityMapper.toResponse(room);
   }
   async update(id: string, d: Partial<Omit<RoomData, "buildingId">>) {
-    if (d.roomTypeId && !(await this.types.findById(d.roomTypeId)))
-      throw new AppError(
-        404,
-        "ROOM_TYPE_NOT_FOUND",
-        "Không tìm thấy loại phòng",
-      );
-    const x = await this.rooms.update(id, d);
-    if (!x) throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
+    const x = await this.tx.runInTransaction(async (s) => {
+      const current = await this.rooms.findById(id, s);
+      if (!current)
+        throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
+      if (d.roomTypeId && d.roomTypeId !== current.roomTypeId) {
+        // Lock the target type so its capacity cannot change between validation
+        // and the room update. Capacity edits use the same row lock.
+        const target = await this.types.findByIdForUpdate(d.roomTypeId, s);
+        if (!target)
+          throw new AppError(
+            404,
+            "ROOM_TYPE_NOT_FOUND",
+            "Không tìm thấy loại phòng",
+          );
+        const currentType = await this.types.findById(current.roomTypeId, s);
+        if (!currentType)
+          throw new AppError(
+            409,
+            "ROOM_BED_CAPACITY_INCONSISTENT",
+            "Loại phòng hiện tại không còn tồn tại",
+          );
+        const actualBeds = (await this.beds.findByRoomId(id, s)).length;
+        if (
+          currentType.capacity !== target.capacity ||
+          actualBeds !== currentType.capacity
+        )
+          throw new AppError(
+            409,
+            "ROOM_TYPE_CAPACITY_MISMATCH",
+            "Chỉ có thể đổi sang loại phòng có cùng sức chứa và khớp số giường hiện có",
+          );
+      }
+      return (await this.rooms.update(id, d, s))!;
+    });
     return EntityMapper.toResponse(x);
   }
   async status(id: string, status: RoomStatus) {

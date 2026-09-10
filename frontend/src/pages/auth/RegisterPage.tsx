@@ -21,7 +21,8 @@ export function RegisterPage() {
   } = useForm<RegisterForm>({ resolver: zodResolver(registerSchema) });
   const submit = handleSubmit(async (values) => {
     try {
-      await registerUser(values);
+      const { confirmPassword: _confirmPassword, ...input } = values;
+      await registerUser(input);
       navigate("/login", { replace: true, state: { registered: true } });
     } catch (e) {
       const error = normalizeApiError(e);
@@ -30,8 +31,12 @@ export function RegisterPage() {
       );
       if (error.code === "USERNAME_ALREADY_EXISTS")
         setError("username", { message: "Tên đăng nhập đã tồn tại" });
-      else if (error.code === "MSSV_ALREADY_EXISTS")
-        setError("mssv", { message: "MSSV đã tồn tại" });
+      else if (["STUDENT_REGISTRY_ALREADY_CLAIMED", "STUDENT_CODE_ALREADY_EXISTS"].includes(error.code ?? ""))
+        setError("mssv", { message: "MSSV đã được đăng ký" });
+      else if (error.code === "STUDENT_NOT_IN_REGISTRY")
+        setError("mssv", { message: "MSSV không có trong danh sách xác minh" });
+      else if (error.code === "STUDENT_IDENTITY_MISMATCH")
+        setError("email", { message: "Email không khớp với MSSV" });
       else setApiError(error.message);
     }
   });
@@ -48,9 +53,9 @@ export function RegisterPage() {
         {[
           ["username", "Tên đăng nhập", "text"],
           ["password", "Mật khẩu", "password"],
-          ["fullName", "Họ và tên", "text"],
           ["mssv", "Mã số sinh viên", "text"],
-          ["email", "Email (không bắt buộc)", "email"],
+          ["email", "Email xác minh", "email"],
+          ["confirmPassword", "Xác nhận mật khẩu", "password"],
         ].map(([name, label, type]) => (
           <label key={name} className={name === "email" ? "sm:col-span-2" : ""}>
             <span className="label">{label}</span>

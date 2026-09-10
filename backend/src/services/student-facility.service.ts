@@ -4,6 +4,8 @@ import type { IRoomTypeRepository } from "../repositories/interfaces/room-type.r
 import type { IBedRepository } from "../repositories/interfaces/bed.repository.interface.js";
 import { AppError } from "../errors/AppError.js";
 import { StudentFacilityMapper } from "../mappers/student-facility.mapper.js";
+import type { IStudentRepository } from "../repositories/interfaces/student.repository.interface.js";
+import { assertPlacementAllowed, isGenderCompatible } from "./building-placement.js";
 
 export class StudentFacilityService {
   constructor(
@@ -11,16 +13,24 @@ export class StudentFacilityService {
     private rooms: IRoomRepository,
     private roomTypes: IRoomTypeRepository,
     private beds: IBedRepository,
+    private students: IStudentRepository,
   ) {}
 
-  async getBuildings() {
-    return (await this.buildings.findAll()).map(StudentFacilityMapper.building);
+  async getBuildings(userId: string) {
+    const student = await this.students.findByUserId(userId);
+    if (!student) throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
+    return (await this.buildings.findAll())
+      .filter((building) => building.status === "ACTIVE" && isGenderCompatible(student.gender, building.allowedGender))
+      .map(StudentFacilityMapper.building);
   }
 
-  async getRooms(buildingId: string) {
-    if (!(await this.buildings.findById(buildingId))) {
+  async getRooms(userId: string, buildingId: string) {
+    const [student, building] = await Promise.all([this.students.findByUserId(userId), this.buildings.findById(buildingId)]);
+    if (!student) throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
+    if (!building) {
       throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
     }
+    assertPlacementAllowed(student, building);
 
     const result = await this.rooms.findByBuildingId(buildingId, {
       page: 1,
@@ -28,27 +38,25 @@ export class StudentFacilityService {
       status: "AVAILABLE",
     });
 
-    const rooms = await Promise.all(
-      result.items.map(async (room) => {
-        const [roomType, beds] = await Promise.all([
-          this.roomTypes.findById(room.roomTypeId.toString()),
-          this.beds.findByRoomId(room._id.toString()),
-        ]);
+    const [types, occupancy] = await Promise.all([
+      this.roomTypes.findAll(),
+      this.beds.summarizeByRoomIds(result.items.map((room) => room.id)),
+    ]);
+    const typesById = new Map(types.map((type) => [type.id, type]));
+    const rooms = result.items.map((room) => {
+      const roomType = typesById.get(room.roomTypeId);
+      if (!roomType) return null;
+      const summary = occupancy.get(room.id);
+      const emptyBedCount = summary?.empty ?? 0;
+      if (emptyBedCount === 0) return null;
 
-        if (!roomType) return null;
-        const emptyBedCount = beds.filter(
-          (bed) => bed.status === "EMPTY",
-        ).length;
-        if (emptyBedCount === 0) return null;
-
-        return StudentFacilityMapper.room(
-          room,
-          roomType,
-          emptyBedCount,
-          beds.length,
-        );
-      }),
-    );
+      return StudentFacilityMapper.room(
+        room,
+        roomType,
+        emptyBedCount,
+        summary?.total ?? 0,
+      );
+    });
 
     return rooms.filter((room) => room !== null);
   }
@@ -88,7 +96,7 @@ export class StudentFacilityService {
     };
   }
 
-  async getEmptyBeds(roomId: string) {
+  async getEmptyBeds(userId: string, roomId: string) {
     const room = await this.rooms.findById(roomId);
     if (!room) {
       throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
@@ -100,6 +108,13 @@ export class StudentFacilityService {
         "Phòng hiện không khả dụng",
       );
     }
+    const [student, building] = await Promise.all([
+      this.students.findByUserId(userId),
+      this.buildings.findById(room.buildingId),
+    ]);
+    if (!student) throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
+    if (!building) throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
+    assertPlacementAllowed(student, building);
 
     return (await this.beds.findByRoomId(roomId))
       .filter((bed) => bed.status === "EMPTY")

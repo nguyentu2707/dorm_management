@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { ROOM_STATUSES } from "../../models/room.model.js";
+import { BUILDING_GENDERS, BUILDING_STATUSES } from "../../models/building.model.js";
 import { EQUIPMENT_CONDITIONS } from "../../models/equipment-item.model.js";
-const id = z.string().regex(/^[a-f\d]{24}$/i, "ID không hợp lệ");
+const id = z.string().uuid("ID không hợp lệ");
 const wrap = (
   body: z.ZodType = z.any(),
   params: z.ZodType = z.any(),
@@ -14,6 +15,8 @@ export const buildingCreate = wrap(
     name: z.string().trim().min(1).max(100),
     address: z.string().optional(),
     description: z.string().optional(),
+    status: z.enum(BUILDING_STATUSES).optional(),
+    allowedGender: z.enum(BUILDING_GENDERS).optional(),
   }),
 );
 export const buildingUpdate = wrap(
@@ -22,6 +25,8 @@ export const buildingUpdate = wrap(
       name: z.string().trim().min(1).max(100),
       address: z.string().optional(),
       description: z.string().optional(),
+      status: z.enum(BUILDING_STATUSES).optional(),
+      allowedGender: z.enum(BUILDING_GENDERS).optional(),
     })
     .partial(),
 );
@@ -108,6 +113,11 @@ export const studentList = wrap(
     faculty: z.string().trim().max(100).optional(),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   }),
+);
+export const studentAccountStatus = wrap(
+  z.object({ status: z.enum(["ACTIVE", "LOCKED"]) }).strict(),
+  z.object({ studentId: id }),
+  z.any(),
 );
 export const equipmentList = wrap(
   z.any(),

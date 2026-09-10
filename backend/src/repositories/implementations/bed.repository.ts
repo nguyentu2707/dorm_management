@@ -1,89 +1,118 @@
-import { BedModel } from "../../models/bed.model.js";
 import type { IBedRepository } from "../interfaces/bed.repository.interface.js";
-import { Types, type ClientSession } from "mongoose";
-export class BedRepository implements IBedRepository {
-  async summarizeByRoomIds(ids: string[]) {
-    const rows = await BedModel.aggregate([
-      { $match: { roomId: { $in: ids.map((id) => new Types.ObjectId(id)) } } },
-      {
-        $group: {
-          _id: "$roomId",
-          total: { $sum: 1 },
-          occupied: {
-            $sum: { $cond: [{ $eq: ["$status", "OCCUPIED"] }, 1, 0] },
-          },
-          empty: { $sum: { $cond: [{ $eq: ["$status", "EMPTY"] }, 1, 0] } },
-        },
-      },
-    ]);
-    return new Map(
-      rows.map((row) => [
-        row._id.toString(),
-        { total: row.total, occupied: row.occupied, empty: row.empty },
-      ]),
+import type { BedDocument } from "../../models/bed.model.js";
+import {
+  query,
+  rows,
+  one,
+  required,
+  count,
+  page,
+  contains,
+} from "../../database/query.js";
+export class PostgresBedRepository implements IBedRepository {
+  async findById(
+    ...[id, s]: Parameters<IBedRepository["findById"]>
+  ): ReturnType<IBedRepository["findById"]> {
+    return one<BedDocument>(`SELECT * FROM beds WHERE id=$1`, [id], s);
+  }
+  async findByRoomId(
+    ...[id, s]: Parameters<IBedRepository["findByRoomId"]>
+  ): ReturnType<IBedRepository["findByRoomId"]> {
+    return rows<BedDocument>(
+      `SELECT * FROM beds WHERE room_id=$1 ORDER BY bed_number, id`,
+      [id],
+      s,
     );
   }
-  findById(id: string, s?: ClientSession) {
-    return BedModel.findById(id)
-      .session(s ?? null)
-      .exec();
-  }
-  findByRoomId(id: string, s?: ClientSession) {
-    return BedModel.find({ roomId: id })
-      .session(s ?? null)
-      .sort({ bedNumber: 1 })
-      .exec();
-  }
-  async createMany(id: string, count: number, s?: ClientSession) {
-    return BedModel.insertMany(
-      Array.from({ length: count }, (_, i) => ({
-        roomId: id,
-        bedNumber: String(i + 1),
-        status: "EMPTY",
-      })),
-      { session: s },
+  async createMany(
+    ...[id, count, s]: Parameters<IBedRepository["createMany"]>
+  ): ReturnType<IBedRepository["createMany"]> {
+    return rows<BedDocument>(
+      `INSERT INTO beds(room_id, bed_number) SELECT $1, n::text FROM generate_series(1,$2::integer) n RETURNING *`,
+      [id, count],
+      s,
     );
   }
-  async ensureCapacity(id: string, count: number, s?: ClientSession) {
-    const existing = new Set(
-      (await this.findByRoomId(id, s)).map((bed) => bed.bedNumber),
-    );
-    const missing = Array.from({ length: count }, (_, i) => String(i + 1))
-      .filter((bedNumber) => !existing.has(bedNumber))
-      .map((bedNumber) => ({ roomId: id, bedNumber, status: "EMPTY" as const }));
-    if (!missing.length) return 0;
-    await BedModel.insertMany(missing, { session: s });
-    return missing.length;
-  }
-  countOccupiedByRoomId(id: string, s?: ClientSession) {
-    return BedModel.countDocuments({ roomId: id, status: "OCCUPIED" }).session(
-      s ?? null,
-    );
-  }
-  countEmptyByRoomId(id: string, s?: ClientSession) {
-    return BedModel.countDocuments({ roomId: id, status: "EMPTY" }).session(
-      s ?? null,
-    );
-  }
-  async occupyIfEmpty(id: string, s?: ClientSession) {
+  async ensureCapacity(
+    ...[id, count, s]: Parameters<IBedRepository["ensureCapacity"]>
+  ): ReturnType<IBedRepository["ensureCapacity"]> {
     return (
-      (await BedModel.findOneAndUpdate(
-        { _id: id, status: "EMPTY" },
-        { status: "OCCUPIED" },
-        { new: true, session: s },
-      )) !== null
+      (
+        await query(
+          `INSERT INTO beds(room_id,bed_number) SELECT $1,n::text
+      FROM generate_series(1,$2::integer) n
+      ON CONFLICT ON CONSTRAINT uq_beds_room_bed_number DO NOTHING`,
+          [id, count],
+          s,
+        )
+      ).rowCount ?? 0
     );
   }
-  async releaseIfOccupied(id: string, s?: ClientSession) {
+  async countOccupiedByRoomId(
+    ...[id, s]: Parameters<IBedRepository["countOccupiedByRoomId"]>
+  ): ReturnType<IBedRepository["countOccupiedByRoomId"]> {
+    return count(
+      `SELECT count(*) FROM beds WHERE room_id=$1 AND status='OCCUPIED'`,
+      [id],
+      s,
+    );
+  }
+  async countEmptyByRoomId(
+    ...[id, s]: Parameters<IBedRepository["countEmptyByRoomId"]>
+  ): ReturnType<IBedRepository["countEmptyByRoomId"]> {
+    return count(
+      `SELECT count(*) FROM beds WHERE room_id=$1 AND status='EMPTY'`,
+      [id],
+      s,
+    );
+  }
+  async occupyIfEmpty(
+    ...[id, s]: Parameters<IBedRepository["occupyIfEmpty"]>
+  ): ReturnType<IBedRepository["occupyIfEmpty"]> {
     return (
-      (await BedModel.findOneAndUpdate(
-        { _id: id, status: "OCCUPIED" },
-        { status: "EMPTY" },
-        { new: true, session: s },
-      )) !== null
+      (
+        await query(
+          `UPDATE beds SET status='OCCUPIED',updated_at=now() WHERE id=$1 AND status='EMPTY'`,
+          [id],
+          s,
+        )
+      ).rowCount === 1
     );
   }
-  async deleteByRoomId(id: string, s?: ClientSession) {
-    await BedModel.deleteMany({ roomId: id }, { session: s });
+  async releaseIfOccupied(
+    ...[id, s]: Parameters<IBedRepository["releaseIfOccupied"]>
+  ): ReturnType<IBedRepository["releaseIfOccupied"]> {
+    return (
+      (
+        await query(
+          `UPDATE beds SET status='EMPTY',updated_at=now() WHERE id=$1 AND status='OCCUPIED'`,
+          [id],
+          s,
+        )
+      ).rowCount === 1
+    );
+  }
+  async summarizeByRoomIds(
+    ...[ids]: Parameters<IBedRepository["summarizeByRoomIds"]>
+  ): ReturnType<IBedRepository["summarizeByRoomIds"]> {
+    const result = await rows<{
+      roomId: string;
+      total: number;
+      occupied: number;
+      empty: number;
+    }>(
+      `SELECT room_id,count(*) AS total,count(*) FILTER(WHERE status='OCCUPIED') AS occupied,count(*) FILTER(WHERE status='EMPTY') AS empty
+      FROM beds
+      WHERE room_id=ANY($1::uuid[])
+      GROUP BY room_id`,
+      [ids],
+    );
+    return new Map(result.map(({ roomId, ...summary }) => [roomId, summary]));
+  }
+  async deleteByRoomId(
+    ...[id, s]: Parameters<IBedRepository["deleteByRoomId"]>
+  ): ReturnType<IBedRepository["deleteByRoomId"]> {
+    await query(`DELETE FROM beds WHERE room_id=$1`, [id], s);
   }
 }
+export { PostgresBedRepository as BedRepository };

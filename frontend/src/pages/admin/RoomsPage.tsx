@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Eye, Plus, Search, Trash2, UsersRound } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { Pagination } from "../../components/ui/Pagination";
@@ -16,6 +16,7 @@ import { roomApi } from "../../features/rooms/api/room.api";
 import { normalizeApiError } from "../../services/api-client";
 import type { Building, Paginated, Room, RoomType } from "../../types/api";
 export function RoomsPage() {
+  const route = useParams();
   const [params, setParams] = useSearchParams(),
     [buildings, setBuildings] = useState<Building[]>([]),
     [types, setTypes] = useState<RoomType[]>([]),
@@ -24,7 +25,8 @@ export function RoomsPage() {
     [error, setError] = useState(""),
     [open, setOpen] = useState(false),
     [deleting, setDeleting] = useState<Room | null>(null);
-  const buildingId = params.get("buildingId") ?? "",
+  const buildingId = route.buildingId ?? params.get("buildingId") ?? "",
+    selectedFloor = route.floor ?? params.get("floor") ?? "",
     page = Number(params.get("page") ?? 1);
   const update = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -53,7 +55,7 @@ export function RoomsPage() {
           search: params.get("search") || undefined,
           status: params.get("status") || undefined,
           roomTypeId: params.get("roomTypeId") || undefined,
-          floor: params.get("floor") || undefined,
+          floor: selectedFloor || undefined,
         }),
       );
     } catch (e) {
@@ -61,7 +63,7 @@ export function RoomsPage() {
     } finally {
       setLoading(false);
     }
-  }, [buildingId, page, params]);
+  }, [buildingId, page, params, selectedFloor]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -94,8 +96,8 @@ export function RoomsPage() {
   return (
     <>
       <PageHeader
-        title="Quản lý phòng"
-        description="Theo dõi sức chứa, hạng phòng và trạng thái sử dụng."
+        title={selectedFloor ? `Quản lý phòng · Tầng ${selectedFloor}` : "Quản lý phòng"}
+        description={route.buildingId ? "Danh sách phòng thuộc tầng đã chọn." : "Theo dõi sức chứa, hạng phòng và trạng thái sử dụng."}
         action={
           <button
             className="btn-primary"
@@ -125,6 +127,7 @@ export function RoomsPage() {
         <select
           className="field"
           value={buildingId}
+          disabled={!!route.buildingId}
           onChange={(e) => update("buildingId", e.target.value)}
         >
           {buildings.map((x) => (
@@ -135,7 +138,8 @@ export function RoomsPage() {
         </select>
         <select
           className="field"
-          value={params.get("floor") ?? ""}
+          value={selectedFloor}
+          disabled={!!route.floor}
           onChange={(e) => update("floor", e.target.value)}
         >
           <option value="">Tất cả tầng</option>

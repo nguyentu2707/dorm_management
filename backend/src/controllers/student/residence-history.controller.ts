@@ -1,0 +1,2 @@
+import type { RequestHandler } from "express"; import type { AuthRequest } from "../../types/common.types.js"; import type { ResidenceHistoryService } from "../../services/residence-history.service.js";
+export class StudentResidenceHistoryController { constructor(private service: ResidenceHistoryService) {} mine: RequestHandler = async (req: AuthRequest, res, next) => { try { res.json({ success: true, message: "Lịch sử lưu trú", data: await this.service.mine(req.user!.userId) }); } catch (error) { next(error); } }; }

@@ -1,4 +1,4 @@
-import type { ClientSession, Types } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type {
   ContractDocument,
   ContractStatus,
@@ -37,12 +37,44 @@ export type ContractDisplaySummary = {
   room: { id: string; roomNumber: string; buildingName: string };
   bed: { id: string; bedNumber: string };
 };
+export type ResidenceHistoryItem = {
+  contractId: string;
+  status: "ACTIVE" | "ENDED" | "CANCELLED";
+  isCurrent: boolean;
+  building: { id: string | null; name: string | null };
+  room: { id: string; roomNumber: string | null };
+  bed: { id: string | null; bedNumber: string | null };
+  segmentStartDate: Date;
+  plannedEndDate: Date;
+  actualEndDate: Date | null;
+  consistencyIssues: string[];
+};
+export type BillingResidenceSegment = {
+  contractId: string;
+  studentId: string;
+  mssv: string;
+  fullName: string;
+  status: ContractStatus;
+  startDate: Date;
+  endDate: Date;
+  endedAt: Date | null;
+  nextSegmentStartDate: Date | null;
+  roomMonthlyPrice: number;
+};
 export interface IContractRepository {
+  findBillingResidenceSegments(
+    roomId: string,
+    session?: TransactionContext,
+  ): Promise<BillingResidenceSegment[]>;
+  findResidenceHistoryByStudentId(id: string): Promise<ResidenceHistoryItem[]>;
   findActiveStudentIdsByBuildingId(
     buildingId: string,
-    session?: ClientSession,
-  ): Promise<Types.ObjectId[]>;
-  findById(id: string, s?: ClientSession): Promise<ContractDocument | null>;
+    session?: TransactionContext,
+  ): Promise<string[]>;
+  findById(
+    id: string,
+    s?: TransactionContext,
+  ): Promise<ContractDocument | null>;
   findAll(q: ContractListQuery): Promise<PaginatedResult<ContractDocument>>;
   findDisplaySummaries(
     ids: string[],
@@ -50,31 +82,34 @@ export interface IContractRepository {
   findByStudentId(id: string): Promise<ContractDocument[]>;
   findActiveByStudentId(
     id: string,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<ContractDocument | null>;
   findPendingOrActiveByStudentId(
     id: string,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<ContractDocument | null>;
   findActiveByBedId(
     id: string,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<ContractDocument | null>;
   findPendingByBedId(
     id: string,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<ContractDocument[]>;
-  create(d: CreateContractData, s?: ClientSession): Promise<ContractDocument>;
+  create(
+    d: CreateContractData,
+    s?: TransactionContext,
+  ): Promise<ContractDocument>;
   updateStatus(
     id: string,
     status: ContractStatus,
     extra?: Partial<ContractStatusMetadata>,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<ContractDocument | null>;
   rejectPendingByBedIdExcept(
     bedId: string,
     exceptId: string,
     reason: string,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<number>;
 }

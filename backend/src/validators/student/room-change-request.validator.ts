@@ -1,5 +1,5 @@
 import { z } from "zod";
-const id = z.string().regex(/^[a-f\d]{24}$/i, "INVALID_ID");
+const id = z.string().uuid("INVALID_ID");
 const wrap = (body: z.ZodType = z.any(), params: z.ZodType = z.any()) =>
   z.object({ body, params, query: z.any() });
 export const createRoomChangeRequestSchema = wrap(

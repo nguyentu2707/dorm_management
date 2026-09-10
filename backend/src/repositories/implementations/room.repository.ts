@@ -1,72 +1,122 @@
-import { RoomModel, type RoomStatus } from "../../models/room.model.js";
-import type {
-  IRoomRepository,
-  RoomData,
-  RoomListQuery,
-} from "../interfaces/room.repository.interface.js";
-import type { ClientSession, FilterQuery } from "mongoose";
-import type { Room } from "../../models/room.model.js";
-export class RoomRepository implements IRoomRepository {
-  findById(id: string, s?: ClientSession) {
-    return RoomModel.findById(id)
-      .session(s ?? null)
-      .exec();
+import type { IRoomRepository } from "../interfaces/room.repository.interface.js";
+import type { RoomDocument } from "../../models/room.model.js";
+import {
+  query,
+  rows,
+  one,
+  required,
+  count,
+  page,
+  contains,
+} from "../../database/query.js";
+export class PostgresRoomRepository implements IRoomRepository {
+  async findById(
+    ...[id, s]: Parameters<IRoomRepository["findById"]>
+  ): ReturnType<IRoomRepository["findById"]> {
+    return one<RoomDocument>(
+      `SELECT * FROM rooms WHERE id=$1 ${s ? "FOR UPDATE" : ""}`,
+      [id],
+      s,
+    );
   }
-  async findByBuildingId(id: string, q: RoomListQuery) {
-    const f: FilterQuery<Room> = { buildingId: id };
-    if (q.search) f.roomNumber = { $regex: q.search, $options: "i" };
-    if (q.status) f.status = q.status;
-    if (q.roomTypeId) f.roomTypeId = q.roomTypeId;
-    if (q.floor !== undefined) f.floor = q.floor;
-    const [items, total] = await Promise.all([
-      RoomModel.find(f)
-        .skip((q.page - 1) * q.limit)
-        .limit(q.limit)
-        .sort({ floor: 1, roomNumber: 1 }),
-      RoomModel.countDocuments(f),
-    ]);
-    return {
-      items,
-      pagination: {
-        page: q.page,
-        limit: q.limit,
-        total,
-        totalPages: Math.ceil(total / q.limit),
-      },
-    };
+  async lockUtilityLedger(
+    ...[id, s]: Parameters<IRoomRepository["lockUtilityLedger"]>
+  ): ReturnType<IRoomRepository["lockUtilityLedger"]> {
+    await query(
+      `SELECT room_id FROM room_billing_cursors WHERE room_id=$1 FOR UPDATE`,
+      [id],
+      s,
+    );
   }
-  findByRoomNumberAndBuildingId(n: string, b: string) {
-    return RoomModel.findOne({ roomNumber: n, buildingId: b }).exec();
+  async findByBuildingId(
+    ...[id, q]: Parameters<IRoomRepository["findByBuildingId"]>
+  ): ReturnType<IRoomRepository["findByBuildingId"]> {
+    return page<RoomDocument>(
+      `SELECT *
+      FROM rooms
+      WHERE building_id=$1 AND ($2::text IS NULL OR room_number ILIKE $2) AND ($3::text IS NULL OR status=$3) AND ($4::uuid IS NULL OR room_type_id=$4) AND ($5::integer IS NULL OR floor=$5)`,
+      [id, contains(q.search), q.status, q.roomTypeId, q.floor],
+      q,
+      "floor, room_number, id",
+    );
   }
-  countByBuildingId(id: string) {
-    return RoomModel.countDocuments({ buildingId: id });
+  async findByRoomNumberAndBuildingId(
+    ...[n, b]: Parameters<IRoomRepository["findByRoomNumberAndBuildingId"]>
+  ): ReturnType<IRoomRepository["findByRoomNumberAndBuildingId"]> {
+    return one<RoomDocument>(
+      `SELECT * FROM rooms WHERE room_number=$1 AND building_id=$2`,
+      [n, b],
+      undefined,
+    );
   }
-  countByRoomTypeId(id: string) {
-    return RoomModel.countDocuments({ roomTypeId: id });
+  async countByBuildingId(
+    ...[id]: Parameters<IRoomRepository["countByBuildingId"]>
+  ): ReturnType<IRoomRepository["countByBuildingId"]> {
+    return count(
+      `SELECT count(*) FROM rooms WHERE building_id=$1`,
+      [id],
+      undefined,
+    );
   }
-  async create(d: RoomData, s?: ClientSession) {
-    const [x] = await RoomModel.create([d], { session: s });
-    return x!;
+  async countByRoomTypeId(
+    ...[id, s]: Parameters<IRoomRepository["countByRoomTypeId"]>
+  ): ReturnType<IRoomRepository["countByRoomTypeId"]> {
+    return count(
+      `SELECT count(*) FROM rooms WHERE room_type_id=$1`,
+      [id],
+      s,
+    );
   }
-  update(
-    id: string,
-    d: Partial<Omit<RoomData, "buildingId">>,
-    s?: ClientSession,
-  ) {
-    return RoomModel.findByIdAndUpdate(id, d, {
-      new: true,
-      runValidators: true,
-      session: s,
-    }).exec();
+  async create(
+    ...[d, s]: Parameters<IRoomRepository["create"]>
+  ): ReturnType<IRoomRepository["create"]> {
+    return required<RoomDocument>(
+      `INSERT INTO rooms (building_id, room_type_id, room_number, floor, status) VALUES ($1, $2, $3, $4, COALESCE($5, 'AVAILABLE')) RETURNING *`,
+      [
+        d.buildingId,
+        d.roomTypeId,
+        typeof d.roomNumber === "string" ? d.roomNumber.trim() : d.roomNumber,
+        d.floor,
+        d.status,
+      ],
+      s,
+    );
   }
-  updateStatus(id: string, status: RoomStatus, s?: ClientSession) {
-    return RoomModel.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true, runValidators: true, session: s },
-    ).exec();
+  async update(
+    ...[id, d, s]: Parameters<IRoomRepository["update"]>
+  ): ReturnType<IRoomRepository["update"]> {
+    return one<RoomDocument>(
+      `UPDATE rooms
+      SET room_type_id = CASE WHEN $2::boolean THEN $3 ELSE room_type_id END, room_number = CASE WHEN $4::boolean THEN $5 ELSE room_number END, floor = CASE WHEN $6::boolean THEN $7 ELSE floor END, status = CASE WHEN $8::boolean THEN $9 ELSE status END, updated_at = now()
+      WHERE id = $1
+      RETURNING *`,
+      [
+        id,
+        d.roomTypeId !== undefined,
+        d.roomTypeId,
+        d.roomNumber !== undefined,
+        d.roomNumber,
+        d.floor !== undefined,
+        d.floor,
+        d.status !== undefined,
+        d.status,
+      ],
+      s,
+    );
   }
-  async deleteById(id: string, s?: ClientSession) {
-    await RoomModel.findByIdAndDelete(id, { session: s });
+  async updateStatus(
+    ...[id, status, s]: Parameters<IRoomRepository["updateStatus"]>
+  ): ReturnType<IRoomRepository["updateStatus"]> {
+    return one<RoomDocument>(
+      `UPDATE rooms SET status=$2,updated_at=now() WHERE id=$1 RETURNING *`,
+      [id, status],
+      s,
+    );
+  }
+  async deleteById(
+    ...[id, s]: Parameters<IRoomRepository["deleteById"]>
+  ): ReturnType<IRoomRepository["deleteById"]> {
+    await query(`DELETE FROM rooms WHERE id=$1`, [id], s);
   }
 }
+export { PostgresRoomRepository as RoomRepository };

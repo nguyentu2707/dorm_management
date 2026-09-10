@@ -1,6 +1,10 @@
+import { PostgresDashboardRepository } from "../repositories/implementations/dashboard.repository.js";
+import { PostgresPaymentRepository } from "../repositories/implementations/payment.repository.js";
+import { PaymentService } from "../services/payment.service.js";
+import { PaymentController } from "../controllers/payment.controller.js";
 import { JwtTokenService } from "../services/token.service.js";
 import { BcryptPasswordHasher } from "../services/password-hasher.service.js";
-import { MongoTransactionManager } from "../services/transaction-manager.js";
+import { PostgresTransactionManager } from "../services/transaction-manager.js";
 import { UserRepository } from "../repositories/implementations/user.repository.js";
 import { StudentRepository } from "../repositories/implementations/student.repository.js";
 import { BuildingRepository } from "../repositories/implementations/building.repository.js";
@@ -55,11 +59,36 @@ import { RoomRecommendationRepository } from "../repositories/implementations/ro
 import { StudentPersonalizationService } from "../services/student-personalization.service.js";
 import { RoomRecommendationService } from "../services/room-recommendation.service.js";
 import { StudentPersonalizationController } from "../controllers/student/personalization.controller.js";
+import { CheckoutRequestRepository } from "../repositories/implementations/checkout-request.repository.js";
+import { CheckoutRequestService } from "../services/checkout-request.service.js";
+import { StudentCheckoutRequestController } from "../controllers/student/checkout-request.controller.js";
+import { AdminCheckoutRequestController } from "../controllers/admin/checkout-request.controller.js";
+import { ResidenceHistoryService } from "../services/residence-history.service.js";
+import { StudentResidenceHistoryController } from "../controllers/student/residence-history.controller.js";
+import { AdminResidenceHistoryController } from "../controllers/admin/residence-history.controller.js";
+import { UtilityReadingRepository } from "../repositories/implementations/utility-reading.repository.js";
+import { UtilityReadingService } from "../services/utility-reading.service.js";
+import { AdminUtilityReadingController } from "../controllers/admin/utility-reading.controller.js";
+import { StudentUtilityReadingController } from "../controllers/student/utility-reading.controller.js";
+import { MonthlyBillingRepository } from "../repositories/implementations/monthly-billing.repository.js";
+import { RoomBillingCursorRepository } from "../repositories/implementations/room-billing-cursor.repository.js";
+import { InvoiceRepository } from "../repositories/implementations/invoice.repository.js";
+import { MonthlyBillingCalculator } from "../services/monthly-billing.calculator.js";
+import { MonthlyBillingService } from "../services/monthly-billing.service.js";
+import { AdminMonthlyBillingController } from "../controllers/admin/monthly-billing.controller.js";
+import { StudentInvoiceController } from "../controllers/student/invoice.controller.js";
+import { BILLING_FEE_CONFIG } from "./billing-fees.js";
+import { RefreshSessionRepository } from "../repositories/implementations/refresh-session.repository.js";
+import { StudentRegistryRepository } from "../repositories/implementations/student-registry.repository.js";
+import { StudentRegistryService } from "../services/admin/student-registry.service.js";
+import { StudentRegistryController } from "../controllers/admin/student-registry.controller.js";
 const tokenService = new JwtTokenService(),
   passwordHasher = new BcryptPasswordHasher(),
-  transactionManager = new MongoTransactionManager();
+  transactionManager = new PostgresTransactionManager();
 const userRepository = new UserRepository(),
   studentRepository = new StudentRepository(),
+  refreshSessionRepository = new RefreshSessionRepository(),
+  studentRegistryRepository = new StudentRegistryRepository(),
   buildingRepository = new BuildingRepository(),
   roomTypeRepository = new RoomTypeRepository(),
   roomRepository = new RoomRepository(),
@@ -68,6 +97,11 @@ const userRepository = new UserRepository(),
   equipmentItemRepository = new EquipmentItemRepository(),
   contractRepository = new ContractRepository(),
   roomChangeRequestRepository = new RoomChangeRequestRepository();
+const checkoutRequestRepository = new CheckoutRequestRepository();
+const utilityReadingRepository = new UtilityReadingRepository();
+const monthlyBillingRepository = new MonthlyBillingRepository();
+const roomBillingCursorRepository = new RoomBillingCursorRepository();
+const invoiceRepository = new InvoiceRepository();
 const notificationRepository = new NotificationRepository(),
   notificationRecipientRepository = new NotificationRecipientRepository();
 const notificationService = new NotificationService(
@@ -94,6 +128,8 @@ const contractService = new ContractService(
   bedRepository,
   roomRepository,
   transactionManager,
+  checkoutRequestRepository,
+  buildingRepository,
 );
 const roomChangeRequestService = new RoomChangeRequestService(
   roomChangeRequestRepository,
@@ -102,24 +138,106 @@ const roomChangeRequestService = new RoomChangeRequestService(
   bedRepository,
   roomRepository,
   transactionManager,
+  checkoutRequestRepository,
+  buildingRepository,
+);
+const checkoutRequestService = new CheckoutRequestService(
+  checkoutRequestRepository,
+  contractRepository,
+  studentRepository,
+  roomChangeRequestRepository,
+  bedRepository,
+  roomRepository,
+  transactionManager,
+);
+const residenceHistoryService = new ResidenceHistoryService(
+  contractRepository,
+  studentRepository,
+);
+const utilityReadingService = new UtilityReadingService(
+  utilityReadingRepository,
+  roomRepository,
+  buildingRepository,
+  contractRepository,
+  studentRepository,
+  transactionManager,
+);
+const monthlyBillingService = new MonthlyBillingService(
+  monthlyBillingRepository,
+  roomBillingCursorRepository,
+  invoiceRepository,
+  utilityReadingRepository,
+  roomRepository,
+  buildingRepository,
+  studentRepository,
+  new MonthlyBillingCalculator(
+    roomRepository,
+    buildingRepository,
+    contractRepository,
+    utilityReadingRepository,
+    BILLING_FEE_CONFIG,
+  ),
+  transactionManager,
 );
 const studentFacilityService = new StudentFacilityService(
   buildingRepository,
   roomRepository,
   roomTypeRepository,
   bedRepository,
+  studentRepository,
 );
 const studentProfileService = new StudentProfileService(
   userRepository,
   studentRepository,
   transactionManager,
   passwordHasher,
+  refreshSessionRepository,
 );
 export const container = {
+  paymentController: new PaymentController(
+    new PaymentService(
+      new PostgresPaymentRepository(),
+      studentRepository,
+      transactionManager,
+    ),
+  ),
+  userRepository,
   tokenService,
+  adminMonthlyBillingController: new AdminMonthlyBillingController(
+    monthlyBillingService,
+  ),
+  studentInvoiceController: new StudentInvoiceController(monthlyBillingService),
+  studentCheckoutRequestController: new StudentCheckoutRequestController(
+    checkoutRequestService,
+  ),
+  adminCheckoutRequestController: new AdminCheckoutRequestController(
+    checkoutRequestService,
+  ),
+  studentResidenceHistoryController: new StudentResidenceHistoryController(
+    residenceHistoryService,
+  ),
+  adminResidenceHistoryController: new AdminResidenceHistoryController(
+    residenceHistoryService,
+  ),
+  adminUtilityReadingController: new AdminUtilityReadingController(
+    utilityReadingService,
+  ),
+  studentUtilityReadingController: new StudentUtilityReadingController(
+    utilityReadingService,
+  ),
   studentPersonalizationController: new StudentPersonalizationController(
-    new StudentPersonalizationService(studentRepository, roomPreferenceRepository, classScheduleRepository),
-    new RoomRecommendationService(studentRepository, contractRepository, roomPreferenceRepository, classScheduleRepository, new RoomRecommendationRepository()),
+    new StudentPersonalizationService(
+      studentRepository,
+      roomPreferenceRepository,
+      classScheduleRepository,
+    ),
+    new RoomRecommendationService(
+      studentRepository,
+      contractRepository,
+      roomPreferenceRepository,
+      classScheduleRepository,
+      new RoomRecommendationRepository(),
+    ),
   ),
   adminNotificationController: new AdminNotificationController(
     notificationService,
@@ -137,6 +255,8 @@ export const container = {
     new AuthService(
       userRepository,
       studentRepository,
+      refreshSessionRepository,
+      studentRegistryRepository,
       tokenService,
       passwordHasher,
       transactionManager,
@@ -146,7 +266,7 @@ export const container = {
     new BuildingService(buildingRepository, roomRepository),
   ),
   roomTypeController: new RoomTypeController(
-    new RoomTypeService(roomTypeRepository, roomRepository),
+      new RoomTypeService(roomTypeRepository, roomRepository, transactionManager),
   ),
   roomController: new RoomController(
     new RoomService(
@@ -175,10 +295,18 @@ export const container = {
     ),
   ),
   adminStudentController: new AdminStudentController(
-    new AdminStudentService(studentRepository),
+    new AdminStudentService(
+      studentRepository,
+      userRepository,
+      refreshSessionRepository,
+      transactionManager,
+    ),
+  ),
+  studentRegistryController: new StudentRegistryController(
+    new StudentRegistryService(studentRegistryRepository),
   ),
   adminDashboardController: new AdminDashboardController(
-    new AdminDashboardService(),
+    new AdminDashboardService(new PostgresDashboardRepository()),
   ),
   studentContractController: new StudentContractController(contractService),
   adminContractController: new AdminContractController(contractService),

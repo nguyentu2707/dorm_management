@@ -5,11 +5,14 @@ import type {
 import type { IStudentRepository } from "../repositories/interfaces/student.repository.interface.js";
 import type { IBedRepository } from "../repositories/interfaces/bed.repository.interface.js";
 import type { IRoomRepository } from "../repositories/interfaces/room.repository.interface.js";
+import type { IBuildingRepository } from "../repositories/interfaces/building.repository.interface.js";
 import type { ITransactionManager } from "./transaction-manager.js";
-import type { ClientSession } from "mongoose";
+import type { TransactionContext } from "../services/transaction-manager.js";
 import { AppError } from "../errors/AppError.js";
 import { ContractMapper } from "../mappers/contract.mapper.js";
 import { createDefaultContractPeriod } from "../utils/contract-period.js";
+import type { ICheckoutRequestRepository } from "../repositories/interfaces/checkout-request.repository.interface.js";
+import { assertPlacementAllowed } from "./building-placement.js";
 export type CreateContractInput = {
   bedId: string;
 };
@@ -25,7 +28,19 @@ export class ContractService {
     private beds: IBedRepository,
     private rooms: IRoomRepository,
     private tx: ITransactionManager,
+    private checkoutRequests: ICheckoutRequestRepository,
+    private buildings?: IBuildingRepository,
   ) {}
+  private async placementAllowed(studentId: string, buildingId: string, s?: TransactionContext) {
+    if (!this.buildings) return;
+    const [student, building] = await Promise.all([
+      this.students.findById(studentId, s),
+      this.buildings.findById(buildingId, s),
+    ]);
+    if (!student) throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
+    if (!building) throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
+    assertPlacementAllowed(student, building);
+  }
   private period(i: { startDate?: Date; endDate?: Date }) {
     if (!!i.startDate !== !!i.endDate)
       throw new AppError(
@@ -62,7 +77,7 @@ export class ContractService {
   private async syncFull(
     roomId: string,
     currentStatus: string,
-    s: ClientSession,
+    s: TransactionContext,
   ) {
     if (
       currentStatus === "AVAILABLE" &&
@@ -73,7 +88,7 @@ export class ContractService {
   private async syncAvailable(
     roomId: string,
     currentStatus: string,
-    s: ClientSession,
+    s: TransactionContext,
   ) {
     if (currentStatus === "FULL")
       await this.rooms.updateStatus(roomId, "AVAILABLE", s);
@@ -86,13 +101,12 @@ export class ContractService {
     const room = await this.rooms.findById(bed.roomId.toString());
     if (!room)
       throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
+    await this.placementAllowed(student.id, room.buildingId);
     this.roomAvailable(room.status);
     if (bed.status !== "EMPTY")
       throw new AppError(409, "BED_NOT_AVAILABLE", "Giường không khả dụng");
     if (
-      await this.contracts.findPendingOrActiveByStudentId(
-        student._id.toString(),
-      )
+      await this.contracts.findPendingOrActiveByStudentId(student.id.toString())
     )
       throw new AppError(
         409,
@@ -101,7 +115,7 @@ export class ContractService {
       );
     return ContractMapper.toResponse(
       await this.contracts.create({
-        studentId: student._id.toString(),
+        studentId: student.id.toString(),
         bedId: i.bedId,
         roomId: bed.roomId.toString(),
         startDate: period.startDate,
@@ -112,13 +126,18 @@ export class ContractService {
   }
   async getMyContracts(userId: string) {
     const s = await this.studentFromUser(userId);
-    return (await this.contracts.findByStudentId(s._id.toString())).map(
-      ContractMapper.toResponse,
+    const items = await this.contracts.findByStudentId(s.id.toString());
+    const summaries = await this.contracts.findDisplaySummaries(
+      items.map((item) => item.id),
     );
+    return items.map((item) => ({
+      ...ContractMapper.toResponse(item),
+      ...summaries.get(item.id),
+    }));
   }
   async getMyActiveContract(userId: string) {
     const s = await this.studentFromUser(userId);
-    const c = await this.contracts.findActiveByStudentId(s._id.toString());
+    const c = await this.contracts.findActiveByStudentId(s.id.toString());
     return c ? ContractMapper.toResponse(c) : null;
   }
   async cancelPendingContract(userId: string, id: string, reason?: string) {
@@ -126,7 +145,7 @@ export class ContractService {
       c = await this.contracts.findById(id);
     if (!c)
       throw new AppError(404, "CONTRACT_NOT_FOUND", "Không tìm thấy hợp đồng");
-    if (c.studentId.toString() !== s._id.toString())
+    if (c.studentId.toString() !== s.id.toString())
       throw new AppError(
         403,
         "FORBIDDEN",
@@ -185,8 +204,9 @@ export class ContractService {
       const room = await this.rooms.findById(bed.roomId.toString(), s);
       if (!room)
         throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
+      await this.placementAllowed(c.studentId, room.buildingId, s);
       this.roomAvailable(room.status);
-      if (!(await this.beds.occupyIfEmpty(bed._id.toString(), s)))
+      if (!(await this.beds.occupyIfEmpty(bed.id.toString(), s)))
         throw new AppError(
           409,
           "BED_NOT_AVAILABLE",
@@ -199,12 +219,12 @@ export class ContractService {
         s,
       );
       await this.contracts.rejectPendingByBedIdExcept(
-        bed._id.toString(),
+        bed.id.toString(),
         id,
         "Bed is no longer available",
         s,
       );
-      await this.syncFull(room._id.toString(), room.status, s);
+      await this.syncFull(room.id.toString(), room.status, s);
       return active!;
     });
     return ContractMapper.toResponse(result);
@@ -248,7 +268,7 @@ export class ContractService {
         c.bedId.toString(),
         s,
       );
-      if (!owner || owner._id.toString() !== id)
+      if (!owner || owner.id.toString() !== id)
         throw new AppError(
           409,
           "BED_NOT_AVAILABLE",
@@ -258,7 +278,10 @@ export class ContractService {
       const updated = await this.contracts.updateStatus(
         id,
         status,
-        status === "ENDED" ? { endedAt: new Date() } : { cancelReason: reason },
+        {
+          endedAt: new Date(),
+          ...(status === "CANCELLED" ? { cancelReason: reason } : {}),
+        },
         s,
       );
       if (!(await this.beds.releaseIfOccupied(c.bedId.toString(), s)))
@@ -267,7 +290,14 @@ export class ContractService {
           "BED_NOT_AVAILABLE",
           "Giường không ở trạng thái đang sử dụng",
         );
-      if (room) await this.syncAvailable(room._id.toString(), room.status, s);
+      if (room) await this.syncAvailable(room.id.toString(), room.status, s);
+      await this.checkoutRequests.cancelPendingByContractId(
+        id,
+        status === "ENDED"
+          ? "Hợp đồng đã được quản trị viên kết thúc."
+          : "Hợp đồng đã được quản trị viên hủy.",
+        s,
+      );
       return updated!;
     });
     return ContractMapper.toResponse(result);
@@ -301,6 +331,7 @@ export class ContractService {
       const room = await this.rooms.findById(bed.roomId.toString(), s);
       if (!room)
         throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
+      await this.placementAllowed(i.studentId, room.buildingId, s);
       this.roomAvailable(room.status);
       if (!(await this.beds.occupyIfEmpty(i.bedId, s)))
         throw new AppError(
@@ -323,11 +354,11 @@ export class ContractService {
       );
       await this.contracts.rejectPendingByBedIdExcept(
         i.bedId,
-        c._id.toString(),
+        c.id.toString(),
         "Bed is no longer available",
         s,
       );
-      await this.syncFull(room._id.toString(), room.status, s);
+      await this.syncFull(room.id.toString(), room.status, s);
       return c;
     });
     return ContractMapper.toResponse(result);

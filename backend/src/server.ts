@@ -1,13 +1,24 @@
 import { app } from "./app.js";
-import { connectDatabase } from "./config/database.js";
+import { connectDatabase, disconnectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
 async function main() {
   await connectDatabase();
-  app.listen(env.PORT, () =>
+  const server = app.listen(env.PORT, () =>
     console.log(`Server listening on port ${env.PORT}`),
   );
+  let closing = false;
+  const shutdown = () => {
+    if (closing) return;
+    closing = true;
+    server.close(() => {
+      void disconnectDatabase();
+    });
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }
-main().catch((e) => {
-  console.error("Startup failed", e);
-  process.exit(1);
+main().catch(async () => {
+  console.error("Startup failed: check configuration and database readiness");
+  await disconnectDatabase();
+  process.exitCode = 1;
 });

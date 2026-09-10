@@ -2,7 +2,7 @@ import type { ContractDocument } from "../models/contract.model.js";
 export class ContractMapper {
   static toResponse(c: ContractDocument) {
     return {
-      id: c._id.toString(),
+      id: c.id.toString(),
       studentId: c.studentId.toString(),
       bedId: c.bedId.toString(),
       roomId: c.roomId.toString(),

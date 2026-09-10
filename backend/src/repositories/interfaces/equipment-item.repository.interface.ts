@@ -1,4 +1,4 @@
-import type { ClientSession } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type {
   EquipmentCondition,
   EquipmentItemDocument,
@@ -37,17 +37,17 @@ export interface IEquipmentItemRepository {
   countByRoomId(id: string): Promise<number>;
   create(
     d: EquipmentItemData,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<EquipmentItemDocument>;
   update(
     id: string,
     d: Partial<Omit<EquipmentItemData, "roomId">>,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<EquipmentItemDocument | null>;
   updateCondition(
     id: string,
     c: EquipmentCondition,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<EquipmentItemDocument | null>;
-  deleteById(id: string, s?: ClientSession): Promise<void>;
+  deleteById(id: string, s?: TransactionContext): Promise<void>;
 }

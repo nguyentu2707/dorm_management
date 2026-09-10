@@ -2,7 +2,7 @@ import type { RoomChangeRequestDocument } from "../models/room-change-request.mo
 export class RoomChangeRequestMapper {
   static toResponse(x: RoomChangeRequestDocument) {
     return {
-      id: x._id.toString(),
+      id: x.id.toString(),
       studentId: x.studentId.toString(),
       currentContractId: x.currentContractId.toString(),
       targetBedId: x.targetBedId.toString(),

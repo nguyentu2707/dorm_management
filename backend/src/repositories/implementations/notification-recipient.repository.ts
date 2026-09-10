@@ -1,97 +1,95 @@
-import { Types, type ClientSession } from "mongoose";
-import { NotificationRecipientModel } from "../../models/notification-recipient.model.js";
-import type {
-  INotificationRecipientRepository,
-  StudentNotificationRecord,
-} from "../interfaces/notification-recipient.repository.interface.js";
-export class NotificationRecipientRepository implements INotificationRecipientRepository {
+import type { INotificationRecipientRepository } from "../interfaces/notification-recipient.repository.interface.js";
+import type { NotificationRecipientDocument } from "../../models/notification-recipient.model.js";
+import type { StudentNotificationRecord } from "../interfaces/notification-recipient.repository.interface.js";
+import {
+  query,
+  rows,
+  one,
+  required,
+  count,
+  page,
+  contains,
+} from "../../database/query.js";
+export class PostgresNotificationRecipientRepository implements INotificationRecipientRepository {
   async createMany(
-    data: Array<{ notificationId: Types.ObjectId; studentId: Types.ObjectId }>,
-    session?: ClientSession,
-  ) {
+    ...[data, s]: Parameters<INotificationRecipientRepository["createMany"]>
+  ): ReturnType<INotificationRecipientRepository["createMany"]> {
     if (data.length)
-      await NotificationRecipientModel.insertMany(data, { session });
-  }
-  private pipeline(studentId: string, extra: Record<string, unknown> = {}) {
-    return [
-      { $match: { studentId: new Types.ObjectId(studentId), ...extra } },
-      {
-        $lookup: {
-          from: "notifications",
-          localField: "notificationId",
-          foreignField: "_id",
-          as: "notification",
-        },
-      },
-      { $unwind: "$notification" },
-      {
-        $project: {
-          _id: 0,
-          notificationId: { $toString: "$notificationId" },
-          title: "$notification.title",
-          content: "$notification.content",
-          targetScope: "$notification.targetScope",
-          isRead: 1,
-          readAt: 1,
-          createdAt: "$notification.createdAt",
-        },
-      },
-    ];
+      await query(
+        `INSERT INTO notification_recipients(notification_id,student_id) SELECT * FROM unnest($1::uuid[],$2::uuid[])`,
+        [data.map((x) => x.notificationId), data.map((x) => x.studentId)],
+        s,
+      );
   }
   async findByStudentId(
-    studentId: string,
-    q: { page: number; limit: number; isRead?: boolean },
-  ) {
-    const extra = q.isRead === undefined ? {} : { isRead: q.isRead };
-    const [result] = await NotificationRecipientModel.aggregate([
-      ...this.pipeline(studentId, extra),
-      { $sort: { createdAt: -1 } },
-      {
-        $facet: {
-          items: [{ $skip: (q.page - 1) * q.limit }, { $limit: q.limit }],
-          meta: [{ $count: "total" }],
-        },
-      },
-    ]);
-    const total = result?.meta?.[0]?.total ?? 0;
-    return {
-      items: result?.items ?? [],
-      pagination: {
-        page: q.page,
-        limit: q.limit,
-        total,
-        totalPages: Math.ceil(total / q.limit),
-      },
-    };
-  }
-  async findOne(notificationId: string, studentId: string) {
-    const [item] = await NotificationRecipientModel.aggregate(
-      this.pipeline(studentId, {
-        notificationId: new Types.ObjectId(notificationId),
-      }),
+    ...[id, q]: Parameters<INotificationRecipientRepository["findByStudentId"]>
+  ): ReturnType<INotificationRecipientRepository["findByStudentId"]> {
+    return page<StudentNotificationRecord>(
+      `SELECT nr.notification_id,n.title,n.content,n.target_scope,nr.is_read,nr.read_at,n.created_at
+      FROM notification_recipients nr
+      JOIN notifications n ON n.id=nr.notification_id
+      WHERE nr.student_id=$1 AND ($2::boolean IS NULL OR nr.is_read=$2)`,
+      [id, q.isRead],
+      q,
+      "n.created_at DESC,n.id",
     );
-    return (item as StudentNotificationRecord | undefined) ?? null;
   }
-  async markAsRead(notificationId: string, studentId: string) {
-    await NotificationRecipientModel.updateOne(
-      { notificationId, studentId, isRead: false },
-      { $set: { isRead: true, readAt: new Date() } },
+  async findOne(
+    ...[notificationId, studentId]: Parameters<
+      INotificationRecipientRepository["findOne"]
+    >
+  ): ReturnType<INotificationRecipientRepository["findOne"]> {
+    return one<StudentNotificationRecord>(
+      `SELECT nr.notification_id,n.title,n.content,n.target_scope,nr.is_read,nr.read_at,n.created_at
+      FROM notification_recipients nr
+      JOIN notifications n ON n.id=nr.notification_id
+      WHERE nr.notification_id=$1 AND nr.student_id=$2`,
+      [notificationId, studentId],
+    );
+  }
+  async markAsRead(
+    ...[notificationId, studentId]: Parameters<
+      INotificationRecipientRepository["markAsRead"]
+    >
+  ): ReturnType<INotificationRecipientRepository["markAsRead"]> {
+    await query(
+      `UPDATE notification_recipients SET is_read=true,read_at=now(),updated_at=now() WHERE notification_id=$1 AND student_id=$2 AND NOT is_read`,
+      [notificationId, studentId],
     );
     return this.findOne(notificationId, studentId);
   }
-  countUnreadByStudentId(studentId: string) {
-    return NotificationRecipientModel.countDocuments({
-      studentId,
-      isRead: false,
-    });
+  async countUnreadByStudentId(
+    ...[id]: Parameters<
+      INotificationRecipientRepository["countUnreadByStudentId"]
+    >
+  ): ReturnType<INotificationRecipientRepository["countUnreadByStudentId"]> {
+    return count(
+      `SELECT count(*) FROM notification_recipients WHERE student_id=$1 AND NOT is_read`,
+      [id],
+      undefined,
+    );
   }
-  countByNotificationId(notificationId: string) {
-    return NotificationRecipientModel.countDocuments({ notificationId });
+  async countByNotificationId(
+    ...[id]: Parameters<
+      INotificationRecipientRepository["countByNotificationId"]
+    >
+  ): ReturnType<INotificationRecipientRepository["countByNotificationId"]> {
+    return count(
+      `SELECT count(*) FROM notification_recipients WHERE notification_id=$1`,
+      [id],
+      undefined,
+    );
   }
-  countReadByNotificationId(notificationId: string) {
-    return NotificationRecipientModel.countDocuments({
-      notificationId,
-      isRead: true,
-    });
+  async countReadByNotificationId(
+    ...[id]: Parameters<
+      INotificationRecipientRepository["countReadByNotificationId"]
+    >
+  ): ReturnType<INotificationRecipientRepository["countReadByNotificationId"]> {
+    return count(
+      `SELECT count(*) FROM notification_recipients WHERE notification_id=$1 AND is_read`,
+      [id],
+      undefined,
+    );
   }
 }
+export { PostgresNotificationRecipientRepository as NotificationRecipientRepository };

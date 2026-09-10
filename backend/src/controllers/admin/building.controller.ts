@@ -13,6 +13,17 @@ export class BuildingController {
       n(e);
     }
   };
+  overview: RequestHandler = async (q, r, n) => {
+    try {
+      r.json({
+        success: true,
+        message: "Tổng quan tòa nhà theo tầng",
+        data: await this.s.overview(q.params.buildingId!),
+      });
+    } catch (e) {
+      n(e);
+    }
+  };
   get: RequestHandler = async (q, r, n) => {
     try {
       r.json({

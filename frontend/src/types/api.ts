@@ -48,6 +48,18 @@ export interface Paginated<T> {
   items: T[];
   pagination: PaginationMeta;
 }
+export interface StudentRegistryRecord {
+  id: string;
+  studentCode: string;
+  fullName: string;
+  email?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  dateOfBirth?: string;
+  status: "AVAILABLE" | "CLAIMED" | "DISABLED";
+  claimedUserId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 export interface Entity {
   id: string;
   createdAt?: string;
@@ -58,6 +70,44 @@ export interface Building extends Entity {
   name: string;
   address?: string;
   description?: string;
+  status: "ACTIVE" | "INACTIVE" | "MAINTENANCE";
+  allowedGender: "MALE" | "FEMALE" | "MIXED";
+  floorCount?: number;
+  roomCount?: number;
+  totalBeds?: number;
+  occupiedBeds?: number;
+  emptyBeds?: number;
+}
+export interface BuildingFloorRoom {
+  id: string;
+  roomNumber: string;
+  floor: number;
+  status: Status;
+  roomTypeId: string;
+  roomTypeName: string;
+  capacity: number;
+  totalBeds: number;
+  occupiedBeds: number;
+  emptyBeds: number;
+}
+export interface BuildingOverview {
+  building: Building;
+  summary: {
+    floorCount: number;
+    roomCount: number;
+    totalBeds: number;
+    occupiedBeds: number;
+    emptyBeds: number;
+    occupancyPercent: number;
+  };
+  floors: Array<{
+    floor: number;
+    roomCount: number;
+    totalBeds: number;
+    occupiedBeds: number;
+    emptyBeds: number;
+    rooms: BuildingFloorRoom[];
+  }>;
 }
 export interface RoomType extends Entity {
   name: string;
@@ -115,8 +165,171 @@ export interface RoomChangeRequest extends Entity {
   processedAt?: string;
   rejectReason?: string;
   student?: { id: string; mssv: string; fullName: string };
-  currentRoom?: { roomNumber: string; buildingName: string; bedNumber: string };
-  targetRoom?: { roomNumber: string; buildingName: string; bedNumber: string };
+  currentRoom?: {
+    id: string;
+    roomNumber: string;
+    buildingName: string;
+    bedNumber: string;
+  };
+  targetRoom?: {
+    id: string;
+    roomNumber: string;
+    buildingName: string;
+    bedNumber: string;
+  };
+}
+export interface CheckoutRequest extends Entity {
+  status: Status;
+  reason?: string;
+  rejectReason?: string;
+  cancelReason?: string;
+  processedAt?: string;
+  student?: { id: string; mssv: string; fullName: string };
+  room?: { id: string; buildingName: string; roomNumber: string };
+  bed?: { id: string; bedNumber: string };
+  contract?: { id: string; startDate: string; endDate: string };
+}
+export interface ResidenceHistoryItem {
+  contractId: string;
+  status: "ACTIVE" | "ENDED" | "CANCELLED";
+  isCurrent: boolean;
+  building: { id: string | null; name: string | null };
+  room: { id: string; roomNumber: string | null };
+  bed: { id: string | null; bedNumber: string | null };
+  segmentStartDate: string;
+  plannedEndDate: string;
+  actualEndDate: string | null;
+  consistencyIssues: string[];
+}
+export interface ResidenceHistoryResponse {
+  items: ResidenceHistoryItem[];
+}
+export interface UtilityReadingInput {
+  roomId: string;
+  billingPeriod: string;
+  electricityPrevious: number;
+  electricityCurrent: number;
+  electricityUnitPrice: number;
+  waterPrevious: number;
+  waterCurrent: number;
+  waterUnitPrice: number;
+}
+export interface UtilityReading extends Entity {
+  billingPeriod: string;
+  room: {
+    id: string;
+    roomNumber: string;
+    building: { id: string; name: string };
+  };
+  electricity: {
+    previous: number;
+    current: number;
+    usage: number;
+    unitPrice: number;
+    amount: number;
+  };
+  water: {
+    previous: number;
+    current: number;
+    usage: number;
+    unitPrice: number;
+    amount: number;
+  };
+  totalUtilityAmount: number;
+}
+export type MonthlyBillingStatus = "DRAFT" | "FINALIZED" | "CANCELLED";
+export interface BillingRoom {
+  id: string;
+  roomNumber: string;
+  building: { id: string; name: string };
+}
+export interface BillingResidentPreview {
+  contractId: string;
+  studentId: string;
+  mssv: string;
+  fullName: string;
+  residentDays: number;
+  roomMonthlyPrice: number;
+  roomFee: number;
+  electricityShare: number;
+  waterShare: number;
+  wifiShare: number;
+  trashShare: number;
+  totalAmount: number;
+}
+export interface MonthlyBillingPreview {
+  room: BillingRoom;
+  billingPeriod: string;
+  daysInMonth: number;
+  electricity: {
+    previous: number;
+    current: number;
+    usage: number;
+    unitPrice: number;
+    amount: number;
+  };
+  water: {
+    previous: number;
+    current: number;
+    usage: number;
+    unitPrice: number;
+    amount: number;
+  };
+  wifiFee: number;
+  trashFee: number;
+  sharedServiceTotal: number;
+  totalResidentDays: number;
+  residents: BillingResidentPreview[];
+  totalInvoiceAmount: number;
+  warnings: string[];
+}
+export interface StudentInvoice extends Entity {
+  monthlyBillingId: string;
+  studentId: string;
+  contractId: string;
+  billingPeriod: string;
+  status: "UNPAID" | "PARTIALLY_PAID" | "PAID" | "CANCELLED";
+  paidAmount: number;
+  remainingAmount: number;
+  pendingAmount: number;
+  paymentStatus: "UNPAID" | "PARTIALLY_PAID" | "PAID" | "CANCELLED";
+  room: { buildingName: string; roomNumber: string };
+  student: { fullName: string; mssv: string };
+  residentDays: number;
+  daysInMonth: number;
+  roomMonthlyPrice: number;
+  roomFee: number;
+  electricityShare: number;
+  waterShare: number;
+  wifiShare: number;
+  trashShare: number;
+  totalAmount: number;
+  items?: Array<{
+    id: string;
+    type: string;
+    description: string;
+    amount: number;
+    calculationNote: string;
+  }>;
+}
+export interface MonthlyBilling extends Entity {
+  billingPeriod: string;
+  status: MonthlyBillingStatus;
+  room: BillingRoom;
+  draft: {
+    electricityPrevious: number;
+    electricityCurrent: number;
+    waterPrevious: number;
+    waterCurrent: number;
+  };
+  electricity?: MonthlyBillingPreview["electricity"];
+  water?: MonthlyBillingPreview["water"];
+  wifiFee?: number;
+  trashFee?: number;
+  sharedServiceTotal?: number;
+  totalInvoiceAmount?: number;
+  invoices?: StudentInvoice[];
+  cancelReason?: string;
 }
 
 export interface StudentBuilding {
@@ -191,6 +404,9 @@ export interface DashboardSummary {
   beds: { total: number; occupied: number; empty: number };
   contracts: { pending: number; active: number };
   roomChangeRequests: { pending: number };
+  checkoutRequests: { pending: number };
+  maintenanceRequests: { pending: number; inProgress: number };
+  studentRequests: { pendingTotal: number };
 }
 export type NotificationTargetScope = "ALL" | "BUILDING" | "SPECIFIC_STUDENT";
 export interface StudentNotification {
@@ -219,6 +435,9 @@ export type MaintenanceStatus =
   "PENDING" | "IN_PROGRESS" | "RESOLVED" | "CANCELLED";
 export type MaintenanceCategory =
   "ELECTRICAL" | "PLUMBING" | "FURNITURE" | "APPLIANCE" | "OTHER";
+export type MaintenanceResolutionMethod = "REPAIR" | "REPLACE";
+export type MaintenanceDamageCause =
+  "WEAR_AND_TEAR" | "STUDENT_CAUSED" | "OTHER";
 export interface MaintenanceRequest extends Entity {
   studentId: string;
   roomId: string;
@@ -227,7 +446,13 @@ export interface MaintenanceRequest extends Entity {
   description: string;
   status: MaintenanceStatus;
   assignedStaffId?: string;
+  processingStartedAt?: string;
   resolutionNote?: string;
+  resolutionMethod?: MaintenanceResolutionMethod;
+  resolutionReason?: string;
+  resolutionCost?: number;
+  damageCause?: MaintenanceDamageCause;
+  damageCauseDetail?: string;
   cancelReason?: string;
   resolvedAt?: string;
   cancelledAt?: string;
@@ -239,16 +464,38 @@ export interface RoomPreference extends Entity {
   wantsHotWater?: boolean | null;
   occupancyPreference?: OccupancyPreference;
 }
-export type DayOfWeek = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
-export interface ScheduleEntry { dayOfWeek: DayOfWeek; startPeriod: number; endPeriod: number }
-export interface ClassSchedule extends Entity { entries: ScheduleEntry[] }
+export type DayOfWeek =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+export interface ScheduleEntry {
+  dayOfWeek: DayOfWeek;
+  startPeriod: number;
+  endPeriod: number;
+}
+export interface ClassSchedule extends Entity {
+  entries: ScheduleEntry[];
+}
 export type PersonalizationLevel = "BASIC" | "PARTIAL" | "PERSONALIZED";
 export interface RoomRecommendation {
   personalizationLevel: PersonalizationLevel;
-  room: { id: string; roomNumber: string; building: { id: string; name: string }; pricePerMonth: number };
+  room: {
+    id: string;
+    roomNumber: string;
+    building: { id: string; name: string };
+    pricePerMonth: number;
+  };
   availableBedCount: number;
   compatibilityScore: number;
   scheduleCoverage: number;
   reasons: string[];
 }
-export interface RecommendationResponse { hasPreference: boolean; hasSchedule: boolean; items: RoomRecommendation[] }
+export interface RecommendationResponse {
+  hasPreference: boolean;
+  hasSchedule: boolean;
+  items: RoomRecommendation[];
+}

@@ -1,4 +1,4 @@
-import type { ClientSession, Types } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type { StudentDocument } from "../../models/student.model.js";
 import type { ContractStatus } from "../../models/contract.model.js";
 import type { PaginatedResult } from "../../types/common.types.js";
@@ -38,24 +38,30 @@ export type UpdateStudentProfileData = {
 export interface IStudentRepository {
   findById(
     id: string,
-    session?: ClientSession,
+    session?: TransactionContext,
   ): Promise<StudentDocument | null>;
   findByUserId(
     userId: string,
-    session?: ClientSession,
+    session?: TransactionContext,
   ): Promise<StudentDocument | null>;
   findByMssv(mssv: string): Promise<StudentDocument | null>;
   search(q: StudentSearchQuery): Promise<PaginatedResult<AdminStudentRecord>>;
   findAdminDetail(id: string): Promise<AdminStudentRecord | null>;
   create(
-    data: { userId: Types.ObjectId; mssv: string },
-    session?: ClientSession,
+    data: {
+      userId: string;
+      mssv: string;
+      gender?: "MALE" | "FEMALE" | "OTHER";
+      dob?: Date;
+    },
+    session?: TransactionContext,
   ): Promise<StudentDocument>;
   updateProfile(
     id: string,
     data: UpdateStudentProfileData,
-    session?: ClientSession,
+    session?: TransactionContext,
   ): Promise<StudentDocument | null>;
-  findActiveIds(session?: ClientSession): Promise<Types.ObjectId[]>;
-  isActive(id: string, session?: ClientSession): Promise<boolean>;
+  findActiveIds(session?: TransactionContext): Promise<string[]>;
+  isActive(id: string, session?: TransactionContext): Promise<boolean>;
+  lockResidenceIntent(id: string, session: TransactionContext): Promise<void>;
 }

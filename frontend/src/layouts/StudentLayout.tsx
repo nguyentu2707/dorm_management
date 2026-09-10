@@ -8,6 +8,7 @@ import {
   MessageSquare,
   UserRound,
   Wrench,
+  ReceiptText,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
@@ -29,6 +30,10 @@ const groups: Array<{ title: string; items: SidebarItem[] }> = [
       { label: "Thông tin phòng", icon: Building2, to: "/student/room" },
       { label: "Báo hỏng thiết bị", icon: Wrench, to: "/student/maintenance" },
     ],
+  },
+  {
+    title: "Tài chính",
+    items: [{ label: "Hóa đơn", icon: ReceiptText, to: "/student/invoices" }],
   },
   {
     title: "Hỗ trợ",

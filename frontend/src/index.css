@@ -5,6 +5,11 @@
 @layer base {
   body {
     @apply bg-slate-50 text-slate-800 antialiased;
+    background-image: radial-gradient(
+      circle at top right,
+      rgba(37, 99, 235, 0.06),
+      transparent 32rem
+    );
   }
   button,
   input,
@@ -15,24 +20,37 @@
 }
 @layer components {
   .card {
-    @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
+    @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm;
   }
-  .field {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-brand-500 focus:ring-2 focus:ring-brand-50;
+  .field,
+  .input {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
   }
   .label {
     @apply mb-1.5 block text-sm font-medium text-slate-700;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition focus-visible:ring-4 focus-visible:ring-brand-50 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn bg-brand-600 text-white hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-md;
   }
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50;
   }
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700;
+    @apply btn bg-red-600 text-white hover:bg-red-700 hover:shadow-md;
+  }
+  .table-shell {
+    @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm;
+  }
+  .table-head {
+    @apply bg-slate-50/90 text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .notice-success {
+    @apply rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800;
+  }
+  .notice-error {
+    @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800;
   }
 }

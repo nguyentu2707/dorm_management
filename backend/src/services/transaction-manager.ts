@@ -1,18 +1,35 @@
-import mongoose, { type ClientSession } from "mongoose";
+import { pool } from "../database/pool.js";
+import { activeClient, type TransactionContext } from "../database/context.js";
+import { translatePostgresError } from "../database/postgres-errors.js";
+export type { TransactionContext } from "../database/context.js";
 export interface ITransactionManager {
-  runInTransaction<T>(work: (s: ClientSession) => Promise<T>): Promise<T>;
+  runInTransaction<T>(work: (tx: TransactionContext) => Promise<T>): Promise<T>;
 }
-export class MongoTransactionManager implements ITransactionManager {
-  async runInTransaction<T>(work: (s: ClientSession) => Promise<T>) {
-    const session = await mongoose.startSession();
+export class PostgresTransactionManager implements ITransactionManager {
+  async runInTransaction<T>(
+    work: (tx: TransactionContext) => Promise<T>,
+  ): Promise<T> {
+    const existing = activeClient.getStore();
+    if (existing) return work(existing.context);
+    const client = await pool.connect();
+    let discard = false;
     try {
-      let result!: T;
-      await session.withTransaction(async () => {
-        result = await work(session);
-      });
+      await client.query("BEGIN");
+      const context = Object.freeze({ transactionId: Symbol("transaction") });
+      const result = await activeClient.run({ context, client }, () =>
+        work(context),
+      );
+      await client.query("COMMIT");
       return result;
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        discard = true;
+      }
+      throw translatePostgresError(error) ?? error;
     } finally {
-      await session.endSession();
+      client.release(discard);
     }
   }
 }

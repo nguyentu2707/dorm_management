@@ -1,5 +1,4 @@
-import mongoose from "mongoose";
-import { connectDatabase } from "../src/config/database.js";
+import { disconnectDatabase, connectDatabase } from "../src/config/database.js";
 import { BuildingRepository } from "../src/repositories/implementations/building.repository.js";
 import { RoomTypeRepository } from "../src/repositories/implementations/room-type.repository.js";
 import { RoomRepository } from "../src/repositories/implementations/room.repository.js";
@@ -11,124 +10,97 @@ import { RoomTypeService } from "../src/services/admin/room-type.service.js";
 import { RoomService } from "../src/services/admin/room.service.js";
 import { EquipmentItemService } from "../src/services/admin/equipment-item.service.js";
 import { EquipmentCategoryService } from "../src/services/admin/equipment-category.service.js";
-import { MongoTransactionManager } from "../src/services/transaction-manager.js";
-const tiers = [
-  {
-    name: "Phòng giá rẻ",
-    price: 1_200_000,
-    building: "Tòa A",
-    code: "A",
-    floors: 1,
-    tier: "ECONOMY",
-  },
-  {
-    name: "Phòng trung bình",
-    price: 1_500_000,
-    building: "Tòa B",
-    code: "B",
-    floors: 1,
-    tier: "STANDARD",
-  },
+import { PostgresTransactionManager } from "../src/services/transaction-manager.js";
+
+const roomTypes = [
+  { name: "Tiêu chuẩn 6 người", capacity: 6, price: 900_000 },
+  { name: "Phòng giá rẻ", capacity: 4, price: 1_200_000 },
+  { name: "Phòng trung bình", capacity: 4, price: 1_500_000 },
+  { name: "Chất lượng cao 4 người", capacity: 4, price: 1_900_000 },
+  { name: "Cao cấp 2 người", capacity: 2, price: 2_500_000 },
 ] as const;
+const buildings = [
+  { name: "Tòa A", code: "A", allowedGender: "MALE" as const },
+  { name: "Tòa B", code: "B", allowedGender: "MALE" as const },
+  { name: "Tòa C", code: "C", allowedGender: "FEMALE" as const },
+] as const;
+const distributions = {
+  A: [[0, 0, 1, 1, 2], [1, 1, 2, 2, 3], [2, 3, 3, 4, 4]],
+  B: [[0, 1, 1, 2, 2], [1, 2, 2, 3, 3], [2, 3, 4, 3, 4]],
+  C: [[1, 1, 2, 2, 3], [1, 2, 2, 3, 3], [2, 3, 3, 4, 4]],
+} as const;
 const categories = [
-  { name: "Tủ lạnh", prefix: "FRIDGE", count: 1 },
-  { name: "Bộ bàn ghế", prefix: "DESK", count: 4 },
-  { name: "Quạt trần", prefix: "FAN", count: 1 },
-  { name: "Bình nóng lạnh", prefix: "WATERHEATER", count: 1 },
+  { name: "Tủ lạnh", prefix: "FRIDGE" },
+  { name: "Bộ bàn ghế", prefix: "DESK" },
+  { name: "Quạt trần", prefix: "FAN" },
+  { name: "Bình nóng lạnh", prefix: "WATERHEATER" },
+  { name: "Điều hòa", prefix: "AC" },
 ] as const;
+
 async function main() {
+  if (process.env.NODE_ENV === "production") throw new Error("Demo seeds are disabled in production");
   await connectDatabase();
-  const br = new BuildingRepository(),
-    tr = new RoomTypeRepository(),
-    rr = new RoomRepository(),
-    beds = new BedRepository(),
-    er = new EquipmentItemRepository(),
-    cr = new EquipmentCategoryRepository();
+  const br = new BuildingRepository(), tr = new RoomTypeRepository(), rr = new RoomRepository();
+  const beds = new BedRepository(), equipment = new EquipmentItemRepository(), categoriesRepo = new EquipmentCategoryRepository();
+  const transactionManager = new PostgresTransactionManager();
   const bs = new BuildingService(br, rr),
-    ts = new RoomTypeService(tr, rr),
-    rs = new RoomService(rr, br, tr, beds, er, new MongoTransactionManager()),
-    cs = new EquipmentCategoryService(cr, er),
-    es = new EquipmentItemService(er, cr, rr);
-  const summary = {
-    roomsCreated: 0,
-    roomsSkipped: 0,
-    equipmentCreated: 0,
-    equipmentSkipped: 0,
-    bedsRestored: 0,
-  };
+    ts = new RoomTypeService(tr, rr, transactionManager);
+  const rs = new RoomService(rr, br, tr, beds, equipment, transactionManager);
+  const categoryService = new EquipmentCategoryService(categoriesRepo, equipment);
+  const equipmentService = new EquipmentItemService(equipment, categoriesRepo, rr);
+  const summary = { buildingsCreated: 0, roomsCreated: 0, roomsReused: 0, legacyRoomsRenamed: 0, equipmentCreated: 0, warnings: [] as string[] };
+
+  const typeIds: string[] = [];
+  for (const type of roomTypes) {
+    const found = (await tr.findAll()).find((item) => item.name === type.name);
+    typeIds.push(found?.id ?? (await ts.create({ name: type.name, capacity: type.capacity, pricePerMonth: type.price })).id);
+    if (found && (found.capacity !== type.capacity || found.pricePerMonth !== type.price)) summary.warnings.push(`Giữ nguyên hạng phòng hiện có: ${type.name}`);
+  }
   const categoryIds = new Map<string, string>();
-  for (const c of categories) {
-    const found = (await cr.findAll()).find((x) => x.name === c.name);
-    categoryIds.set(
-      c.name,
-      found?.id ?? (await cs.create({ name: c.name, unit: "cái" })).id,
-    );
+  for (const category of categories) {
+    const found = (await categoriesRepo.findAll()).find((item) => item.name === category.name);
+    categoryIds.set(category.name, found?.id ?? (await categoryService.create({ name: category.name, unit: "cái" })).id);
   }
-  for (const t of tiers) {
-    const foundType = (await tr.findAll()).find((x) => x.name === t.name);
-    const typeId =
-      foundType?.id ??
-      (await ts.create({ name: t.name, capacity: 4, pricePerMonth: t.price }))
-        .id;
-    const foundBuilding = (await br.findAll()).find(
-      (x) => x.name === t.building,
-    );
-    const buildingId =
-      foundBuilding?.id ?? (await bs.create({ name: t.building })).id;
-    for (let floor = 1; floor <= t.floors; floor++)
-      for (let i = 1; i <= 5; i++) {
-        const roomNumber = `${t.code}-${floor}0${i}`;
-        let room = await rr.findByRoomNumberAndBuildingId(
-          roomNumber,
-          buildingId,
-        );
-        if (!room) {
-          await rs.create({
-            buildingId,
-            roomTypeId: typeId,
-            roomNumber,
-            floor,
-          });
-          room = await rr.findByRoomNumberAndBuildingId(roomNumber, buildingId);
-          summary.roomsCreated++;
-        } else {
-          summary.roomsSkipped++;
-          if (room.roomTypeId.toString() !== typeId)
-            room = await rr.update(room.id, { roomTypeId: typeId });
-        }
-        if (!room) throw Error(`Cannot create ${roomNumber}`);
-        summary.bedsRestored += await beds.ensureCapacity(room.id, 4);
-        const selected = categories.filter(
-          (c) => !(c.name === "Bình nóng lạnh" && t.tier === "ECONOMY"),
-        );
-        for (const c of selected)
-          for (let n = 1; n <= c.count; n++) {
-            const serial = `${c.prefix}-${roomNumber}-${String(n).padStart(2, "0")}`;
-            if (await er.findBySerialNumber(serial)) {
-              summary.equipmentSkipped++;
-              continue;
-            }
-            await es.create({
-              roomId: room.id,
-              categoryId: categoryIds.get(c.name)!,
-              serialNumber: serial,
-              condition: "GOOD",
-            });
-            summary.equipmentCreated++;
-          }
+
+  for (const config of buildings) {
+    let building = (await br.findAll()).find((item) => item.name === config.name);
+    if (!building) {
+      building = await bs.create({ name: config.name, status: "ACTIVE", allowedGender: config.allowedGender });
+      summary.buildingsCreated++;
+    } else if (building.status !== "ACTIVE" || building.allowedGender !== config.allowedGender) {
+      building = await bs.update(building.id, { status: "ACTIVE", allowedGender: config.allowedGender });
+    }
+    for (let floor = 1; floor <= 3; floor++) for (let index = 1; index <= 5; index++) {
+      const roomNumber = `${config.code}${floor}0${index}`, legacyNumber = `${config.code}-${floor}0${index}`;
+      let room = await rr.findByRoomNumberAndBuildingId(roomNumber, building.id);
+      if (!room) {
+        const legacy = await rr.findByRoomNumberAndBuildingId(legacyNumber, building.id);
+        if (legacy) { room = await rr.update(legacy.id, { roomNumber }); summary.legacyRoomsRenamed++; }
       }
+      if (!room) {
+        const typeIndex = distributions[config.code][floor - 1]![index - 1]!;
+        room = await rs.create({ buildingId: building.id, roomTypeId: typeIds[typeIndex]!, roomNumber, floor });
+        summary.roomsCreated++;
+      } else {
+        summary.roomsReused++;
+        if (room.floor !== floor) summary.warnings.push(`${roomNumber}: giữ nguyên tầng ${room.floor} vì phòng đã tồn tại`);
+      }
+      const roomType = await tr.findById(room.roomTypeId), actualBeds = await beds.findByRoomId(room.id);
+      if (roomType && actualBeds.length !== roomType.capacity) summary.warnings.push(`${roomNumber}: ${actualBeds.length} giường, hạng phòng yêu cầu ${roomType.capacity}; không tự resize`);
+      const selected = categories.filter((category) => category.name === "Điều hòa" ? roomType?.name.includes("Cao") || roomType?.name.includes("Chất lượng") : category.name !== "Bình nóng lạnh" || roomType?.name !== "Tiêu chuẩn 6 người");
+      for (const category of selected) {
+        const serialNumber = `${category.prefix}-${roomNumber}-01`;
+        if (await equipment.findBySerialNumber(serialNumber)) continue;
+        await equipmentService.create({ roomId: room.id, categoryId: categoryIds.get(category.name)!, serialNumber, condition: "GOOD" });
+        summary.equipmentCreated++;
+      }
+    }
   }
-  console.log("===== Seed Summary =====");
-  console.log({
-    ...summary,
-    expectedRooms: 10,
-    expectedBeds: 40,
-    expectedEquipment: 65,
-  });
+  const finalBuildings = await br.findAllWithSummaries();
+  for (const building of finalBuildings.filter((item) => buildings.some((config) => config.name === item.name)))
+    if (building.floorCount !== 3 || building.roomCount !== 15) summary.warnings.push(`${building.name}: expected 3 tầng/15 phòng, actual ${building.floorCount}/${building.roomCount}`);
+  console.log("===== Dormitory Demo Seed =====");
+  console.log({ ...summary, topology: finalBuildings.map(({ name, floorCount, roomCount, totalBeds }) => ({ name, floorCount, roomCount, totalBeds })) });
 }
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exitCode = 1;
-  })
-  .finally(() => mongoose.disconnect());
+
+main().catch((error) => { console.error(error); process.exitCode = 1; }).finally(() => disconnectDatabase());

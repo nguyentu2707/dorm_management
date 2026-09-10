@@ -7,5 +7,5 @@ export type RecommendationCandidate = {
   residentSchedules: ScheduleEntry[][];
 };
 export interface IRoomRecommendationRepository {
-  findCandidates(): Promise<RecommendationCandidate[]>;
+  findCandidates(gender: "MALE" | "FEMALE" | "OTHER"): Promise<RecommendationCandidate[]>;
 }

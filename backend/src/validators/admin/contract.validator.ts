@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CONTRACT_STATUSES } from "../../models/contract.model.js";
-const id = z.string().regex(/^[a-f\d]{24}$/i, "INVALID_ID");
+const id = z.string().uuid("INVALID_ID");
 const wrap = (
   body: z.ZodType = z.any(),
   params: z.ZodType = z.any(),

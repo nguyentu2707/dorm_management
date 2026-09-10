@@ -1,0 +1,2 @@
+import type { RequestHandler } from "express"; import type { ResidenceHistoryService } from "../../services/residence-history.service.js";
+export class AdminResidenceHistoryController { constructor(private service: ResidenceHistoryService) {} get: RequestHandler = async (req, res, next) => { try { res.json({ success: true, message: "Lịch sử lưu trú của sinh viên", data: await this.service.admin(req.params.studentId!) }); } catch (error) { next(error); } }; }

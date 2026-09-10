@@ -2,10 +2,10 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { tokenStorage } from "./token-storage";
 import type { ApiError, ApiResponse } from "../types/api";
 
-const baseURL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/v1";
-export const apiClient = axios.create({ baseURL, timeout: 15000 });
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
+export const apiClient = axios.create({ baseURL, timeout: 15000, withCredentials: true });
 let refreshPromise: Promise<string> | null = null;
+let redirectingToLogin = false;
 
 apiClient.interceptors.request.use((config) => {
   const token = tokenStorage.getAccess();
@@ -18,30 +18,24 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<ApiError>) => {
     const original = error.config as
       (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
-    const shouldRefresh =
-      error.response?.status === 401 &&
-      error.response.data?.code === "TOKEN_EXPIRED";
-    if (
-      !original ||
-      original._retry ||
-      !shouldRefresh ||
-      original.url?.includes("refresh-token")
-    )
+    const isAuthRequest =
+      original?.url?.includes("/auth/login") ||
+      original?.url?.includes("/auth/register") ||
+      original?.url?.includes("/auth/refresh-token");
+    // Recover the session for missing, invalid and expired access tokens while
+    // a refresh token is still available.
+    const shouldRefresh = error.response?.status === 401 && !isAuthRequest;
+    if (!original || original._retry || !shouldRefresh || isAuthRequest)
       return Promise.reject(normalizeApiError(error));
-    const refreshToken = tokenStorage.getRefresh();
-    if (!refreshToken) {
-      tokenStorage.clear();
-      window.location.assign("/login");
-      return Promise.reject(normalizeApiError(error));
-    }
     original._retry = true;
     refreshPromise ??= axios
       .post<ApiResponse<{ accessToken: string; refreshToken?: string }>>(
         `${baseURL}/auth/refresh-token`,
-        { refreshToken },
+        {},
+        { withCredentials: true },
       )
       .then(({ data }) => {
-        tokenStorage.set(data.data.accessToken, data.data.refreshToken);
+        tokenStorage.set(data.data.accessToken);
         return data.data.accessToken;
       })
       .finally(() => {
@@ -52,7 +46,10 @@ apiClient.interceptors.response.use(
       return apiClient(original);
     } catch (refreshError) {
       tokenStorage.clear();
-      window.location.assign("/login");
+      if (!redirectingToLogin) {
+        redirectingToLogin = true;
+        window.location.assign("/login");
+      }
       return Promise.reject(normalizeApiError(refreshError));
     }
   },

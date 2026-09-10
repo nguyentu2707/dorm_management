@@ -6,6 +6,8 @@ import type { IEquipmentItemRepository } from "../repositories/interfaces/equipm
 import type { IStaffRepository } from "../repositories/interfaces/staff.repository.interface.js";
 import type {
   MaintenanceCategory,
+  MaintenanceDamageCause,
+  MaintenanceResolutionMethod,
   MaintenanceStatus,
 } from "../models/maintenance-request.model.js";
 export class MaintenanceRequestService {
@@ -137,9 +139,20 @@ export class MaintenanceRequestService {
     return this.requests.update(id, {
       assignedStaffId: staffId,
       status: "IN_PROGRESS",
+      processingStartedAt: item.processingStartedAt ?? new Date(),
     });
   }
-  async resolve(id: string, note: string) {
+  async resolve(
+    id: string,
+    input: {
+      resolutionMethod: MaintenanceResolutionMethod;
+      damageCause: MaintenanceDamageCause;
+      damageCauseDetail?: string;
+      resolutionReason: string;
+      resolutionCost: number;
+      resolutionNote?: string;
+    },
+  ) {
     const item = await this.must(id);
     if (!["PENDING", "IN_PROGRESS"].includes(item.status))
       throw new AppError(
@@ -150,7 +163,8 @@ export class MaintenanceRequestService {
     return this.requests.update(id, {
       status: "RESOLVED",
       resolvedAt: new Date(),
-      resolutionNote: note,
+      processingStartedAt: item.processingStartedAt ?? new Date(),
+      ...input,
     });
   }
   async adminCancel(id: string, reason?: string) {

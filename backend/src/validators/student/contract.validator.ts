@@ -1,5 +1,5 @@
 import { z } from "zod";
-const id = z.string().regex(/^[a-f\d]{24}$/i, "INVALID_ID");
+const id = z.string().uuid("INVALID_ID");
 // Unknown keys are stripped so a cached legacy client may still submit its old
 // date fields. ContractService receives only bedId and computes the period.
 const dateRange = z.object({ bedId: id });

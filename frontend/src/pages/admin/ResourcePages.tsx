@@ -2,11 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Building2,
   Edit2,
-  Hammer,
   Plus,
-  ShieldCheck,
   Trash2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/common/PageHeader";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import {
@@ -234,9 +233,7 @@ export function BuildingsPage() {
   useEffect(() => {
     void load();
   }, [load]);
-  const buildings = ["Tòa A", "Tòa B", "Tòa C"].map(
-    (name) => items.find((item) => item.name === name) ?? { id: name, name },
-  );
+  const buildings = items;
   return (
     <>
       <PageHeader
@@ -250,9 +247,13 @@ export function BuildingsPage() {
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {buildings.map((building) => {
-            const active = building.name !== "Tòa C";
+            const active = building.status === "ACTIVE";
+            const occupancy = building.totalBeds
+              ? Math.round(((building.occupiedBeds ?? 0) / building.totalBeds) * 100)
+              : 0;
             return (
-              <article
+              <Link
+                to={`/admin/buildings/${building.id}`}
                 className={`card border-t-4 ${active ? "border-t-emerald-500" : "border-t-amber-500"}`}
                 key={building.id}
               >
@@ -260,24 +261,24 @@ export function BuildingsPage() {
                   <div
                     className={`rounded-xl p-3 ${active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
                   >
-                    {active ? <Building2 size={28} /> : <Hammer size={28} />}
+                    <Building2 size={28} />
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${active ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
                   >
-                    {active ? "Đang hoạt động" : "Đang hoàn thiện"}
+                    {active ? "Đang hoạt động" : building.status === "MAINTENANCE" ? "Bảo trì" : "Ngừng hoạt động"}
                   </span>
                 </div>
                 <h2 className="mt-5 text-xl font-bold">{building.name}</h2>
                 <p className="mt-2 min-h-10 text-sm text-slate-500">
-                  {active
-                    ? "Khu nhà đang tiếp nhận và phục vụ sinh viên."
-                    : "Khu nhà đang trong giai đoạn hoàn thiện, chưa tiếp nhận sinh viên."}
+                  {building.allowedGender === "MALE" ? "Khu Nam" : building.allowedGender === "FEMALE" ? "Khu Nữ" : "Khu hỗn hợp"}
                 </p>
-                <div className="mt-5 flex items-center gap-2 border-t pt-4 text-sm text-slate-500">
-                  <ShieldCheck size={17} /> Thông tin hệ thống cố định
+                <div className="mt-5 grid grid-cols-3 gap-2 border-t pt-4 text-center text-sm">
+                  <div><strong className="block text-slate-800">{building.floorCount ?? 0}</strong><span className="text-slate-500">Tầng</span></div>
+                  <div><strong className="block text-slate-800">{building.roomCount ?? 0}</strong><span className="text-slate-500">Phòng</span></div>
+                  <div><strong className="block text-slate-800">{occupancy}%</strong><span className="text-slate-500">Lấp đầy</span></div>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>

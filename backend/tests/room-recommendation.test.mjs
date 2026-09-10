@@ -5,7 +5,7 @@ const morning = [{ dayOfWeek: "MONDAY", startPeriod: 1, endPeriod: 4 }];
 const afternoon = [{ dayOfWeek: "MONDAY", startPeriod: 6, endPeriod: 9 }];
 const candidate = (id, price, hot, occupied, schedules) => ({ room: { id, roomNumber: id, building: { id: "building", name: "Tòa test" }, pricePerMonth: price, capacity: 4 }, availableBedCount: 4 - occupied, occupiedBedCount: occupied, hasHotWater: hot, residentSchedules: schedules });
 const service = (preference, schedule, candidates) => new RoomRecommendationService(
-  { findByUserId: async () => ({ id: "student" }) }, { findPendingOrActiveByStudentId: async () => null },
+  { findByUserId: async () => ({ id: "student", gender: "MALE" }) }, { findPendingOrActiveByStudentId: async () => null },
   { findByStudentId: async () => preference }, { findByStudentId: async () => schedule }, { findCandidates: async () => candidates },
 );
 test("schedule similarity", () => { assert.equal(scheduleSimilarity(morning, morning), 1); assert.equal(scheduleSimilarity(morning, afternoon), 0); });

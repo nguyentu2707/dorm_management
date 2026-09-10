@@ -37,4 +37,16 @@ export class AdminStudentController {
       next(error);
     }
   };
+  accountStatus: RequestHandler = async (req, res, next) => {
+    try {
+      res.json({
+        success: true,
+        message: "Cập nhật trạng thái tài khoản thành công",
+        data: await this.service.accountStatus(
+          req.params.studentId!,
+          req.body.status,
+        ),
+      });
+    } catch (error) { next(error); }
+  };
 }

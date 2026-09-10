@@ -18,6 +18,7 @@ export function AdminRoomChangeRequestsPage() {
     [result, setResult] = useState<Paginated<RoomChangeRequest> | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
+    [success, setSuccess] = useState(""),
     [action, setAction] = useState<{
       kind: "approve" | "reject";
       item: RoomChangeRequest;
@@ -46,9 +47,12 @@ export function AdminRoomChangeRequestsPage() {
   async function run(reason?: string) {
     if (!action) return;
     try {
+      setError("");
+      setSuccess("");
       if (action.kind === "approve")
         await roomChangeApi.approve(action.item.id);
       else await roomChangeApi.reject(action.item.id, reason);
+      setSuccess(action.kind === "approve" ? "Đã duyệt yêu cầu chuyển phòng." : "Đã từ chối yêu cầu chuyển phòng.");
       setAction(null);
       await load();
     } catch (e) {
@@ -82,6 +86,7 @@ export function AdminRoomChangeRequestsPage() {
           ))}
         </select>
       </div>
+      {success && <p className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{success}</p>}
       {loading ? (
         <LoadingState />
       ) : error ? (

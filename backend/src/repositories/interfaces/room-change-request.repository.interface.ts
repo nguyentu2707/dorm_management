@@ -1,4 +1,4 @@
-import type { ClientSession } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type {
   RoomChangeRequestDocument,
   RoomChangeRequestStatus,
@@ -22,15 +22,28 @@ export type RoomChangeRequestStatusMetadata = {
   processedAt?: Date;
   rejectReason?: string;
 };
+export type RoomChangeDisplaySummary = {
+  student: { id: string; mssv: string; fullName: string };
+  currentRoom: {
+    id: string;
+    roomNumber: string;
+    buildingName: string;
+    bedNumber: string;
+  };
+  targetRoom: {
+    id: string;
+    roomNumber: string;
+    buildingName: string;
+    bedNumber: string;
+  };
+};
 export interface IRoomChangeRequestRepository {
-  findDisplaySummaries(ids: string[]): Promise<Map<string, {
-    student: { id: string; mssv: string; fullName: string };
-    currentRoom: { roomNumber: string; buildingName: string; bedNumber: string };
-    targetRoom: { roomNumber: string; buildingName: string; bedNumber: string };
-  }>>;
+  findDisplaySummaries(
+    ids: string[],
+  ): Promise<Map<string, RoomChangeDisplaySummary>>;
   findById(
     id: string,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<RoomChangeRequestDocument | null>;
   findAll(
     q: RoomChangeRequestListQuery,
@@ -38,16 +51,16 @@ export interface IRoomChangeRequestRepository {
   findByStudentId(id: string): Promise<RoomChangeRequestDocument[]>;
   findPendingByStudentId(
     id: string,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<RoomChangeRequestDocument | null>;
   create(
     d: CreateRoomChangeRequestData,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<RoomChangeRequestDocument>;
   updateStatus(
     id: string,
     status: RoomChangeRequestStatus,
     extra?: Partial<RoomChangeRequestStatusMetadata>,
-    s?: ClientSession,
+    s?: TransactionContext,
   ): Promise<RoomChangeRequestDocument | null>;
 }

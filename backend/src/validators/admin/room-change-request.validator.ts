@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ROOM_CHANGE_STATUSES } from "../../models/room-change-request.model.js";
-const id = z.string().regex(/^[a-f\d]{24}$/i, "INVALID_ID");
+const id = z.string().uuid("INVALID_ID");
 const wrap = (
   body: z.ZodType = z.any(),
   params: z.ZodType = z.any(),

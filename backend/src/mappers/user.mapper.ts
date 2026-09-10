@@ -2,7 +2,7 @@ import type { UserDocument } from "../models/user.model.js";
 export class UserMapper {
   static toResponse(u: UserDocument) {
     return {
-      id: u._id.toString(),
+      id: u.id.toString(),
       username: u.username,
       role: u.role,
       fullName: u.fullName,

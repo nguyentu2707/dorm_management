@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { isValidObjectId } from "mongoose";
-const id = z.string().refine(isValidObjectId, "INVALID_ID");
+const id = z.string().uuid("INVALID_ID");
 const base = z.object({
   title: z.string().trim().min(1).max(200),
   content: z.string().trim().min(1).max(2000),

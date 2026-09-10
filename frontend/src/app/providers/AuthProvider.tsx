@@ -19,7 +19,7 @@ interface AuthContextValue {
   isInitializing: boolean;
   login(input: LoginInput): Promise<AuthUser>;
   register(input: RegisterInput): Promise<void>;
-  logout(): void;
+  logout(): Promise<void>;
   refreshUser(): Promise<void>;
 }
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -28,8 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitializing, setInitializing] = useState(true);
   const refreshUser = useCallback(async () => {
     if (!tokenStorage.getAccess()) {
-      setUser(null);
-      return;
+      const refreshed = await authApi.refresh();
+      tokenStorage.set(refreshed.accessToken);
     }
     setUser(await authApi.me());
   }, []);
@@ -48,16 +48,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isInitializing,
       async login(input) {
         const payload = await authApi.login(input);
-        tokenStorage.set(payload.accessToken, payload.refreshToken);
+        tokenStorage.set(payload.accessToken);
         setUser(payload.user);
         return payload.user;
       },
       async register(input) {
         await authApi.register(input);
       },
-      logout() {
-        tokenStorage.clear();
-        setUser(null);
+      async logout() {
+        try {
+          await authApi.logout();
+        } catch {
+          // Local logout must complete even if the server is unavailable.
+        } finally {
+          tokenStorage.clear();
+          setUser(null);
+          window.location.assign("/login");
+        }
       },
       refreshUser,
     }),

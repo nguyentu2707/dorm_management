@@ -7,6 +7,7 @@ import type { ITransactionManager } from "./transaction-manager.js";
 import { AppError } from "../errors/AppError.js";
 import { StudentProfileMapper } from "../mappers/student-profile.mapper.js";
 import type { IPasswordHasher } from "./password-hasher.service.js";
+import type { IRefreshSessionRepository } from "../repositories/interfaces/refresh-session.repository.interface.js";
 
 export type UpdateStudentProfileInput = UpdateStudentProfileData & {
   fullName?: string;
@@ -20,14 +21,8 @@ export class StudentProfileService {
     private students: IStudentRepository,
     private transactionManager: ITransactionManager,
     private passwords: IPasswordHasher,
+    private sessions: IRefreshSessionRepository,
   ) {}
-
-  private transactionUnsupported(error: unknown): boolean {
-    const message = error instanceof Error ? error.message : "";
-    return /Transaction numbers are only allowed|replica set|mongos/i.test(
-      message,
-    );
-  }
 
   private async entities(userId: string) {
     const [user, student] = await Promise.all([
@@ -49,45 +44,22 @@ export class StudentProfileService {
     const { student } = await this.entities(userId);
     const studentData: UpdateStudentProfileData = {
       dob: input.dob,
-      gender: input.gender,
       emergencyContactName: input.emergencyContactName,
       emergencyContactPhone: input.emergencyContactPhone,
       permanentAddress: input.permanentAddress,
     };
 
-    try {
-      return await this.transactionManager.runInTransaction(async (session) => {
-        const updatedStudent = await this.students.updateProfile(
-          student._id.toString(),
-          studentData,
-          session,
-        );
-        const updatedUser = await this.users.updateProfile(
-          userId,
-          { fullName: input.fullName, email: input.email, phone: input.phone },
-          session,
-        );
-        if (!updatedUser || !updatedStudent) {
-          throw new AppError(
-            404,
-            "STUDENT_NOT_FOUND",
-            "Không tìm thấy sinh viên",
-          );
-        }
-        return StudentProfileMapper.toResponse(updatedUser, updatedStudent);
-      });
-    } catch (error) {
-      if (!this.transactionUnsupported(error)) throw error;
-
+    return await this.transactionManager.runInTransaction(async (session) => {
       const updatedStudent = await this.students.updateProfile(
-        student._id.toString(),
+        student.id.toString(),
         studentData,
+        session,
       );
-      const updatedUser = await this.users.updateProfile(userId, {
-        fullName: input.fullName,
-        email: input.email,
-        phone: input.phone,
-      });
+      const updatedUser = await this.users.updateProfile(
+        userId,
+        { fullName: input.fullName, email: input.email, phone: input.phone },
+        session,
+      );
       if (!updatedUser || !updatedStudent) {
         throw new AppError(
           404,
@@ -96,7 +68,7 @@ export class StudentProfileService {
         );
       }
       return StudentProfileMapper.toResponse(updatedUser, updatedStudent);
-    }
+    });
   }
 
   async changePassword(
@@ -114,10 +86,12 @@ export class StudentProfileService {
         "CURRENT_PASSWORD_INCORRECT",
         "Mật khẩu hiện tại không đúng",
       );
-    await this.users.updatePassword(
-      userId,
-      await this.passwords.hash(newPassword),
-    );
+    const passwordHash = await this.passwords.hash(newPassword);
+    await this.transactionManager.runInTransaction(async (session) => {
+      if (!(await this.users.updatePassword(userId, passwordHash, session)))
+        throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
+      await this.sessions.revokeAllByUserId(userId, session);
+    });
     return { changed: true };
   }
 }

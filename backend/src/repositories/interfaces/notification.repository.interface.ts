@@ -1,4 +1,4 @@
-import type { ClientSession, Types } from "mongoose";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 import type {
   NotificationDocument,
   NotificationTargetScope,
@@ -8,9 +8,9 @@ export type CreateNotificationData = {
   title: string;
   content: string;
   targetScope: NotificationTargetScope;
-  targetBuildingId?: Types.ObjectId;
-  targetStudentId?: Types.ObjectId;
-  createdBy: Types.ObjectId;
+  targetBuildingId?: string;
+  targetStudentId?: string;
+  createdBy: string;
 };
 export type NotificationListQuery = {
   page: number;
@@ -21,7 +21,7 @@ export type NotificationListQuery = {
 export interface INotificationRepository {
   create(
     data: CreateNotificationData,
-    session?: ClientSession,
+    session?: TransactionContext,
   ): Promise<NotificationDocument>;
   findById(id: string): Promise<NotificationDocument | null>;
   findAll(

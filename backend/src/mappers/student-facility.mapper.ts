@@ -5,7 +5,7 @@ import type { RoomTypeDocument } from "../models/room-type.model.js";
 
 export class StudentFacilityMapper {
   static building(building: BuildingDocument) {
-    return { id: building._id.toString(), name: building.name };
+    return { id: building.id.toString(), name: building.name };
   }
 
   static room(
@@ -15,7 +15,7 @@ export class StudentFacilityMapper {
     totalBedCount: number,
   ) {
     return {
-      id: room._id.toString(),
+      id: room.id.toString(),
       buildingId: room.buildingId.toString(),
       roomNumber: room.roomNumber,
       floor: room.floor,
@@ -23,7 +23,7 @@ export class StudentFacilityMapper {
       emptyBedCount,
       totalBedCount,
       roomType: {
-        id: roomType._id.toString(),
+        id: roomType.id.toString(),
         name: roomType.name,
         capacity: roomType.capacity,
         pricePerMonth: roomType.pricePerMonth,
@@ -33,7 +33,7 @@ export class StudentFacilityMapper {
 
   static bed(bed: BedDocument) {
     return {
-      id: bed._id.toString(),
+      id: bed.id.toString(),
       roomId: bed.roomId.toString(),
       bedNumber: bed.bedNumber,
       status: bed.status,

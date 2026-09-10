@@ -1,4 +1,3 @@
-import { Types } from "mongoose";
 import { AppError } from "../errors/AppError.js";
 import type { INotificationRepository } from "../repositories/interfaces/notification.repository.interface.js";
 import type { INotificationRecipientRepository } from "../repositories/interfaces/notification-recipient.repository.interface.js";
@@ -26,7 +25,7 @@ export class NotificationService {
   ) {}
   async create(adminUserId: string, input: CreateInput) {
     return this.tx.runInTransaction(async (session) => {
-      let studentIds: Types.ObjectId[];
+      let studentIds: string[];
       if (input.targetScope === "ALL")
         studentIds = await this.students.findActiveIds(session);
       else if (input.targetScope === "BUILDING") {
@@ -54,7 +53,7 @@ export class NotificationService {
             "STUDENT_NOT_FOUND",
             "Không tìm thấy sinh viên đang hoạt động",
           );
-        studentIds = [student._id];
+        studentIds = [student.id];
       }
       studentIds = [
         ...new Map(studentIds.map((id) => [id.toString(), id])).values(),
@@ -71,18 +70,18 @@ export class NotificationService {
           content: input.content,
           targetScope: input.targetScope,
           targetBuildingId: input.targetBuildingId
-            ? new Types.ObjectId(input.targetBuildingId)
+            ? input.targetBuildingId
             : undefined,
           targetStudentId: input.targetStudentId
-            ? new Types.ObjectId(input.targetStudentId)
+            ? input.targetStudentId
             : undefined,
-          createdBy: new Types.ObjectId(adminUserId),
+          createdBy: adminUserId,
         },
         session,
       );
       await this.recipients.createMany(
         studentIds.map((studentId) => ({
-          notificationId: notification._id,
+          notificationId: notification.id,
           studentId,
         })),
         session,

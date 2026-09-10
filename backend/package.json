@@ -9,10 +9,17 @@
     "start": "node dist/server.js",
     "seed:admin": "npm run build && node scripts/seed-admin.mjs",
     "seed:dormitory": "tsc -p tsconfig.scripts.json && node dist-scripts/scripts/seed-dormitory-data.js",
-    "reset:dormitory": "node scripts/reset-dormitory-data.mjs && npm run seed:dormitory"
-    ,"test:recommendation": "npm run build && node --test tests/room-recommendation.test.mjs",
-    "seed:demo-students": "tsc -p tsconfig.scripts.json && node dist-scripts/scripts/seed-demo-students.js"
-    ,"db:init-replica": "node scripts/init-replica-set.mjs"
+    "test:recommendation": "npm run build && node --test tests/room-recommendation.test.mjs",
+    "test:room-change": "npm run build && node --test tests/room-change-request.test.mjs",
+    "test:core": "npm run build && node --test tests/*.test.mjs",
+    "seed:demo-students": "tsc -p tsconfig.scripts.json && node dist-scripts/scripts/seed-demo-students.js",
+    "db:migrate": "node scripts/migrate.mjs up",
+    "db:rollback": "node scripts/migrate.mjs down",
+    "test:postgres": "npm run build && node scripts/run-postgres-tests.mjs",
+    "db:check": "node scripts/check-connection.mjs",
+    "db:audit": "node scripts/audit-postgres.mjs",
+    "db:audit:room-capacity": "node scripts/audit-room-capacity.mjs",
+    "smoke:ui-api": "npm run build && node scripts/smoke-ui-api.mjs"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -20,7 +27,7 @@
     "dotenv": "^17.2.2",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.18.0",
+    "pg": "^8.23.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
@@ -29,6 +36,7 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }
