@@ -29,9 +29,15 @@ export const studentMaintenanceApi = {
 };
 export const adminMaintenanceApi = {
   staff: () =>
-    dataOf<Array<{ id: string; fullName: string; username: string }>>(
-      apiClient.get("/admin/maintenance-staff"),
-    ),
+    dataOf<
+      Array<{
+        id: string;
+        staffCode: string;
+        fullName: string;
+        specialty?: string;
+        status: "ACTIVE" | "INACTIVE";
+      }>
+    >(apiClient.get("/admin/maintenance-staff")),
   list: (params: Record<string, string | number | undefined>) =>
     dataOf<Paginated<MaintenanceRequest>>(
       apiClient.get("/admin/maintenance-requests", { params }),

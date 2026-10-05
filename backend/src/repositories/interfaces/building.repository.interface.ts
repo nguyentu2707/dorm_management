@@ -34,6 +34,15 @@ export interface IBuildingRepository {
     id: string,
     session?: TransactionContext,
   ): Promise<BuildingDocument | null>;
+  findByIdForUpdate(
+    id: string,
+    session: TransactionContext,
+  ): Promise<BuildingDocument | null>;
+  hasIncompatibleActiveResidents(
+    id: string,
+    allowedGender: BuildingGender,
+    session: TransactionContext,
+  ): Promise<boolean>;
   create(
     data: BuildingData,
     session?: TransactionContext,

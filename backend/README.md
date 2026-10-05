@@ -74,6 +74,34 @@ npm run db:rollback
 
 Do not edit a migration after it has been applied. Add another version. Initial migration enables `pgcrypto`, so the migration role needs permission to install that extension. Runtime uses UUID strings and does not require extension-management privileges.
 
+### Contract room-price snapshots
+
+Migration `008_contract_room_price_snapshot` stores the agreed integer-VND monthly
+room price on each contract. Student requests capture the price at request creation;
+approval does not reprice them. Admin-created contracts capture the current price at
+creation, including backdated contracts. Room changes capture the target price when
+approval creates the replacement contract. V1 has no tariff-history table, so it
+cannot reconstruct a historically advertised price for a backdated contract.
+
+The schema migration leaves legacy rows nullable and does not present today's
+RoomType price as historical truth. Billing returns
+`CONTRACT_PRICE_SNAPSHOT_MISSING` when a participating legacy contract has no
+snapshot. Audit first; the command is dry-run by default:
+
+```sh
+npm run db:backfill:contract-prices
+```
+
+Only for confirmed demo/development data, current RoomType prices may be applied as
+an explicitly best-effort approximation:
+
+```sh
+npm run db:backfill:contract-prices -- --apply --confirm-demo-current-price
+```
+
+Apply mode is refused when `NODE_ENV=production`. Review the status/invoice report
+and take a backup before writing.
+
 ## Auth sessions and Student Registry
 
 Access tokens remain short-lived JWTs and are stored by the current frontend in
@@ -189,6 +217,6 @@ createdb dormitory_restored
 pg_restore --no-owner -d dormitory_restored dormitory.dump
 ```
 
-Back up before schema rollback. Never use the integration reset or demo reset as a production migration procedure. See `docs/POSTGRES_ERD.md` and the repository-level migration report for audit decisions and actual validation results.
+Back up before schema rollback. Never use the integration reset or demo reset as a production migration procedure. See [the ERD](docs/POSTGRES_ERD.md), [project revision report](../PROJECT_REVISION_REPORT.md) and [Building Gender audit](../BUILDING_GENDER_AUDIT_REPORT.md) for audit decisions and validation limits.
 
 Reference documentation: [PostgreSQL SQLSTATE](https://www.postgresql.org/docs/current/errcodes-appendix.html), [node-postgres transactions](https://node-postgres.com/features/transactions).

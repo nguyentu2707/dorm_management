@@ -109,6 +109,16 @@ export class MonthlyBillingCalculator {
         "Không có ngày cư trú hợp lệ trong kỳ hóa đơn",
       );
     }
+    const missingPrice = residents.find(
+      (resident) => resident.roomPricePerMonthSnapshot === null,
+    );
+    if (missingPrice) {
+      throw new AppError(
+        409,
+        "CONTRACT_PRICE_SNAPSHOT_MISSING",
+        `Hợp đồng ${missingPrice.contractId} chưa có giá phòng lịch sử; cần xử lý dữ liệu cũ trước khi lập hóa đơn`,
+      );
+    }
     const weights = residents.map((resident) => ({
       key: resident.contractId,
       weight: resident.residentDays,
@@ -119,7 +129,7 @@ export class MonthlyBillingCalculator {
     const trashShares = allocateExact(this.fees.trashPerRoomMonth, weights);
     const calculatedResidents = residents.map((resident) => {
       const roomFee = prorateRoomFee(
-        resident.roomMonthlyPrice,
+        resident.roomPricePerMonthSnapshot!,
         resident.residentDays,
         month.daysInMonth,
       );

@@ -22,6 +22,7 @@ export type CreateContractData = {
   startDate: Date;
   endDate: Date;
   status: ContractStatus;
+  roomPricePerMonthSnapshot: number;
   approvedBy?: string;
   approvedAt?: Date;
 };
@@ -59,7 +60,7 @@ export type BillingResidenceSegment = {
   endDate: Date;
   endedAt: Date | null;
   nextSegmentStartDate: Date | null;
-  roomMonthlyPrice: number;
+  roomPricePerMonthSnapshot: number | null;
 };
 export interface IContractRepository {
   findBillingResidenceSegments(

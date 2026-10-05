@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AuthRequest } from "../../types/common.types.js";
 import type { MaintenanceRequestService } from "../../services/maintenance-request.service.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 export class StudentMaintenanceRequestController {
   constructor(private s: MaintenanceRequestService) {}
   create: RequestHandler = async (q: AuthRequest, r, n) => {
@@ -45,6 +46,7 @@ export class StudentMaintenanceRequestController {
           q.user!.userId,
           q.params.id!,
           q.body.reason,
+          auditContextFrom(q),
         ),
       });
     } catch (e) {

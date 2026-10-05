@@ -1,5 +1,7 @@
 import type { RequestHandler } from "express";
 import type { BuildingService } from "../../services/admin/building.service.js";
+import type { AuthRequest } from "../../types/common.types.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 export class BuildingController {
   constructor(private s: BuildingService) {}
   list: RequestHandler = async (_q, r, n) => {
@@ -46,12 +48,16 @@ export class BuildingController {
       n(e);
     }
   };
-  update: RequestHandler = async (q, r, n) => {
+  update: RequestHandler = async (q: AuthRequest, r, n) => {
     try {
       r.json({
         success: true,
         message: "Cập nhật tòa nhà thành công",
-        data: await this.s.update(q.params.buildingId!, q.body),
+        data: await this.s.update(
+          q.params.buildingId!,
+          q.body,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);

@@ -1,7 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowRight, Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   loginSchema,
   type LoginForm,
@@ -12,7 +13,9 @@ import { InlineError } from "../../components/ui/States";
 export function LoginPage() {
   const { login } = useAuth(),
     navigate = useNavigate(),
-    [apiError, setApiError] = useState("");
+    location = useLocation(),
+    [apiError, setApiError] = useState(""),
+    [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -40,44 +43,77 @@ export function LoginPage() {
     }
   });
   return (
-    <>
-      <h1 className="text-3xl font-bold">Đăng nhập</h1>
-      <p className="mt-2 text-slate-500">Chào mừng bạn quay lại hệ thống.</p>
+    <div className="mx-auto w-full max-w-md">
+      <div className="auth-kicker">
+        <span className="auth-kicker-dot" /> Cổng thông tin nội trú
+      </div>
+      <h1 className="auth-title">Chào mừng trở lại</h1>
+      <p className="auth-subtitle">
+        Đăng nhập để tiếp tục quản lý hành trình nội trú của bạn.
+      </p>
+      {location.state?.registered && (
+        <div className="auth-success" role="status">
+          Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.
+        </div>
+      )}
       {apiError && (
-        <div className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <div className="auth-error" role="alert">
           {apiError}
         </div>
       )}
-      <form className="mt-7 space-y-5" onSubmit={submit}>
+      <form className="mt-7 space-y-5" onSubmit={submit} noValidate>
         <label className="block">
-          <span className="label">Tên đăng nhập</span>
-          <input
-            className="field"
-            autoComplete="username"
-            {...register("username")}
-          />
+          <span className="auth-label">Tên đăng nhập</span>
+          <span className="auth-field-wrap">
+            <UserRound className="auth-field-icon" size={18} />
+            <input
+              className="auth-field"
+              autoComplete="username"
+              placeholder="Nhập tên đăng nhập"
+              {...register("username")}
+            />
+          </span>
           <InlineError message={errors.username?.message} />
         </label>
         <label className="block">
-          <span className="label">Mật khẩu</span>
-          <input
-            className="field"
-            type="password"
-            autoComplete="current-password"
-            {...register("password")}
-          />
+          <span className="auth-label">Mật khẩu</span>
+          <span className="auth-field-wrap">
+            <LockKeyhole className="auth-field-icon" size={18} />
+            <input
+              className="auth-field pr-12"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Nhập mật khẩu"
+              {...register("password")}
+            />
+            <button
+              className="auth-password-toggle"
+              type="button"
+              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              onClick={() => setShowPassword((value) => !value)}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </span>
           <InlineError message={errors.password?.message} />
         </label>
-        <button className="btn-primary w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+        <button className="auth-submit group" disabled={isSubmitting}>
+          <span>{isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}</span>
+          <ArrowRight
+            className="transition-transform group-hover:translate-x-1"
+            size={18}
+          />
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <div className="auth-divider">
+        <span>hoặc</span>
+      </div>
+      <p className="text-center text-sm text-white/60">
         Chưa có tài khoản?{" "}
-        <Link className="font-semibold text-brand-600" to="/register">
+        <Link className="auth-link" to="/register">
           Đăng ký sinh viên
         </Link>
       </p>
-    </>
+    </div>
   );
 }

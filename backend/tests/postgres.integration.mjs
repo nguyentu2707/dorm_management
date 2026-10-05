@@ -5,11 +5,9 @@ import { migrate } from "../scripts/migrate.mjs";
 import { requireTestDatabase } from "../scripts/test-database-url.mjs";
 
 const url = process.env.TEST_DATABASE_URL;
-// The parent runner already compared development and test URLs before replacing
-// DATABASE_URL for this isolated process. Recheck the suffix here, then verify
-// the actual Pool target below before migrations or reset.
+// Recheck the suffix and explicit pool source before migrations or reset.
 requireTestDatabase(url);
-process.env.DATABASE_URL = url;
+assert.equal(process.env.DATABASE_URL_SOURCE, "TEST_DATABASE_URL");
 process.env.JWT_SECRET = "integration-access-secret-only";
 process.env.JWT_REFRESH_SECRET = "integration-refresh-secret-only";
 const { pool } = await import("../dist/database/pool.js");
@@ -26,6 +24,10 @@ assert.equal(
 assert.ok(selectedDatabase.endsWith("_test"));
 const { paymentScenarios } = await import("./payment.scenarios.mjs");
 const { query } = await import("../dist/database/query.js");
+const { PostgresDashboardRepository } =
+  await import("../dist/repositories/implementations/dashboard.repository.js");
+const { AdminDashboardService } =
+  await import("../dist/services/admin/dashboard.service.js");
 const { PostgresTransactionManager } =
   await import("../dist/services/transaction-manager.js");
 const { translatePostgresError } =
@@ -79,6 +81,8 @@ const { MonthlyBillingCalculator } =
 const { RoomService } = await import("../dist/services/admin/room.service.js");
 const { RoomTypeService } =
   await import("../dist/services/admin/room-type.service.js");
+const { BuildingService } =
+  await import("../dist/services/admin/building.service.js");
 const { app } = await import("../dist/app.js");
 const tx = new PostgresTransactionManager(),
   r = repos;
@@ -100,6 +104,8 @@ const contracts = new ContractService(
   r.rooms,
   tx,
   r.checkouts,
+  r.types,
+  r.buildings,
 );
 const changes = new RoomChangeRequestService(
   r.changes,
@@ -109,6 +115,8 @@ const changes = new RoomChangeRequestService(
   r.rooms,
   tx,
   r.checkouts,
+  r.types,
+  r.buildings,
 );
 const checkout = new CheckoutRequestService(
   r.checkouts,
@@ -154,6 +162,13 @@ const billing = (invoices = r.invoices) =>
     tx,
   );
 const code = (expected) => (e) => e.code === expected;
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+};
 const userData = (username, email) => ({
   username,
   fullName: username,
@@ -186,7 +201,11 @@ async function student() {
     u = await r.users.create(userData("u" + id, "u" + id + "@example.test"));
   return {
     user: u,
-    student: await r.students.create({ userId: u.id, mssv: "SV" + id }),
+    student: await r.students.create({
+      userId: u.id,
+      mssv: "SV" + id,
+      gender: "MALE",
+    }),
   };
 }
 async function resident(target) {
@@ -223,10 +242,10 @@ test(
     let server;
     try {
       await migrate(pool);
-      // This is an explicitly selected isolated test database. Never read DATABASE_URL for reset.
-      assert.ok(process.env.DATABASE_URL === process.env.TEST_DATABASE_URL);
+      // The test pool reads TEST_DATABASE_URL directly; DATABASE_URL is never repurposed.
+      assert.equal(process.env.DATABASE_URL_SOURCE, "TEST_DATABASE_URL");
       await pool.query(
-        "TRUNCATE refresh_sessions,student_registry,users,students,staff,buildings,room_types,rooms,beds,equipment_categories,equipment_items,contracts,room_change_requests,checkout_requests,maintenance_requests,notifications,notification_recipients,room_preferences,class_schedules,monthly_billings,utility_readings,invoices,invoice_items RESTART IDENTITY CASCADE",
+        "TRUNCATE audit_logs,refresh_sessions,student_registry,users,students,staff,buildings,room_types,rooms,beds,equipment_categories,equipment_items,contracts,room_change_requests,checkout_requests,maintenance_requests,notifications,notification_recipients,room_preferences,class_schedules,monthly_billings,utility_readings,invoices,invoice_items RESTART IDENTITY CASCADE",
       );
       await t.test("versioned migrations down/up and repeat up", async () => {
         await migrate(pool, "down");
@@ -234,9 +253,9 @@ test(
         await migrate(pool, "down");
         await migrate(pool);
         await migrate(pool);
-        const migrationFiles = (
-          await import("node:fs/promises")
-        ).readdir(new URL("../migrations/", import.meta.url));
+        const migrationFiles = (await import("node:fs/promises")).readdir(
+          new URL("../migrations/", import.meta.url),
+        );
         const expectedMigrations = (await migrationFiles).filter((name) =>
           /^\d+_.+\.up\.sql$/.test(name),
         ).length;
@@ -264,6 +283,7 @@ test(
           "fk_refresh_sessions_user",
           "uq_student_registry_student_code",
           "ck_student_registry_claim_state",
+          "ck_contracts_room_price_per_month_snapshot",
         ])
           assert.ok(names.includes(expected), `Missing constraint ${expected}`);
         const indexes = (
@@ -280,6 +300,152 @@ test(
         capacity: 2,
         pricePerMonth: 1200000,
       });
+      await t.test(
+        "dashboard aggregates occupancy, expiry, finance and trends from PostgreSQL",
+        async () => {
+          const rollback = new Error("ROLLBACK_DASHBOARD_FIXTURE");
+          await assert.rejects(
+            () =>
+              tx.runInTransaction(async () => {
+                const dashboard = new AdminDashboardService(
+                  new PostgresDashboardRepository(),
+                );
+                const target = await room(3);
+                const unavailable = await room(1);
+                await query(
+                  "UPDATE rooms SET status='MAINTENANCE' WHERE id=$1",
+                  [unavailable.id],
+                );
+
+                const first = await resident(target);
+                const second = await resident(target);
+                const ended = await resident(target);
+                await query(
+                  "UPDATE contracts SET end_date=now()+interval '5 days' WHERE id=$1",
+                  [first.contract.id],
+                );
+                await query(
+                  "UPDATE contracts SET end_date=now()+interval '20 days' WHERE id=$1",
+                  [second.contract.id],
+                );
+                await query(
+                  "UPDATE contracts SET status='ENDED',ended_at=now() WHERE id=$1",
+                  [ended.contract.id],
+                );
+                await query("UPDATE beds SET status='EMPTY' WHERE id=$1", [
+                  ended.bed.id,
+                ]);
+                const pendingStudent = await student();
+                await query(
+                  `INSERT INTO contracts(student_id,bed_id,room_id,start_date,end_date,status)
+                   VALUES($1,$2,$3,now(),now()+interval '90 days','PENDING')`,
+                  [pendingStudent.student.id, ended.bed.id, target.id],
+                );
+                await query(
+                  `INSERT INTO room_change_requests(student_id,current_contract_id,target_bed_id,status)
+                   VALUES($1,$2,$3,'PENDING')`,
+                  [first.student.id, first.contract.id, ended.bed.id],
+                );
+                await query(
+                  `INSERT INTO checkout_requests(student_id,contract_id,room_id,status)
+                   VALUES($1,$2,$3,'PENDING')`,
+                  [second.student.id, second.contract.id, target.id],
+                );
+                await query(
+                  `INSERT INTO maintenance_requests(student_id,room_id,category,description,status)
+                   VALUES($1,$2,'OTHER','Dashboard pending','PENDING'),
+                         ($1,$2,'OTHER','Dashboard progress','IN_PROGRESS')`,
+                  [first.student.id, target.id],
+                );
+                await query(
+                  "INSERT INTO staff(staff_code,full_name,status) VALUES('DASH-STAFF','Dashboard Staff','ACTIVE')",
+                );
+
+                const parts = new Intl.DateTimeFormat("en-US", {
+                  timeZone: "Asia/Ho_Chi_Minh",
+                  year: "numeric",
+                  month: "2-digit",
+                }).formatToParts(new Date());
+                const period = `${parts.find((x) => x.type === "year").value}-${parts.find((x) => x.type === "month").value}`;
+                const draftBilling = await billing().saveDraft(
+                  {
+                    roomId: target.id,
+                    billingPeriod: period,
+                    electricityPrevious: 0,
+                    electricityCurrent: 12,
+                    waterPrevious: 0,
+                    waterCurrent: 7,
+                  },
+                  new Date(),
+                );
+                const finalized = await billing().finalize(
+                  draftBilling.id,
+                  admin.id,
+                );
+                const [invoice, ...cancelled] = finalized.invoices;
+                assert.ok(invoice);
+                await query(
+                  "UPDATE invoices SET total_amount=1000000,status='PARTIALLY_PAID' WHERE id=$1",
+                  [invoice.id],
+                );
+                if (cancelled.length)
+                  await query(
+                    "UPDATE invoices SET status='CANCELLED' WHERE id=ANY($1::uuid[])",
+                    [cancelled.map((item) => item.id)],
+                  );
+                await query(
+                  `INSERT INTO payments(
+                     invoice_id,amount,status,submitted_by,processed_by,processed_at,
+                     voided_by,voided_at,void_reason
+                   )
+                   VALUES($1,400000,'CONFIRMED',$2,$2,now(),NULL,NULL,NULL),
+                         ($1,300000,'PENDING',$2,NULL,NULL,NULL,NULL,NULL),
+                         ($1,200000,'VOIDED',$2,$2,now(),$2,now(),'Dashboard void test')`,
+                  [invoice.id, admin.id],
+                );
+
+                const summary = await dashboard.summary();
+                assert.equal(summary.facility.totalUsableBeds, 3);
+                assert.equal(summary.facility.occupiedBeds, 2);
+                assert.equal(summary.facility.emptyBeds, 1);
+                assert.equal(summary.facility.occupancyRate, 66.7);
+                assert.equal(summary.residence.activeContracts, 2);
+                assert.equal(summary.residence.pendingContracts, 1);
+                assert.equal(summary.residence.pendingRoomChanges, 1);
+                assert.equal(summary.residence.pendingCheckouts, 1);
+                assert.equal(summary.expiringContracts.within7Days, 1);
+                assert.equal(summary.expiringContracts.within30Days, 2);
+                assert.equal(summary.operations.pendingMaintenance, 1);
+                assert.equal(summary.operations.inProgressMaintenance, 1);
+                assert.equal(summary.finance.partiallyPaidInvoices, 1);
+                assert.equal(summary.finance.confirmedRevenueThisMonth, 400000);
+                assert.equal(summary.finance.confirmedRevenueAllTime, 400000);
+                assert.equal(summary.finance.outstandingAmount, 600000);
+                const targetBuilding = summary.occupancyByBuilding.find(
+                  (item) => item.buildingId === building.id,
+                );
+                assert.equal(targetBuilding.occupancyRate, 66.7);
+
+                const trends = await dashboard.trends(6);
+                assert.deepEqual(trends.revenue, [{ period, amount: 400000 }]);
+                assert.deepEqual(trends.utilities, [
+                  { period, electricityUsage: 12, waterUsage: 7 },
+                ]);
+
+                await query(
+                  "UPDATE invoices SET status='CANCELLED' WHERE id=$1",
+                  [invoice.id],
+                );
+                assert.equal(
+                  (await dashboard.summary()).finance.outstandingAmount,
+                  0,
+                );
+                throw rollback;
+              }),
+            (error) => error === rollback,
+          );
+        },
+      );
       await t.test(
         "real unique diagnostic translates exact SQLSTATE plus constraint",
         async () => {
@@ -370,6 +536,7 @@ test(
                 startDate: new Date("2026-01-01"),
                 endDate: new Date("2027-01-01"),
                 status: "PENDING",
+                roomPricePerMonthSnapshot: 1_800_000,
               }),
             code("CONTRACT_ROOM_MISMATCH"),
           );
@@ -463,7 +630,10 @@ test(
             .map((bed) => bed.id)
             .sort();
           await roomService.update(target.id, { roomTypeId: typeB.id });
-          assert.equal((await r.rooms.findById(target.id)).roomTypeId, typeB.id);
+          assert.equal(
+            (await r.rooms.findById(target.id)).roomTypeId,
+            typeB.id,
+          );
           assert.deepEqual(
             (await r.beds.findByRoomId(target.id)).map((bed) => bed.id).sort(),
             originalIds,
@@ -472,7 +642,10 @@ test(
             () => roomService.update(target.id, { roomTypeId: typeSix.id }),
             code("ROOM_TYPE_CAPACITY_MISMATCH"),
           );
-          assert.equal((await r.rooms.findById(target.id)).roomTypeId, typeB.id);
+          assert.equal(
+            (await r.rooms.findById(target.id)).roomTypeId,
+            typeB.id,
+          );
           assert.equal((await r.beds.findByRoomId(target.id)).length, 4);
 
           await assert.rejects(
@@ -584,7 +757,10 @@ test(
           );
           assert.equal(await r.users.findByUsername("rollback-register"), null);
           assert.equal(await r.students.findByMssv(identity.studentCode), null);
-          assert.equal((await r.registry.findById(identity.id)).status, "AVAILABLE");
+          assert.equal(
+            (await r.registry.findById(identity.id)).status,
+            "AVAILABLE",
+          );
         },
       );
       await t.test(
@@ -597,11 +773,23 @@ test(
             gender: "FEMALE",
           });
           await assert.rejects(
-            () => auth.register({ username: "unknown-registry", password: "Secret123!", mssv: "UNKNOWN001", email: "unknown@example.test" }),
+            () =>
+              auth.register({
+                username: "unknown-registry",
+                password: "Secret123!",
+                mssv: "UNKNOWN001",
+                email: "unknown@example.test",
+              }),
             code("STUDENT_NOT_IN_REGISTRY"),
           );
           await assert.rejects(
-            () => auth.register({ username: "wrong-registry", password: "Secret123!", mssv: identity.studentCode, email: "wrong@example.test" }),
+            () =>
+              auth.register({
+                username: "wrong-registry",
+                password: "Secret123!",
+                mssv: identity.studentCode,
+                email: "wrong@example.test",
+              }),
             code("STUDENT_IDENTITY_MISMATCH"),
           );
           const result = await auth.register({
@@ -621,27 +809,68 @@ test(
           assert.equal(claimed.status, "CLAIMED");
           assert.equal(claimed.claimedUserId, result.user.id);
           await assert.rejects(
-            () => auth.register({ username: "registry-second", password: "Secret123!", mssv: identity.studentCode, email: identity.email }),
+            () =>
+              auth.register({
+                username: "registry-second",
+                password: "Secret123!",
+                mssv: identity.studentCode,
+                email: identity.email,
+              }),
             code("STUDENT_REGISTRY_ALREADY_CLAIMED"),
           );
 
-          const disabled = await r.registry.create({ studentCode: "DISABLED001", fullName: "Disabled", email: "disabled@example.test", gender: "MALE" });
+          const disabled = await r.registry.create({
+            studentCode: "DISABLED001",
+            fullName: "Disabled",
+            email: "disabled@example.test",
+            gender: "MALE",
+          });
           await r.registry.setAvailability(disabled.id, "DISABLED");
           await assert.rejects(
-            () => auth.register({ username: "disabled-student", password: "Secret123!", mssv: disabled.studentCode, email: disabled.email }),
+            () =>
+              auth.register({
+                username: "disabled-student",
+                password: "Secret123!",
+                mssv: disabled.studentCode,
+                email: disabled.email,
+              }),
             code("STUDENT_REGISTRY_DISABLED"),
           );
           const existing = await student();
-          const duplicateCode = await r.registry.create({ studentCode: existing.student.mssv, fullName: "Duplicate code", email: "duplicate-code@example.test", gender: "MALE" });
+          const duplicateCode = await r.registry.create({
+            studentCode: existing.student.mssv,
+            fullName: "Duplicate code",
+            email: "duplicate-code@example.test",
+            gender: "MALE",
+          });
           await assert.rejects(
-            () => auth.register({ username: "duplicate-code", password: "Secret123!", mssv: duplicateCode.studentCode, email: duplicateCode.email }),
+            () =>
+              auth.register({
+                username: "duplicate-code",
+                password: "Secret123!",
+                mssv: duplicateCode.studentCode,
+                email: duplicateCode.email,
+              }),
             code("STUDENT_CODE_ALREADY_EXISTS"),
           );
-          const emailOwner = await r.users.create(userData("email-owner", "owned@example.test"));
+          const emailOwner = await r.users.create(
+            userData("email-owner", "owned@example.test"),
+          );
           assert.ok(emailOwner.id);
-          const duplicateEmail = await r.registry.create({ studentCode: "EMAILDUP001", fullName: "Duplicate email", email: "owned@example.test", gender: "MALE" });
+          const duplicateEmail = await r.registry.create({
+            studentCode: "EMAILDUP001",
+            fullName: "Duplicate email",
+            email: "owned@example.test",
+            gender: "MALE",
+          });
           await assert.rejects(
-            () => auth.register({ username: "duplicate-email", password: "Secret123!", mssv: duplicateEmail.studentCode, email: duplicateEmail.email }),
+            () =>
+              auth.register({
+                username: "duplicate-email",
+                password: "Secret123!",
+                mssv: duplicateEmail.studentCode,
+                email: duplicateEmail.email,
+              }),
             code("EMAIL_ALREADY_EXISTS"),
           );
         },
@@ -649,16 +878,54 @@ test(
       await t.test(
         "concurrent registry claim has exactly one winner",
         async () => {
-          const identity = await r.registry.create({ studentCode: "CLAIMRACE001", fullName: "Claim Race", email: "claim.race@example.test", gender: "MALE" });
+          const identity = await r.registry.create({
+            studentCode: "CLAIMRACE001",
+            fullName: "Claim Race",
+            email: "claim.race@example.test",
+            gender: "MALE",
+          });
           const results = await Promise.allSettled([
-            auth.register({ username: "claim-race-a", password: "Secret123!", mssv: identity.studentCode, email: identity.email }),
-            auth.register({ username: "claim-race-b", password: "Secret123!", mssv: identity.studentCode, email: identity.email }),
+            auth.register({
+              username: "claim-race-a",
+              password: "Secret123!",
+              mssv: identity.studentCode,
+              email: identity.email,
+            }),
+            auth.register({
+              username: "claim-race-b",
+              password: "Secret123!",
+              mssv: identity.studentCode,
+              email: identity.email,
+            }),
           ]);
-          assert.equal(results.filter((item) => item.status === "fulfilled").length, 1);
-          assert.equal(results.filter((item) => item.status === "rejected").length, 1);
-          assert.equal((await r.registry.findById(identity.id)).status, "CLAIMED");
-          assert.equal((await pool.query("SELECT count(*) FROM students WHERE mssv=$1", [identity.studentCode])).rows[0].count, "1");
-          assert.equal((await pool.query("SELECT count(*) FROM users WHERE username IN ('claim-race-a','claim-race-b')")).rows[0].count, "1");
+          assert.equal(
+            results.filter((item) => item.status === "fulfilled").length,
+            1,
+          );
+          assert.equal(
+            results.filter((item) => item.status === "rejected").length,
+            1,
+          );
+          assert.equal(
+            (await r.registry.findById(identity.id)).status,
+            "CLAIMED",
+          );
+          assert.equal(
+            (
+              await pool.query("SELECT count(*) FROM students WHERE mssv=$1", [
+                identity.studentCode,
+              ])
+            ).rows[0].count,
+            "1",
+          );
+          assert.equal(
+            (
+              await pool.query(
+                "SELECT count(*) FROM users WHERE username IN ('claim-race-a','claim-race-b')",
+              )
+            ).rows[0].count,
+            "1",
+          );
         },
       );
       await t.test(
@@ -666,45 +933,102 @@ test(
         async () => {
           const account = await student();
           const password = "SessionSecret123!";
-          await r.users.updatePassword(account.user.id, await hasher.hash(password));
-          const login = await auth.login(account.user.username, password, { userAgent: "integration-test" });
+          await r.users.updatePassword(
+            account.user.id,
+            await hasher.hash(password),
+          );
+          const login = await auth.login(account.user.username, password, {
+            userAgent: "integration-test",
+          });
           const payload = tokens.verifyRefreshToken(login.refreshToken);
-          const stored = (await pool.query("SELECT * FROM refresh_sessions WHERE id=$1", [payload.sessionId])).rows[0];
+          const stored = (
+            await pool.query("SELECT * FROM refresh_sessions WHERE id=$1", [
+              payload.sessionId,
+            ])
+          ).rows[0];
           assert.notEqual(stored.token_hash, login.refreshToken);
           assert.equal(stored.token_hash.length, 64);
           const rotations = await Promise.allSettled([
             auth.refresh(login.refreshToken),
             auth.refresh(login.refreshToken),
           ]);
-          assert.equal(rotations.filter((item) => item.status === "fulfilled").length, 1);
-          const rotated = rotations.find((item) => item.status === "fulfilled").value;
-          await assert.rejects(() => auth.refresh(login.refreshToken), code("REFRESH_TOKEN_REVOKED"));
+          assert.equal(
+            rotations.filter((item) => item.status === "fulfilled").length,
+            1,
+          );
+          const rotated = rotations.find(
+            (item) => item.status === "fulfilled",
+          ).value;
+          await assert.rejects(
+            () => auth.refresh(login.refreshToken),
+            code("REFRESH_TOKEN_REVOKED"),
+          );
           const secondRotation = await auth.refresh(rotated.refreshToken);
           await auth.logout(secondRotation.refreshToken);
           await auth.logout(secondRotation.refreshToken);
-          await assert.rejects(() => auth.refresh(secondRotation.refreshToken), code("REFRESH_TOKEN_REVOKED"));
+          await assert.rejects(
+            () => auth.refresh(secondRotation.refreshToken),
+            code("REFRESH_TOKEN_REVOKED"),
+          );
 
           const expiring = await auth.login(account.user.username, password);
-          const expiringPayload = tokens.verifyRefreshToken(expiring.refreshToken);
-          await pool.query("UPDATE refresh_sessions SET created_at=now()-interval '2 days',expires_at=now()-interval '1 day' WHERE id=$1", [expiringPayload.sessionId]);
-          await assert.rejects(() => auth.refresh(expiring.refreshToken), code("REFRESH_TOKEN_REVOKED"));
+          const expiringPayload = tokens.verifyRefreshToken(
+            expiring.refreshToken,
+          );
+          await pool.query(
+            "UPDATE refresh_sessions SET created_at=now()-interval '2 days',expires_at=now()-interval '1 day' WHERE id=$1",
+            [expiringPayload.sessionId],
+          );
+          await assert.rejects(
+            () => auth.refresh(expiring.refreshToken),
+            code("REFRESH_TOKEN_REVOKED"),
+          );
 
           const locked = await auth.login(account.user.username, password);
-          const { AdminStudentService } = await import("../dist/services/admin/student.service.js");
-          const adminStudents = new AdminStudentService(r.students, r.users, r.sessions, tx);
+          const { AdminStudentService } =
+            await import("../dist/services/admin/student.service.js");
+          const adminStudents = new AdminStudentService(
+            r.students,
+            r.users,
+            r.sessions,
+            tx,
+          );
           await adminStudents.accountStatus(account.student.id, "LOCKED");
           await assert.rejects(() => auth.refresh(locked.refreshToken));
-          await assert.rejects(() => auth.login(account.user.username, password), code("FORBIDDEN"));
+          await assert.rejects(
+            () => auth.login(account.user.username, password),
+            code("FORBIDDEN"),
+          );
           await adminStudents.accountStatus(account.student.id, "ACTIVE");
 
-          const { StudentProfileService } = await import("../dist/services/student-profile.service.js");
-          const profile = new StudentProfileService(r.users, r.students, tx, hasher, r.sessions);
+          const { StudentProfileService } =
+            await import("../dist/services/student-profile.service.js");
+          const profile = new StudentProfileService(
+            r.users,
+            r.students,
+            tx,
+            hasher,
+            r.sessions,
+          );
           const existingProfile = await profile.getProfile(account.user.id);
           assert.equal(existingProfile.mssv, account.student.mssv);
-          const passwordSession = await auth.login(account.user.username, password);
-          await profile.changePassword(account.user.id, password, "NewSessionSecret123!");
-          await assert.rejects(() => auth.refresh(passwordSession.refreshToken), code("REFRESH_TOKEN_REVOKED"));
-          const relogin = await auth.login(account.user.username, "NewSessionSecret123!");
+          const passwordSession = await auth.login(
+            account.user.username,
+            password,
+          );
+          await profile.changePassword(
+            account.user.id,
+            password,
+            "NewSessionSecret123!",
+          );
+          await assert.rejects(
+            () => auth.refresh(passwordSession.refreshToken),
+            code("REFRESH_TOKEN_REVOKED"),
+          );
+          const relogin = await auth.login(
+            account.user.username,
+            "NewSessionSecret123!",
+          );
           assert.ok(await auth.refresh(relogin.refreshToken));
         },
       );
@@ -721,6 +1045,7 @@ test(
             startDate: new Date("2026-01-01"),
             endDate: new Date("2027-01-01"),
             status: "PENDING",
+            roomPricePerMonthSnapshot: 1_800_000,
           };
           const ca = await r.contracts.create({
               ...input,
@@ -900,6 +1225,38 @@ test(
         },
       );
       await t.test(
+        "billing preserves the contract price after RoomType price changes",
+        async () => {
+          const agreedPrice = 1_350_000;
+          const changedPrice = 2_750_000;
+          const historicalType = await r.types.create({
+            name: "Historical price " + ++serial,
+            capacity: 1,
+            pricePerMonth: agreedPrice,
+          });
+          const target = await roomService.create({
+            buildingId: building.id,
+            roomTypeId: historicalType.id,
+            roomNumber: "HIST" + ++serial,
+            floor: 1,
+          });
+          const account = await resident(target);
+          assert.equal(account.contract.roomPricePerMonthSnapshot, agreedPrice);
+          await r.types.update(historicalType.id, {
+            pricePerMonth: changedPrice,
+          });
+          const billingDraft = await draft(target, "2026-09", 0);
+          const preview = await billing().preview(billingDraft.id);
+          assert.equal(
+            preview.residents[0].roomPricePerMonthSnapshot,
+            agreedPrice,
+          );
+          assert.equal(preview.residents[0].roomFee, agreedPrice);
+          const finalized = await billing().finalize(billingDraft.id, admin.id);
+          assert.equal(finalized.invoices[0].roomMonthlyPrice, agreedPrice);
+        },
+      );
+      await t.test(
         "failure during FINALIZE rolls back reading, invoices, billing and cursor",
         async () => {
           const target = await room();
@@ -1025,9 +1382,9 @@ test(
               categoryId: category.id,
               condition: "GOOD",
             });
-          const candidate = (await r.recommendations.findCandidates("MALE")).find(
-            (x) => x.room.id === target.id,
-          );
+          const candidate = (
+            await r.recommendations.findCandidates("MALE")
+          ).find((x) => x.room.id === target.id);
           assert.equal(candidate.hasHotWater, true);
           assert.equal(candidate.room.pricePerMonth, 1200000);
           assert.deepEqual(candidate.residentSchedules, [entries]);
@@ -1124,7 +1481,10 @@ test(
           const loginCookie = response.headers.get("set-cookie");
           response = await fetch(base + "/auth/refresh-token", {
             method: "POST",
-            headers: { "content-type": "application/json", cookie: loginCookie },
+            headers: {
+              "content-type": "application/json",
+              cookie: loginCookie,
+            },
             body: "{}",
           });
           assert.equal(response.status, 200);
@@ -1144,7 +1504,10 @@ test(
           assert.equal(response.status, 403);
           response = await fetch(base + "/auth/refresh-token", {
             method: "POST",
-            headers: { "content-type": "application/json", cookie: rotatedCookie },
+            headers: {
+              "content-type": "application/json",
+              cookie: rotatedCookie,
+            },
             body: "{}",
           });
           assert.equal(response.status, 403);
@@ -1184,8 +1547,14 @@ test(
             },
           });
           assert.equal(response.status, 200);
-          assert.equal(response.headers.get("access-control-allow-origin"), "http://localhost:5173");
-          assert.equal(response.headers.get("access-control-allow-credentials"), "true");
+          assert.equal(
+            response.headers.get("access-control-allow-origin"),
+            "http://localhost:5173",
+          );
+          assert.equal(
+            response.headers.get("access-control-allow-credentials"),
+            "true",
+          );
           response = await fetch(
             base + "/admin/rooms/507f1f77bcf86cd799439011",
             { headers: { authorization: "Bearer " + adminToken } },
@@ -1207,9 +1576,7 @@ test(
         },
       );
       await t.test("facility deletion and capacity restrictions", async () => {
-        const { BuildingService } =
-          await import("../dist/services/admin/building.service.js");
-        const bs = new BuildingService(r.buildings, r.rooms),
+        const bs = new BuildingService(r.buildings, r.rooms, tx),
           ts = roomTypeService;
         await assert.rejects(
           () => bs.delete(building.id),
@@ -1248,6 +1615,489 @@ test(
           code("ROOM_HAS_EQUIPMENT"),
         );
       });
+      await t.test(
+        "building gender update uses ACTIVE contracts only and is atomic",
+        async () => {
+          const bs = new BuildingService(r.buildings, r.rooms, tx);
+          const createBuildingRoom = async (allowedGender, prefix) => {
+            const targetBuilding = await r.buildings.create({
+              name: `${prefix} building ${++serial}`,
+              allowedGender,
+            });
+            const targetRoom = await roomService.create({
+              buildingId: targetBuilding.id,
+              roomTypeId: type.id,
+              roomNumber: `${prefix}${++serial}`,
+              floor: 1,
+            });
+            return { targetBuilding, targetRoom };
+          };
+
+          const activeCase = await createBuildingRoom("MALE", "GACTIVE");
+          const activeResident = await student();
+          const activeBed = (
+            await r.beds.findByRoomId(activeCase.targetRoom.id)
+          )[0];
+          const activeContract = await contracts.adminCreateContract(admin.id, {
+            studentId: activeResident.student.id,
+            bedId: activeBed.id,
+          });
+          await assert.rejects(
+            () =>
+              bs.update(activeCase.targetBuilding.id, {
+                name: "must not persist",
+                allowedGender: "FEMALE",
+              }),
+            code("BUILDING_GENDER_CONFLICT_WITH_RESIDENTS"),
+          );
+          let persisted = await r.buildings.findById(
+            activeCase.targetBuilding.id,
+          );
+          assert.equal(persisted.name, activeCase.targetBuilding.name);
+          assert.equal(persisted.allowedGender, "MALE");
+
+          await contracts.endContract(activeContract.id, admin.id);
+          persisted = await bs.update(activeCase.targetBuilding.id, {
+            allowedGender: "FEMALE",
+          });
+          assert.equal(persisted.allowedGender, "FEMALE");
+
+          const cancelledCase = await createBuildingRoom("MIXED", "GCANCEL");
+          const cancelledResident = await student();
+          const cancelledBed = (
+            await r.beds.findByRoomId(cancelledCase.targetRoom.id)
+          )[0];
+          const cancelled = await contracts.adminCreateContract(admin.id, {
+            studentId: cancelledResident.student.id,
+            bedId: cancelledBed.id,
+          });
+          await contracts.cancelActiveContract(
+            cancelled.id,
+            admin.id,
+            "integration test",
+          );
+          assert.equal(
+            (
+              await bs.update(cancelledCase.targetBuilding.id, {
+                allowedGender: "FEMALE",
+              })
+            ).allowedGender,
+            "FEMALE",
+          );
+
+          for (const [status, prefix] of [
+            ["PENDING", "GPENDING"],
+            ["REJECTED", "GREJECTED"],
+          ]) {
+            const statusCase = await createBuildingRoom("MIXED", prefix);
+            const account = await student();
+            const bed = (
+              await r.beds.findByRoomId(statusCase.targetRoom.id)
+            )[0];
+            const pending = await contracts.createContract(account.user.id, {
+              bedId: bed.id,
+            });
+            if (status === "REJECTED")
+              await contracts.rejectContract(pending.id, admin.id, "test");
+            assert.equal(
+              (
+                await bs.update(statusCase.targetBuilding.id, {
+                  allowedGender: "FEMALE",
+                })
+              ).allowedGender,
+              "FEMALE",
+            );
+          }
+        },
+      );
+      await t.test(
+        "building mutation serializes with every ACTIVE placement path",
+        async () => {
+          const proxy = (target, methods) =>
+            new Proxy(target, {
+              get(object, key) {
+                if (key in methods) return methods[key];
+                const value = object[key];
+                return typeof value === "function" ? value.bind(object) : value;
+              },
+            });
+          const createBuildingRoom = async (prefix) => {
+            const targetBuilding = await r.buildings.create({
+              name: `${prefix} building ${++serial}`,
+              allowedGender: "MIXED",
+            });
+            const targetRoom = await roomService.create({
+              buildingId: targetBuilding.id,
+              roomTypeId: type.id,
+              roomNumber: `${prefix}${++serial}`,
+              floor: 1,
+            });
+            return { targetBuilding, targetRoom };
+          };
+          const runRace = async (label, preparePlacement) => {
+            for (const placementFirst of [true, false]) {
+              const target = await createBuildingRoom(
+                `${label}${placementFirst}`,
+              );
+              const lockHeld = deferred();
+              const releasePlacement = deferred();
+              const mutationAttempted = deferred();
+              let firstPid, secondPid;
+              const lock = (first) => async (id, context) => {
+                await query("SET LOCAL lock_timeout = '8s'", [], context);
+                const pid = (
+                  await query("SELECT pg_backend_pid() AS pid", [], context)
+                ).rows[0].pid;
+                if (first) firstPid = pid;
+                else {
+                  secondPid = pid;
+                  mutationAttempted.resolve();
+                }
+                const row = await r.buildings.findByIdForUpdate(id, context);
+                if (first) {
+                  lockHeld.resolve();
+                  await releasePlacement.promise;
+                }
+                return row;
+              };
+              const placementBuildings = proxy(r.buildings, {
+                findByIdForUpdate: lock(placementFirst),
+              });
+              const mutationBuildings = proxy(r.buildings, {
+                findByIdForUpdate: lock(!placementFirst),
+              });
+              const placement = await preparePlacement(
+                target,
+                placementBuildings,
+              );
+              const snapshot = async () =>
+                (
+                  await pool.query(
+                    `SELECT jsonb_build_object(
+                'contracts', (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.id) FROM contracts c WHERE student_id=$1),
+                'requests', (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM room_change_requests r WHERE student_id=$1),
+                'student', (SELECT to_jsonb(s) FROM students s WHERE id=$1),
+                'beds', (SELECT jsonb_agg(to_jsonb(b) ORDER BY b.id) FROM beds b WHERE room_id=$2 OR id IN (SELECT bed_id FROM contracts WHERE student_id=$1))) AS state`,
+                    [placement.studentId, target.targetRoom.id],
+                  )
+                ).rows[0].state;
+              const before = await snapshot();
+              const mutation = () =>
+                new BuildingService(mutationBuildings, r.rooms, tx).update(
+                  target.targetBuilding.id,
+                  { allowedGender: "FEMALE" },
+                );
+              const outcome = (start) =>
+                start().then(
+                  (value) => ({ value }),
+                  (error) => ({ error }),
+                );
+              const first = outcome(
+                placementFirst ? placement.start : mutation,
+              );
+              let second;
+              try {
+                await Promise.race([
+                  lockHeld.promise,
+                  first.then(() => {
+                    throw new Error("First writer did not hold Building");
+                  }),
+                ]);
+                second = outcome(placementFirst ? mutation : placement.start);
+                await Promise.race([
+                  mutationAttempted.promise,
+                  second.then(() => {
+                    throw new Error("Second writer did not attempt Building");
+                  }),
+                ]);
+                assert.notEqual(
+                  firstPid,
+                  secondPid,
+                  "writers must use separate connections",
+                );
+                const deadline = Date.now() + 5000;
+                while (
+                  !(
+                    await pool.query(
+                      "SELECT $1::integer = ANY(pg_blocking_pids($2::integer)) AS blocked",
+                      [firstPid, secondPid],
+                    )
+                  ).rows[0].blocked
+                ) {
+                  assert.ok(
+                    Date.now() < deadline,
+                    "second writer must actually block behind first",
+                  );
+                  await new Promise((resolve) => setTimeout(resolve, 10));
+                }
+              } finally {
+                releasePlacement.resolve();
+                await Promise.all([first, second]);
+              }
+              const firstResult = await first,
+                secondResult = await second;
+              assert.equal(firstResult.error, undefined);
+              assert.ok(
+                code(
+                  placementFirst
+                    ? "BUILDING_GENDER_CONFLICT_WITH_RESIDENTS"
+                    : "BUILDING_GENDER_NOT_ALLOWED",
+                )(secondResult.error),
+              );
+              const finalBuilding = await r.buildings.findById(
+                target.targetBuilding.id,
+              );
+              const active = await r.contracts.findActiveByStudentId(
+                placement.studentId,
+              );
+              assert.equal(
+                finalBuilding.allowedGender,
+                placementFirst ? "MIXED" : "FEMALE",
+              );
+              if (placementFirst)
+                assert.equal(active.roomId, target.targetRoom.id);
+              else
+                assert.deepEqual(
+                  await snapshot(),
+                  before,
+                  "rejected placement must not change residence data",
+                );
+              assert.equal(
+                Number(
+                  (
+                    await pool.query(
+                      `SELECT count(*) FROM contracts c JOIN rooms r ON r.id=c.room_id JOIN buildings b ON b.id=r.building_id JOIN students s ON s.id=c.student_id
+               WHERE c.status='ACTIVE' AND b.allowed_gender<>'MIXED' AND (s.gender IS NULL OR s.gender<>b.allowed_gender)`,
+                    )
+                  ).rows[0].count,
+                ),
+                0,
+              );
+            }
+          };
+
+          await runRace("RACEAPPROVE", async (target, buildingsRepo) => {
+            const account = await student();
+            const bed = (await r.beds.findByRoomId(target.targetRoom.id))[0];
+            const pending = await contracts.createContract(account.user.id, {
+              bedId: bed.id,
+            });
+            const service = new ContractService(
+              r.contracts,
+              r.students,
+              r.beds,
+              r.rooms,
+              tx,
+              r.checkouts,
+              r.types,
+              buildingsRepo,
+            );
+            return {
+              studentId: account.student.id,
+              start: () => service.approveContract(pending.id, admin.id),
+            };
+          });
+
+          await runRace("RACEDIRECT", async (target, buildingsRepo) => {
+            const account = await student();
+            const bed = (await r.beds.findByRoomId(target.targetRoom.id))[0];
+            const service = new ContractService(
+              r.contracts,
+              r.students,
+              r.beds,
+              r.rooms,
+              tx,
+              r.checkouts,
+              r.types,
+              buildingsRepo,
+            );
+            return {
+              studentId: account.student.id,
+              start: () =>
+                service.adminCreateContract(admin.id, {
+                  studentId: account.student.id,
+                  bedId: bed.id,
+                }),
+            };
+          });
+
+          await runRace("RACEMOVE", async (target, buildingsRepo) => {
+            const origin = await room();
+            const account = await resident(origin);
+            const bed = (await r.beds.findByRoomId(target.targetRoom.id))[0];
+            const request = await changes.createRequest(account.user.id, {
+              targetBedId: bed.id,
+            });
+            const service = new RoomChangeRequestService(
+              r.changes,
+              r.contracts,
+              r.students,
+              r.beds,
+              r.rooms,
+              tx,
+              r.checkouts,
+              r.types,
+              buildingsRepo,
+            );
+            return {
+              studentId: account.student.id,
+              start: () => service.approveRequest(request.id, admin.id),
+            };
+          });
+        },
+      );
+      await t.test(
+        "seeds preserve existing Building policy and resident gender on conflict",
+        async () => {
+          const { spawnSync } = await import("node:child_process");
+          requireTestDatabase(url);
+          const seed = (file) =>
+            spawnSync(
+              process.execPath,
+              ["--import", "tsx", `scripts/${file}.ts`],
+              {
+                encoding: "utf8",
+                timeout: 20000,
+                env: {
+                  ...process.env,
+                  NODE_ENV: "test",
+                  DATABASE_URL: url,
+                  TEST_DATABASE_URL: url,
+                  DATABASE_URL_SOURCE: "TEST_DATABASE_URL",
+                  ADMIN_USERNAME: admin.username,
+                },
+              },
+            );
+          const seededBuilding = await r.buildings.create({
+            name: "Tòa A",
+            allowedGender: "MIXED",
+          });
+          const seededRoom = await roomService.create({
+            buildingId: seededBuilding.id,
+            roomTypeId: type.id,
+            roomNumber: "SEED-CONFLICT",
+            floor: 1,
+          });
+          const user = await r.users.create(
+            userData("demom001", "seed.gender@example.test"),
+          );
+          const seededStudent = await r.students.create({
+            userId: user.id,
+            mssv: "DM001",
+            gender: "FEMALE",
+          });
+          const seededBed = (await r.beds.findByRoomId(seededRoom.id))[0];
+          const active = await contracts.adminCreateContract(admin.id, {
+            studentId: seededStudent.id,
+            bedId: seededBed.id,
+          });
+          const state = async () => ({
+            building: await r.buildings.findById(seededBuilding.id),
+            student: await r.students.findById(seededStudent.id),
+            contract: await r.contracts.findById(active.id),
+            bed: await r.beds.findById(seededBed.id),
+          });
+          const before = await state();
+          const dormitorySeed = seed("seed-dormitory-data");
+          assert.equal(
+            dormitorySeed.status,
+            1,
+            "dormitory seed must reject conflicting policy",
+          );
+          assert.match(
+            dormitorySeed.stderr,
+            /BUILDING_GENDER_CONFLICT_WITH_RESIDENTS/,
+          );
+          assert.deepEqual(await state(), before);
+
+          const maleBuilding = await r.buildings.create({
+            name: "Seed male zone",
+            allowedGender: "MALE",
+          });
+          await roomService.create({
+            buildingId: maleBuilding.id,
+            roomTypeId: type.id,
+            roomNumber: "SEED-MALE",
+            floor: 1,
+          });
+          const demoSeed = seed("seed-demo-students");
+          assert.equal(
+            demoSeed.status,
+            1,
+            "student seed must reject existing gender mismatch",
+          );
+          assert.match(
+            demoSeed.stderr,
+            /Existing demom001 has a different gender/,
+          );
+          assert.deepEqual(await state(), before);
+        },
+      );
+      await t.test(
+        "all contract creation paths capture price at their defined business moment",
+        async () => {
+          const createPricedRoom = async (price, prefix) => {
+            const roomType = await r.types.create({
+              name: `${prefix} type ${++serial}`,
+              capacity: 1,
+              pricePerMonth: price,
+            });
+            const target = await roomService.create({
+              buildingId: building.id,
+              roomTypeId: roomType.id,
+              roomNumber: `${prefix}${++serial}`,
+              floor: 1,
+            });
+            return { roomType, target };
+          };
+
+          const requested = await createPricedRoom(1_100_000, "REQ");
+          const requester = await student();
+          const requestedBed = (
+            await r.beds.findByRoomId(requested.target.id)
+          )[0];
+          const pending = await contracts.createContract(requester.user.id, {
+            bedId: requestedBed.id,
+          });
+          await r.types.update(requested.roomType.id, {
+            pricePerMonth: 1_300_000,
+          });
+          await contracts.approveContract(pending.id, admin.id);
+          assert.equal(
+            (await r.contracts.findById(pending.id)).roomPricePerMonthSnapshot,
+            1_100_000,
+          );
+
+          const changed = await createPricedRoom(1_500_000, "MOVE");
+          const changedBed = (await r.beds.findByRoomId(changed.target.id))[0];
+          const changeRequest = await changes.createRequest(requester.user.id, {
+            targetBedId: changedBed.id,
+          });
+          await r.types.update(changed.roomType.id, {
+            pricePerMonth: 1_700_000,
+          });
+          await changes.approveRequest(changeRequest.id, admin.id);
+          assert.equal(
+            (await r.contracts.findActiveByStudentId(requester.student.id))
+              .roomPricePerMonthSnapshot,
+            1_700_000,
+          );
+
+          const direct = await createPricedRoom(2_000_000, "ADM");
+          const directStudent = await student();
+          const directBed = (await r.beds.findByRoomId(direct.target.id))[0];
+          await r.types.update(direct.roomType.id, {
+            pricePerMonth: 2_200_000,
+          });
+          const directContract = await contracts.adminCreateContract(admin.id, {
+            studentId: directStudent.student.id,
+            bedId: directBed.id,
+            startDate: new Date("2025-01-01T00:00:00Z"),
+            endDate: new Date("2026-01-01T00:00:00Z"),
+          });
+          assert.equal(directContract.roomPricePerMonthSnapshot, 2_200_000);
+        },
+      );
       await t.test(
         "student contract create, reject, cancel, approve metadata and end",
         async () => {
@@ -1304,6 +2154,8 @@ test(
             r.rooms,
             tx,
             r.checkouts,
+            r.types,
+            r.buildings,
           );
           await assert.rejects(
             () => broken.approveRequest(request.id, admin.id),
@@ -1391,14 +2243,9 @@ test(
             r.equipment,
             new StaffRepository(),
           );
-          const staffUser = await r.users.create({
-            ...userData("audit-staff"),
-            role: "STAFF",
-          });
           const staff = (
             await pool.query(
-              "INSERT INTO staff(user_id,position) VALUES ($1,'MAINTENANCE') RETURNING id",
-              [staffUser.id],
+              "INSERT INTO staff(staff_code,full_name,specialty,status) VALUES ('MT-TEST','Nhân viên test','Điện nước','ACTIVE') RETURNING id",
             )
           ).rows[0];
           const m = await ms.create(a.user.id, {
@@ -1470,6 +2317,193 @@ test(
           assert.deepEqual(
             await r.invoices.findByMonthlyBilling(august.id),
             [],
+          );
+        },
+      );
+      await t.test(
+        "Staff directory, assignment policy and transactional audit",
+        async () => {
+          const base = `http://127.0.0.1:${server.address().port}/api/v1`;
+          const adminToken = tokens.generateAccessToken({
+            userId: admin.id,
+            role: "ADMIN",
+          });
+          const request = async (
+            path,
+            method = "GET",
+            body,
+            token = adminToken,
+          ) => {
+            const response = await fetch(base + path, {
+              method,
+              headers: {
+                "content-type": "application/json",
+                authorization: "Bearer " + token,
+              },
+              body: body === undefined ? undefined : JSON.stringify(body),
+            });
+            return {
+              status: response.status,
+              body: await response.json(),
+              requestId: response.headers.get("x-request-id"),
+            };
+          };
+          let response = await request("/admin/staff", "POST", {
+            staffCode: "MT-001",
+            fullName: "Nguyễn Bảo Trì",
+            phone: "0901234567",
+            specialty: "Điện nước",
+          });
+          assert.equal(response.status, 201);
+          assert.ok(response.requestId);
+          const staff = response.body.data;
+          response = await request("/admin/staff", "POST", {
+            staffCode: "MT-001",
+            fullName: "Trùng mã",
+          });
+          assert.equal(response.status, 409);
+          assert.equal(response.body.code, "STAFF_CODE_ALREADY_EXISTS");
+          const residentAccount = await resident(await room());
+          const maintenance = (
+            await pool.query(
+              "INSERT INTO maintenance_requests(student_id,room_id,category,description) VALUES($1,$2,'OTHER','Test assignment') RETURNING id",
+              [residentAccount.student.id, residentAccount.contract.roomId],
+            )
+          ).rows[0];
+          response = await request(
+            `/admin/maintenance-requests/${maintenance.id}/assign`,
+            "PATCH",
+            { staffId: staff.id },
+          );
+          assert.equal(response.status, 200);
+          response = await request(`/admin/staff/${staff.id}/status`, "PATCH", {
+            status: "INACTIVE",
+          });
+          assert.equal(response.status, 409);
+          assert.equal(response.body.code, "STAFF_HAS_ACTIVE_ASSIGNMENTS");
+          response = await request(
+            `/admin/maintenance-requests/${maintenance.id}/resolve`,
+            "PATCH",
+            {
+              resolutionMethod: "REPAIR",
+              damageCause: "WEAR_AND_TEAR",
+              resolutionReason: "Đã sửa",
+              resolutionCost: 0,
+            },
+          );
+          assert.equal(response.status, 200);
+          response = await request(`/admin/staff/${staff.id}/status`, "PATCH", {
+            status: "INACTIVE",
+          });
+          assert.equal(response.status, 200);
+          const historical = await request(
+            `/admin/maintenance-requests/${maintenance.id}`,
+          );
+          assert.equal(historical.body.data.assignedStaff.staffCode, "MT-001");
+          assert.equal(historical.body.data.assignedStaff.status, "INACTIVE");
+          const second = (
+            await pool.query(
+              "INSERT INTO maintenance_requests(student_id,room_id,category,description) VALUES($1,$2,'OTHER','Inactive assignment') RETURNING id",
+              [residentAccount.student.id, residentAccount.contract.roomId],
+            )
+          ).rows[0];
+          response = await request(
+            `/admin/maintenance-requests/${second.id}/assign`,
+            "PATCH",
+            { staffId: staff.id },
+          );
+          assert.equal(response.status, 409);
+          assert.equal(response.body.code, "STAFF_INACTIVE");
+          response = await request(`/admin/staff/${staff.id}`, "PATCH", {
+            phone: "0911222333",
+            specialty: "Điện",
+          });
+          assert.equal(response.status, 200);
+          assert.equal(response.body.data.phone, "0911222333");
+          assert.equal(response.body.data.userId, undefined);
+          response = await request(`/admin/staff/${staff.id}/status`, "PATCH", {
+            status: "ACTIVE",
+          });
+          assert.equal(response.status, 200);
+          const studentToken = tokens.generateAccessToken({
+            userId: residentAccount.user.id,
+            role: "STUDENT",
+          });
+          response = await request(
+            "/admin/audit-logs",
+            "GET",
+            undefined,
+            studentToken,
+          );
+          assert.equal(response.status, 403);
+          response = await request(`/admin/audit-logs?entityId=${staff.id}`);
+          assert.equal(response.status, 200);
+          assert.ok(
+            response.body.data.items.some((x) => x.action === "STAFF_CREATED"),
+          );
+          assert.ok(
+            response.body.data.items.some(
+              (x) => x.action === "STAFF_DEACTIVATED",
+            ),
+          );
+          assert.ok(
+            response.body.data.items.every(
+              (x) => !x.actor || x.actor.id === admin.id,
+            ),
+          );
+          assert.ok(
+            response.body.data.items.some((x) => x.action === "STAFF_UPDATED"),
+          );
+          assert.ok(
+            response.body.data.items.some(
+              (x) => x.action === "STAFF_ACTIVATED",
+            ),
+          );
+          for (let i = 1; i < response.body.data.items.length; i++)
+            assert.ok(
+              new Date(response.body.data.items[i - 1].createdAt) >=
+                new Date(response.body.data.items[i].createdAt),
+            );
+          response = await request(
+            `/admin/audit-logs?action=STAFF_CREATED&entityType=STAFF&entityId=${staff.id}&dateFrom=2020-01-01`,
+          );
+          assert.equal(response.status, 200);
+          assert.equal(response.body.data.items.length, 1);
+          assert.equal(response.body.data.items[0].action, "STAFF_CREATED");
+
+          const { StaffService } =
+            await import("../dist/services/admin/staff.service.js");
+          const { StaffRepository } =
+            await import("../dist/repositories/implementations/staff.repository.js");
+          const { AuditLogService } =
+            await import("../dist/services/audit-log.service.js");
+          const target = (
+            await pool.query(
+              "INSERT INTO staff(staff_code,full_name,status) VALUES('MT-ROLLBACK','Rollback Test','ACTIVE') RETURNING id",
+            )
+          ).rows[0];
+          const failingAudit = new AuditLogService({
+            create: async () => {
+              throw new Error("injected audit failure");
+            },
+          });
+          const service = new StaffService(
+            new StaffRepository(),
+            tx,
+            failingAudit,
+          );
+          await assert.rejects(
+            () =>
+              service.status(target.id, "INACTIVE", { actorUserId: admin.id }),
+            /injected audit failure/,
+          );
+          assert.equal(
+            (
+              await pool.query("SELECT status FROM staff WHERE id=$1", [
+                target.id,
+              ])
+            ).rows[0].status,
+            "ACTIVE",
           );
         },
       );

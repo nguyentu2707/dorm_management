@@ -30,6 +30,7 @@ export interface MaintenanceRequest {
   description: string;
   status: MaintenanceStatus;
   assignedStaffId?: string;
+  assignedStaff?: { id: string; staffCode: string; fullName: string; status: "ACTIVE" | "INACTIVE" };
   processingStartedAt?: Date;
   resolvedAt?: Date;
   resolutionNote?: string;

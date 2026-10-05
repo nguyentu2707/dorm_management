@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AuthRequest } from "../../types/common.types.js";
 import type { ContractService } from "../../services/contract.service.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 export class AdminContractController {
   constructor(private s: ContractService) {}
   list: RequestHandler = async (q, r, n) => {
@@ -44,6 +45,7 @@ export class AdminContractController {
         data: await this.s.approveContract(
           q.params.contractId!,
           q.user!.userId,
+          auditContextFrom(q),
         ),
       });
     } catch (e) {
@@ -59,6 +61,7 @@ export class AdminContractController {
           q.params.contractId!,
           q.user!.userId,
           q.body.reason,
+          auditContextFrom(q),
         ),
       });
     } catch (e) {
@@ -70,7 +73,11 @@ export class AdminContractController {
       r.json({
         success: true,
         message: "Kết thúc hợp đồng thành công",
-        data: await this.s.endContract(q.params.contractId!, q.user!.userId),
+        data: await this.s.endContract(
+          q.params.contractId!,
+          q.user!.userId,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);

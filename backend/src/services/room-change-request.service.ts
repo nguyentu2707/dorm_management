@@ -6,12 +6,16 @@ import type { IContractRepository } from "../repositories/interfaces/contract.re
 import type { IStudentRepository } from "../repositories/interfaces/student.repository.interface.js";
 import type { IBedRepository } from "../repositories/interfaces/bed.repository.interface.js";
 import type { IRoomRepository } from "../repositories/interfaces/room.repository.interface.js";
+import type { IRoomTypeRepository } from "../repositories/interfaces/room-type.repository.interface.js";
 import type { IBuildingRepository } from "../repositories/interfaces/building.repository.interface.js";
 import type { ITransactionManager } from "./transaction-manager.js";
 import { AppError } from "../errors/AppError.js";
 import { RoomChangeRequestMapper } from "../mappers/room-change-request.mapper.js";
 import type { ICheckoutRequestRepository } from "../repositories/interfaces/checkout-request.repository.interface.js";
 import { assertPlacementAllowed } from "./building-placement.js";
+import type { AuditContext } from "../models/audit-log.model.js";
+import type { RoomDocument } from "../models/room.model.js";
+import type { AuditLogService } from "./audit-log.service.js";
 export type CreateRoomChangeRequestInput = {
   targetBedId: string;
   reason?: string;
@@ -25,16 +29,25 @@ export class RoomChangeRequestService {
     private rooms: IRoomRepository,
     private tx: ITransactionManager,
     private checkoutRequests: ICheckoutRequestRepository,
-    private buildings?: IBuildingRepository,
+    private roomTypes: IRoomTypeRepository,
+    private buildings: IBuildingRepository,
+    private audit?: AuditLogService,
   ) {}
-  private async placementAllowed(studentId: string, buildingId: string, s?: Parameters<IBuildingRepository["findById"]>[1]) {
-    if (!this.buildings) return;
-    const [student, building] = await Promise.all([
-      this.students.findById(studentId, s),
-      this.buildings.findById(buildingId, s),
-    ]);
-    if (!student) throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
-    if (!building) throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
+  private async placementAllowed(
+    studentId: string,
+    buildingId: string,
+    s?: Parameters<IBuildingRepository["findById"]>[1],
+    lockBuilding = false,
+  ) {
+    const building =
+      lockBuilding && s
+        ? await this.buildings.findByIdForUpdate(buildingId, s)
+        : await this.buildings.findById(buildingId, s);
+    const student = await this.students.findById(studentId, s);
+    if (!student)
+      throw new AppError(404, "STUDENT_NOT_FOUND", "Không tìm thấy sinh viên");
+    if (!building)
+      throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
     assertPlacementAllowed(student, building);
   }
   private async student(userId: string) {
@@ -171,29 +184,53 @@ export class RoomChangeRequestService {
       );
     return this.response(r);
   }
-  async rejectRequest(id: string, adminId: string, reason?: string) {
-    const r = await this.requests.findById(id);
-    if (!r)
-      throw new AppError(
-        404,
-        "ROOM_CHANGE_REQUEST_NOT_FOUND",
-        "Không tìm thấy yêu cầu chuyển phòng",
-      );
-    if (r.status !== "PENDING")
-      throw new AppError(
-        409,
-        "ROOM_CHANGE_REQUEST_NOT_PENDING",
-        "Yêu cầu không còn chờ xử lý",
-      );
-    return this.response(
-      (await this.requests.updateStatus(id, "REJECTED", {
-        processedBy: adminId,
-        processedAt: new Date(),
-        rejectReason: reason,
-      }))!,
-    );
+  async rejectRequest(
+    id: string,
+    adminId: string,
+    reason?: string,
+    context?: AuditContext,
+  ) {
+    const result = await this.tx.runInTransaction(async (s) => {
+      const r = await this.requests.findById(id, s);
+      if (!r)
+        throw new AppError(
+          404,
+          "ROOM_CHANGE_REQUEST_NOT_FOUND",
+          "Không tìm thấy yêu cầu chuyển phòng",
+        );
+      if (r.status !== "PENDING")
+        throw new AppError(
+          409,
+          "ROOM_CHANGE_REQUEST_NOT_PENDING",
+          "Yêu cầu không còn chờ xử lý",
+        );
+      const updated = (await this.requests.updateStatus(
+        id,
+        "REJECTED",
+        {
+          processedBy: adminId,
+          processedAt: new Date(),
+          rejectReason: reason,
+        },
+        s,
+      ))!;
+      if (this.audit && context)
+        await this.audit.record(
+          {
+            action: "ROOM_CHANGE_REJECTED",
+            entityType: "ROOM_CHANGE_REQUEST",
+            entityId: id,
+            oldData: { status: r.status },
+            newData: { status: "REJECTED", rejectReason: reason },
+          },
+          context,
+          s,
+        );
+      return updated;
+    });
+    return this.response(result);
   }
-  async approveRequest(id: string, adminId: string) {
+  async approveRequest(id: string, adminId: string, context?: AuditContext) {
     const result = await this.tx.runInTransaction(async (s) => {
       const request = await this.requests.findById(id, s);
       if (!request)
@@ -230,13 +267,31 @@ export class RoomChangeRequestService {
       );
       if (!targetBed)
         throw new AppError(404, "BED_NOT_FOUND", "Không tìm thấy giường đích");
-      const targetRoom = await this.rooms.findById(
-        targetBed.roomId.toString(),
-        s,
-      );
+      // Lock both rooms in a stable order before the target Building. Taking
+      // the source room after Building can deadlock with another placement
+      // that holds that room while waiting for the same Building.
+      const lockedRooms = new Map<string, RoomDocument | null>();
+      for (const roomId of [...new Set([old.roomId, targetBed.roomId])].sort())
+        lockedRooms.set(roomId, await this.rooms.findById(roomId, s));
+      const targetRoom = lockedRooms.get(targetBed.roomId);
       if (!targetRoom)
         throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng đích");
-      await this.placementAllowed(request.studentId, targetRoom.buildingId, s);
+      const targetRoomType = await this.roomTypes.findById(
+        targetRoom.roomTypeId,
+        s,
+      );
+      if (!targetRoomType)
+        throw new AppError(
+          404,
+          "ROOM_TYPE_NOT_FOUND",
+          "Không tìm thấy loại phòng đích",
+        );
+      await this.placementAllowed(
+        request.studentId,
+        targetRoom.buildingId,
+        s,
+        true,
+      );
       this.roomAvailable(targetRoom.status);
       if (old.roomId.toString() === targetRoom.id.toString())
         throw new AppError(
@@ -277,7 +332,7 @@ export class RoomChangeRequestService {
           "BED_NOT_AVAILABLE",
           "Không thể trả giường hiện tại",
         );
-      const oldRoom = await this.rooms.findById(old.roomId.toString(), s);
+      const oldRoom = lockedRooms.get(old.roomId);
       if (oldRoom?.status === "FULL")
         await this.rooms.updateStatus(oldRoom.id.toString(), "AVAILABLE", s);
       await this.contracts.create(
@@ -290,6 +345,7 @@ export class RoomChangeRequestService {
           status: "ACTIVE",
           approvedBy: adminId,
           approvedAt: new Date(),
+          roomPricePerMonthSnapshot: targetRoomType.pricePerMonth,
         },
         s,
       );
@@ -298,12 +354,29 @@ export class RoomChangeRequestService {
         (await this.beds.countEmptyByRoomId(targetRoom.id.toString(), s)) === 0
       )
         await this.rooms.updateStatus(targetRoom.id.toString(), "FULL", s);
-      return (await this.requests.updateStatus(
+      const updated = (await this.requests.updateStatus(
         id,
         "APPROVED",
         { processedBy: adminId, processedAt: new Date() },
         s,
       ))!;
+      if (this.audit && context)
+        await this.audit.record(
+          {
+            action: "ROOM_CHANGE_APPROVED",
+            entityType: "ROOM_CHANGE_REQUEST",
+            entityId: id,
+            oldData: {
+              status: request.status,
+              currentContractId: request.currentContractId,
+              targetBedId: request.targetBedId,
+            },
+            newData: { status: "APPROVED" },
+          },
+          context,
+          s,
+        );
+      return updated;
     });
     return this.response(result);
   }

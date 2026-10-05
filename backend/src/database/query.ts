@@ -41,6 +41,8 @@ export function mapRow<T>(row: Record<string, unknown>): T {
         "actualEndDate",
         "currentContractId",
         "currentContractStatus",
+        "room_price_per_month_snapshot",
+        "roomPricePerMonthSnapshot",
       ].includes(key)
     )
       continue;

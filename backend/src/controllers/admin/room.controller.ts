@@ -1,6 +1,8 @@
 import type { RequestHandler } from "express";
 import type { RoomService } from "../../services/admin/room.service.js";
 import { paginationFrom } from "../../types/common.types.js";
+import type { AuthRequest } from "../../types/common.types.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 export class RoomController {
   constructor(private s: RoomService) {}
   list: RequestHandler = async (q, r, n) => {
@@ -50,23 +52,31 @@ export class RoomController {
       n(e);
     }
   };
-  update: RequestHandler = async (q, r, n) => {
+  update: RequestHandler = async (q: AuthRequest, r, n) => {
     try {
       r.json({
         success: true,
         message: "Cập nhật phòng thành công",
-        data: await this.s.update(q.params.roomId!, q.body),
+        data: await this.s.update(
+          q.params.roomId!,
+          q.body,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);
     }
   };
-  status: RequestHandler = async (q, r, n) => {
+  status: RequestHandler = async (q: AuthRequest, r, n) => {
     try {
       r.json({
         success: true,
         message: "Cập nhật trạng thái phòng thành công",
-        data: await this.s.status(q.params.roomId!, q.body.status),
+        data: await this.s.status(
+          q.params.roomId!,
+          q.body.status,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);

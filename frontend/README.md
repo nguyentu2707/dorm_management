@@ -1,6 +1,6 @@
 # Dormitory Management Frontend
 
-React + TypeScript + Vite frontend cho Module 1 và Module 2.
+React + TypeScript + Vite frontend cho quản trị ký túc xá và cổng sinh viên.
 
 ```bash
 copy .env.example .env
@@ -10,10 +10,19 @@ npm run dev
 
 Backend mặc định: `http://localhost:3000/api/v1`.
 
-## Backend API gaps
+Vite chạy tại `http://localhost:5173` và proxy `/api` tới backend trên cổng 3000.
+Để chạy UI và API cùng `http://localhost:3000`, chạy `npm run dev` trong backend
+theo [README gốc](../README.md).
 
-- Chưa có API list/search Student: form Admin tạo Contract tạm nhập Student ID.
-- Các API Building/Room/Bed chỉ dành cho ADMIN: Student tạm nhập Bed ID khi đăng ký ở/chuyển phòng.
-- Chưa có endpoint list toàn bộ Equipment: trang thiết bị yêu cầu Room ID.
+## Kiểm tra
 
-Frontend không invent endpoint và không hard-code dữ liệu thay thế.
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Router hiện dùng dashboard quản trị/sinh viên riêng, trang chọn phòng đăng ký,
+quản lý Staff và Audit Logs. Đường dẫn `/student/contracts` chuyển tới
+`/student/room` để xem hợp đồng và lịch sử cư trú.

@@ -42,6 +42,8 @@ export function RoomsPage() {
         if (!buildingId && b[0]) update("buildingId", b[0].id);
       })
       .catch((e) => setError(normalizeApiError(e).message));
+    // This bootstrap intentionally runs once; route/query changes are handled by load().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const load = useCallback(async () => {
     if (!buildingId) return;

@@ -13,4 +13,15 @@ export class AdminDashboardController {
       next(error);
     }
   };
+  trends: RequestHandler = async (req, res, next) => {
+    try {
+      res.json({
+        success: true,
+        message: "Xu hướng quản trị",
+        data: await this.service.trends(Number(req.query.months)),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

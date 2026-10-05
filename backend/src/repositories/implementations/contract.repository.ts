@@ -29,8 +29,8 @@ export class PostgresContractRepository implements IContractRepository {
     ...[d, s]: Parameters<IContractRepository["create"]>
   ): ReturnType<IContractRepository["create"]> {
     return required<ContractDocument>(
-      `INSERT INTO contracts (student_id, bed_id, room_id, start_date, end_date, status, approved_by, approved_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO contracts (student_id, bed_id, room_id, start_date, end_date, status, approved_by, approved_at, room_price_per_month_snapshot)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *`,
       [
         d.studentId,
@@ -41,6 +41,7 @@ export class PostgresContractRepository implements IContractRepository {
         d.status,
         d.approvedBy,
         d.approvedAt,
+        d.roomPricePerMonthSnapshot,
       ],
       s,
     );
@@ -222,7 +223,7 @@ export class PostgresContractRepository implements IContractRepository {
     >
   ): ReturnType<IContractRepository["findBillingResidenceSegments"]> {
     return rows<BillingResidenceSegment>(
-      `SELECT c.id AS "contractId",c.student_id,c.status,s.mssv,u.full_name,c.start_date,c.end_date,c.ended_at AS "endedAt",rt.price_per_month AS "roomMonthlyPrice",
+      `SELECT c.id AS "contractId",c.student_id,c.status,s.mssv,u.full_name,c.start_date,c.end_date,c.ended_at AS "endedAt",c.room_price_per_month_snapshot AS "roomPricePerMonthSnapshot",
  (SELECT min(n.start_date)
       FROM contracts n
       WHERE n.student_id=c.student_id AND n.start_date>c.start_date AND n.status IN ('ACTIVE','ENDED','CANCELLED')) AS "nextSegmentStartDate"
@@ -233,7 +234,6 @@ export class PostgresContractRepository implements IContractRepository {
       JOIN rooms r ON r.id=c.room_id
       JOIN buildings b ON b.id=r.building_id
       JOIN beds bed ON bed.id=c.bed_id
-      JOIN room_types rt ON rt.id=r.room_type_id
       WHERE c.room_id=$1 AND (c.status IN ('ACTIVE','ENDED') OR (c.status='CANCELLED' AND c.ended_at IS NOT NULL))
       ORDER BY c.start_date,c.id`,
       [roomId],

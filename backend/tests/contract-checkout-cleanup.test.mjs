@@ -67,7 +67,16 @@ function fixture(releaseSucceeds = true) {
     },
   };
   return {
-    service: new ContractService(contracts, {}, beds, rooms, tx, checkout),
+    service: new ContractService(
+      contracts,
+      {},
+      beds,
+      rooms,
+      tx,
+      checkout,
+      {},
+      {},
+    ),
     committed,
   };
 }

@@ -55,6 +55,35 @@ export class PostgresBuildingRepository implements IBuildingRepository {
       s,
     );
   }
+  async findByIdForUpdate(
+    ...[id, s]: Parameters<IBuildingRepository["findByIdForUpdate"]>
+  ): ReturnType<IBuildingRepository["findByIdForUpdate"]> {
+    return one<BuildingDocument>(
+      `SELECT * FROM buildings WHERE id = $1 FOR UPDATE`,
+      [id],
+      s,
+    );
+  }
+  async hasIncompatibleActiveResidents(
+    ...[id, allowedGender, s]: Parameters<
+      IBuildingRepository["hasIncompatibleActiveResidents"]
+    >
+  ): ReturnType<IBuildingRepository["hasIncompatibleActiveResidents"]> {
+    const result = await required<{ exists: boolean }>(
+      `SELECT EXISTS (
+        SELECT 1
+        FROM contracts c
+        JOIN rooms r ON r.id = c.room_id
+        JOIN students st ON st.id = c.student_id
+        WHERE r.building_id = $1
+          AND c.status = 'ACTIVE'
+          AND (st.gender IS NULL OR st.gender <> $2)
+      ) AS exists`,
+      [id, allowedGender],
+      s,
+    );
+    return result.exists;
+  }
   async create(
     ...[d, s]: Parameters<IBuildingRepository["create"]>
   ): ReturnType<IBuildingRepository["create"]> {

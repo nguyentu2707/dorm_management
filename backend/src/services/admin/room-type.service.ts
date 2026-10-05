@@ -6,11 +6,14 @@ import type { IRoomRepository } from "../../repositories/interfaces/room.reposit
 import { AppError } from "../../errors/AppError.js";
 import { EntityMapper } from "../../mappers/entity.mapper.js";
 import type { ITransactionManager } from "../transaction-manager.js";
+import type { AuditContext } from "../../models/audit-log.model.js";
+import type { AuditLogService } from "../audit-log.service.js";
 export class RoomTypeService {
   constructor(
     private repo: IRoomTypeRepository,
     private rooms: IRoomRepository,
     private tx: ITransactionManager,
+    private audit?: AuditLogService,
   ) {}
   async list() {
     return (await this.repo.findAll()).map(EntityMapper.toResponse);
@@ -28,7 +31,7 @@ export class RoomTypeService {
   async create(d: RoomTypeData) {
     return EntityMapper.toResponse(await this.repo.create(d));
   }
-  async update(id: string, d: Partial<RoomTypeData>) {
+  async update(id: string, d: Partial<RoomTypeData>, context?: AuditContext) {
     return this.tx.runInTransaction(async (s) => {
       const old = await this.repo.findByIdForUpdate(id, s);
       if (!old)
@@ -47,7 +50,25 @@ export class RoomTypeService {
           "ROOM_TYPE_CAPACITY_IN_USE",
           "Không thể đổi sức chứa của loại phòng đang được sử dụng",
         );
-      return EntityMapper.toResponse((await this.repo.update(id, d, s))!);
+      const updated = (await this.repo.update(id, d, s))!;
+      if (
+        this.audit &&
+        context &&
+        d.pricePerMonth !== undefined &&
+        d.pricePerMonth !== old.pricePerMonth
+      )
+        await this.audit.record(
+          {
+            action: "ROOM_TYPE_PRICE_CHANGED",
+            entityType: "ROOM_TYPE",
+            entityId: id,
+            oldData: { pricePerMonth: old.pricePerMonth },
+            newData: { pricePerMonth: updated.pricePerMonth },
+          },
+          context,
+          s,
+        );
+      return EntityMapper.toResponse(updated);
     });
   }
   async delete(id: string) {

@@ -1,50 +1,46 @@
+import { AppError } from "../../errors/AppError.js";
 import type { IDashboardRepository } from "../../repositories/interfaces/dashboard.repository.interface.js";
+
+const rate = (occupied: number, total: number) =>
+  total === 0 ? 0 : Math.min(100, Math.round((occupied / total) * 1000) / 10);
+
 export class AdminDashboardService {
   constructor(private repository: IDashboardRepository) {}
-  async summary() {
-    const {
-      rooms,
-      beds,
-      contracts,
-      roomChanges,
-      checkoutRequests,
-      maintenance,
-    } = await this.repository.counts();
-    const count = (
-      rows: Array<{ status: string; count: number }>,
-      status: string,
-    ) => rows.find((row) => row.status === status)?.count ?? 0;
 
+  async summary() {
+    const result = await this.repository.summary();
+    if (result.finance.overpaidInvoices > 0)
+      throw new AppError(
+        500,
+        "DASHBOARD_NEGATIVE_OUTSTANDING",
+        "Dữ liệu thanh toán vượt quá tổng hóa đơn",
+      );
+    if (
+      result.facility.occupiedBeds > result.facility.totalUsableBeds ||
+      result.facility.occupiedBeds !== result.facility.activeResidentBeds
+    )
+      throw new AppError(
+        500,
+        "DASHBOARD_OCCUPANCY_INCONSISTENT",
+        "Dữ liệu sức chứa không nhất quán",
+      );
+    const { activeResidentBeds: _activeResidentBeds, ...facility } = result.facility;
+    const { overpaidInvoices: _overpaidInvoices, ...finance } = result.finance;
     return {
-      rooms: {
-        total: rooms.reduce((sum, row) => sum + row.count, 0),
-        available: count(rooms, "AVAILABLE"),
-        full: count(rooms, "FULL"),
-        maintenance: count(rooms, "MAINTENANCE"),
-        locked: count(rooms, "LOCKED"),
+      ...result,
+      facility: {
+        ...facility,
+        occupancyRate: rate(result.facility.occupiedBeds, result.facility.totalUsableBeds),
       },
-      beds: {
-        total: beds.reduce((sum, row) => sum + row.count, 0),
-        occupied: count(beds, "OCCUPIED"),
-        empty: count(beds, "EMPTY"),
-      },
-      contracts: {
-        pending: count(contracts, "PENDING"),
-        active: count(contracts, "ACTIVE"),
-      },
-      roomChangeRequests: { pending: roomChanges },
-      checkoutRequests: { pending: checkoutRequests },
-      maintenanceRequests: {
-        pending: count(maintenance, "PENDING"),
-        inProgress: count(maintenance, "IN_PROGRESS"),
-      },
-      studentRequests: {
-        pendingTotal:
-          count(contracts, "PENDING") +
-          roomChanges +
-          checkoutRequests +
-          count(maintenance, "PENDING"),
-      },
+      finance,
+      occupancyByBuilding: result.occupancyByBuilding.map((building) => ({
+        ...building,
+        occupancyRate: rate(building.occupiedBeds, building.totalUsableBeds),
+      })),
     };
+  }
+
+  trends(months: number) {
+    return this.repository.trends(months);
   }
 }

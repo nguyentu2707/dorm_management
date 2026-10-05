@@ -1,0 +1,13 @@
+.git
+.github
+**/node_modules
+**/dist
+**/dist-scripts
+**/.env
+**/.env.local
+**/backups
+**/*.log
+**/*.tsbuildinfo
+.vscode
+.idea
+*.md

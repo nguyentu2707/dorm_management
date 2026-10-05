@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AuthRequest } from "../../types/common.types.js";
 import type { MonthlyBillingService } from "../../services/monthly-billing.service.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 
 export class AdminMonthlyBillingController {
   constructor(private service: MonthlyBillingService) {}
@@ -34,6 +35,7 @@ export class AdminMonthlyBillingController {
         data: await this.service.finalize(
           request.params.billingId!,
           request.user!.userId,
+          auditContextFrom(request),
         ),
       });
     } catch (error) {
@@ -49,6 +51,7 @@ export class AdminMonthlyBillingController {
           request.params.billingId!,
           request.user!.userId,
           request.body.reason,
+          auditContextFrom(request),
         ),
       });
     } catch (error) {

@@ -115,7 +115,7 @@ test("calculator derives utility and exact resident-day allocations", async () =
     startDate: new Date(`2026-09-${days === 30 ? "01" : "16"}T00:00:00+07:00`),
     endDate: new Date("2026-09-30T23:00:00+07:00"),
     endedAt: null,
-    roomMonthlyPrice: 1_800_000,
+    roomPricePerMonthSnapshot: 1_800_000,
   }));
   const calculator = new MonthlyBillingCalculator(
     {
@@ -198,5 +198,52 @@ test("calculator refuses financial allocation with zero resident-days", async ()
         draftWaterCurrent: 0,
       }),
     (error) => error.code === "MONTHLY_BILLING_NO_RESIDENTS",
+  );
+});
+
+test("calculator refuses a legacy residence segment without a price snapshot", async () => {
+  const roomId = "507f1f77bcf86cd799439011";
+  const calculator = new MonthlyBillingCalculator(
+    {
+      findById: async () => ({
+        id: roomId,
+        roomNumber: "101",
+        buildingId: { toString: () => "building" },
+      }),
+    },
+    { findById: async () => ({ id: "building", name: "Tòa A" }) },
+    {
+      findBillingResidenceSegments: async () => [
+        {
+          contractId: "legacy-contract",
+          studentId: "student-1",
+          mssv: "SV1",
+          fullName: "Legacy Student",
+          status: "ACTIVE",
+          startDate: new Date("2026-09-01T00:00:00+07:00"),
+          endDate: new Date("2026-09-30T23:00:00+07:00"),
+          endedAt: null,
+          nextSegmentStartDate: null,
+          roomPricePerMonthSnapshot: null,
+        },
+      ],
+    },
+    {
+      findByRoomAndPeriod: async () => null,
+      findLatestByRoom: async () => null,
+    },
+    BILLING_FEE_CONFIG,
+  );
+  await assert.rejects(
+    () =>
+      calculator.calculate({
+        roomId: { toString: () => roomId },
+        billingPeriod: "2026-09",
+        draftElectricityPrevious: 0,
+        draftElectricityCurrent: 0,
+        draftWaterPrevious: 0,
+        draftWaterCurrent: 0,
+      }),
+    (error) => error.code === "CONTRACT_PRICE_SNAPSHOT_MISSING",
   );
 });

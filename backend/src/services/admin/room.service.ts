@@ -11,6 +11,8 @@ import type { ITransactionManager } from "../transaction-manager.js";
 import type { RoomStatus } from "../../models/room.model.js";
 import { AppError } from "../../errors/AppError.js";
 import { EntityMapper } from "../../mappers/entity.mapper.js";
+import type { AuditContext } from "../../models/audit-log.model.js";
+import type { AuditLogService } from "../audit-log.service.js";
 export class RoomService {
   constructor(
     private rooms: IRoomRepository,
@@ -19,6 +21,7 @@ export class RoomService {
     private beds: IBedRepository,
     private equipment: IEquipmentItemRepository,
     private tx: ITransactionManager,
+    private audit?: AuditLogService,
   ) {}
   async list(buildingId: string, q: RoomListQuery) {
     if (!(await this.buildings.findById(buildingId)))
@@ -47,11 +50,7 @@ export class RoomService {
   async create(d: RoomData) {
     const room = await this.tx.runInTransaction(async (s) => {
       if (!(await this.buildings.findById(d.buildingId, s)))
-        throw new AppError(
-          404,
-          "BUILDING_NOT_FOUND",
-          "Không tìm thấy tòa nhà",
-        );
+        throw new AppError(404, "BUILDING_NOT_FOUND", "Không tìm thấy tòa nhà");
       // Serialize room creation with capacity edits of the selected type.
       const type = await this.types.findByIdForUpdate(d.roomTypeId, s);
       if (!type)
@@ -72,7 +71,11 @@ export class RoomService {
     });
     return EntityMapper.toResponse(room);
   }
-  async update(id: string, d: Partial<Omit<RoomData, "buildingId">>) {
+  async update(
+    id: string,
+    d: Partial<Omit<RoomData, "buildingId">>,
+    context?: AuditContext,
+  ) {
     const x = await this.tx.runInTransaction(async (s) => {
       const current = await this.rooms.findById(id, s);
       if (!current)
@@ -105,11 +108,49 @@ export class RoomService {
             "Chỉ có thể đổi sang loại phòng có cùng sức chứa và khớp số giường hiện có",
           );
       }
-      return (await this.rooms.update(id, d, s))!;
+      const updated = (await this.rooms.update(id, d, s))!;
+      if (
+        this.audit &&
+        context &&
+        d.roomTypeId &&
+        d.roomTypeId !== current.roomTypeId
+      )
+        await this.audit.record(
+          {
+            action: "ROOM_TYPE_CHANGED",
+            entityType: "ROOM",
+            entityId: id,
+            oldData: { roomTypeId: current.roomTypeId },
+            newData: { roomTypeId: updated.roomTypeId },
+          },
+          context,
+          s,
+        );
+      return updated;
     });
     return EntityMapper.toResponse(x);
   }
-  async status(id: string, status: RoomStatus) {
+  async status(id: string, status: RoomStatus, context?: AuditContext) {
+    if (this.audit && context)
+      return this.tx.runInTransaction(async (tx) => {
+        const old = await this.rooms.findById(id, tx);
+        if (!old)
+          throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
+        const item = (await this.rooms.updateStatus(id, status, tx))!;
+        if (old.status !== status)
+          await this.audit!.record(
+            {
+              action: "ROOM_STATUS_CHANGED",
+              entityType: "ROOM",
+              entityId: id,
+              oldData: { status: old.status },
+              newData: { status },
+            },
+            context,
+            tx,
+          );
+        return EntityMapper.toResponse(item);
+      });
     const x = await this.rooms.updateStatus(id, status);
     if (!x) throw new AppError(404, "ROOM_NOT_FOUND", "Không tìm thấy phòng");
     return EntityMapper.toResponse(x);

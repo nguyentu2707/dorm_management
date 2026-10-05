@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "../../components/common/PageHeader";
 import { Pagination } from "../../components/ui/Pagination";
 import { StatusBadge } from "../../components/ui/StatusBadge";
@@ -11,7 +11,13 @@ import type {
   Paginated,
 } from "../../types/api";
 
-type MaintenanceStaff = { id: string; fullName: string; username: string };
+type MaintenanceStaff = {
+  id: string;
+  staffCode: string;
+  fullName: string;
+  specialty?: string;
+  status: "ACTIVE" | "INACTIVE";
+};
 
 const categoryLabels: Record<MaintenanceRequest["category"], string> = {
   ELECTRICAL: "Điện",
@@ -52,15 +58,17 @@ export function AdminMaintenancePage() {
     useState<MaintenanceDamageCause>("WEAR_AND_TEAR");
   const [message, setMessage] = useState("");
 
-  const load = () =>
-    adminMaintenanceApi
+  const load = useCallback(
+    () => adminMaintenanceApi
       .list({ page, limit: 20 })
       .then(setData)
-      .catch((error) => setMessage(normalizeApiError(error).message));
+      .catch((error) => setMessage(normalizeApiError(error).message)),
+    [page],
+  );
 
   useEffect(() => {
     void load();
-  }, [page]);
+  }, [load]);
 
   useEffect(() => {
     void adminMaintenanceApi
@@ -127,6 +135,15 @@ export function AdminMaintenancePage() {
               />
             </div>
 
+            {request.assignedStaff && (
+              <p className="mt-3 text-sm text-slate-600">
+                Nhân viên: {request.assignedStaff.staffCode} -{" "}
+                {request.assignedStaff.fullName}
+                {request.assignedStaff.status === "INACTIVE"
+                  ? " (đã ngừng hoạt động)"
+                  : ""}
+              </p>
+            )}
             {request.status === "RESOLVED" && request.resolutionMethod && (
               <div className="mt-4 grid gap-2 rounded-lg bg-emerald-50 p-4 text-sm md:grid-cols-2">
                 <p>
@@ -224,9 +241,19 @@ export function AdminMaintenancePage() {
               onChange={(event) => setStaffId(event.target.value)}
             >
               <option value="">Chọn nhân viên bảo trì</option>
+              {assigning.assignedStaff &&
+                !staff.some(
+                  (item) => item.id === assigning.assignedStaffId,
+                ) && (
+                  <option value={assigning.assignedStaff.id}>
+                    {assigning.assignedStaff.staffCode} -{" "}
+                    {assigning.assignedStaff.fullName} (hiện tại, đã inactive)
+                  </option>
+                )}
               {staff.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.fullName} ({item.username})
+                  {item.staffCode} - {item.fullName}
+                  {item.specialty ? ` · ${item.specialty}` : ""}
                 </option>
               ))}
             </select>

@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AuthRequest } from "../../types/common.types.js";
 import type { RoomChangeRequestService } from "../../services/room-change-request.service.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 export class AdminRoomChangeRequestController {
   constructor(private s: RoomChangeRequestService) {}
   list: RequestHandler = async (q, r, n) => {
@@ -30,7 +31,11 @@ export class AdminRoomChangeRequestController {
       r.json({
         success: true,
         message: "Duyệt yêu cầu chuyển phòng thành công",
-        data: await this.s.approveRequest(q.params.requestId!, q.user!.userId),
+        data: await this.s.approveRequest(
+          q.params.requestId!,
+          q.user!.userId,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);
@@ -45,6 +50,7 @@ export class AdminRoomChangeRequestController {
           q.params.requestId!,
           q.user!.userId,
           q.body.reason,
+          auditContextFrom(q),
         ),
       });
     } catch (e) {

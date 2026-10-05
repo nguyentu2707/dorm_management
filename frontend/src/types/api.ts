@@ -148,6 +148,7 @@ export interface Contract extends Entity {
   startDate: string;
   endDate: string;
   status: Status;
+  roomPricePerMonthSnapshot: number | null;
   rejectReason?: string;
   cancelReason?: string;
   approvedAt?: string;
@@ -394,19 +395,56 @@ export interface AdminEquipment extends Entity {
   };
 }
 export interface DashboardSummary {
-  rooms: {
-    total: number;
-    available: number;
-    full: number;
-    maintenance: number;
-    locked: number;
+  facility: {
+    totalBuildings: number;
+    activeBuildings: number;
+    totalRooms: number;
+    totalBeds: number;
+    totalUsableBeds: number;
+    occupiedBeds: number;
+    emptyBeds: number;
+    occupancyRate: number;
   };
-  beds: { total: number; occupied: number; empty: number };
-  contracts: { pending: number; active: number };
-  roomChangeRequests: { pending: number };
-  checkoutRequests: { pending: number };
-  maintenanceRequests: { pending: number; inProgress: number };
-  studentRequests: { pendingTotal: number };
+  residence: {
+    activeContracts: number;
+    pendingContracts: number;
+    pendingRoomChanges: number;
+    pendingCheckouts: number;
+  };
+  operations: {
+    pendingMaintenance: number;
+    inProgressMaintenance: number;
+    activeStaff: number;
+  };
+  finance: {
+    unpaidInvoices: number;
+    partiallyPaidInvoices: number;
+    paidInvoices: number;
+    billedAmount: number;
+    outstandingAmount: number;
+    confirmedRevenueAllTime: number;
+    confirmedRevenueThisMonth: number;
+  };
+  expiringContracts: { within7Days: number; within30Days: number };
+  occupancyByBuilding: Array<{
+    buildingId: string;
+    buildingName: string;
+    allowedGender: "MALE" | "FEMALE" | "MIXED";
+    totalBeds: number;
+    totalUsableBeds: number;
+    occupiedBeds: number;
+    emptyBeds: number;
+    occupancyRate: number;
+  }>;
+}
+export interface DashboardTrends {
+  revenue: Array<{ period: string; amount: number }>;
+  utilities: Array<{
+    period: string;
+    electricityUsage: number;
+    waterUsage: number;
+  }>;
+  maintenanceByStatus: Array<{ status: MaintenanceStatus; count: number }>;
 }
 export type NotificationTargetScope = "ALL" | "BUILDING" | "SPECIFIC_STUDENT";
 export interface StudentNotification {
@@ -446,6 +484,12 @@ export interface MaintenanceRequest extends Entity {
   description: string;
   status: MaintenanceStatus;
   assignedStaffId?: string;
+  assignedStaff?: {
+    id: string;
+    staffCode: string;
+    fullName: string;
+    status: "ACTIVE" | "INACTIVE";
+  };
   processingStartedAt?: string;
   resolutionNote?: string;
   resolutionMethod?: MaintenanceResolutionMethod;
@@ -456,6 +500,64 @@ export interface MaintenanceRequest extends Entity {
   cancelReason?: string;
   resolvedAt?: string;
   cancelledAt?: string;
+}
+export interface Staff extends Entity {
+  staffCode: string;
+  fullName: string;
+  phone?: string;
+  specialty?: string;
+  status: "ACTIVE" | "INACTIVE";
+  activeAssignmentCount?: number;
+}
+export type AuditAction =
+  | "BUILDING_STATUS_CHANGED"
+  | "BUILDING_GENDER_CHANGED"
+  | "ROOM_STATUS_CHANGED"
+  | "ROOM_TYPE_CHANGED"
+  | "ROOM_TYPE_PRICE_CHANGED"
+  | "CONTRACT_APPROVED"
+  | "CONTRACT_REJECTED"
+  | "CONTRACT_ENDED"
+  | "ROOM_CHANGE_APPROVED"
+  | "ROOM_CHANGE_REJECTED"
+  | "CHECKOUT_APPROVED"
+  | "CHECKOUT_REJECTED"
+  | "MAINTENANCE_ASSIGNED"
+  | "MAINTENANCE_REASSIGNED"
+  | "MAINTENANCE_RESOLVED"
+  | "MAINTENANCE_CANCELLED"
+  | "MONTHLY_BILLING_FINALIZED"
+  | "MONTHLY_BILLING_CANCELLED"
+  | "PAYMENT_CONFIRMED"
+  | "PAYMENT_REJECTED"
+  | "PAYMENT_VOIDED"
+  | "STAFF_CREATED"
+  | "STAFF_UPDATED"
+  | "STAFF_ACTIVATED"
+  | "STAFF_DEACTIVATED";
+export type AuditEntityType =
+  | "BUILDING"
+  | "ROOM"
+  | "ROOM_TYPE"
+  | "CONTRACT"
+  | "ROOM_CHANGE_REQUEST"
+  | "CHECKOUT_REQUEST"
+  | "MAINTENANCE_REQUEST"
+  | "MONTHLY_BILLING"
+  | "PAYMENT"
+  | "STAFF";
+export interface AuditLog extends Entity {
+  createdAt: string;
+  action: AuditAction;
+  entityType: AuditEntityType;
+  entityId: string;
+  actorUserId?: string;
+  actor?: { id: string; fullName: string };
+  oldData?: Record<string, unknown>;
+  newData?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  requestId?: string;
+  ipAddress?: string;
 }
 export type PricePreference = "LOW" | "MEDIUM" | "ANY";
 export type OccupancyPreference = "MORE_EMPTY" | "MORE_OCCUPIED" | "ANY";

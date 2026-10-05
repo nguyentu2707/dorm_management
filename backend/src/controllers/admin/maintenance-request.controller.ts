@@ -1,5 +1,7 @@
 import type { RequestHandler } from "express";
 import type { MaintenanceRequestService } from "../../services/maintenance-request.service.js";
+import type { AuthRequest } from "../../types/common.types.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 export class AdminMaintenanceRequestController {
   constructor(private s: MaintenanceRequestService) {}
   staff: RequestHandler = async (_q, r, n) => {
@@ -35,34 +37,42 @@ export class AdminMaintenanceRequestController {
       n(e);
     }
   };
-  assign: RequestHandler = async (q, r, n) => {
+  assign: RequestHandler = async (q: AuthRequest, r, n) => {
     try {
       r.json({
         success: true,
         message: "Đã phân công",
-        data: await this.s.assign(q.params.id!, q.body.staffId),
+        data: await this.s.assign(
+          q.params.id!,
+          q.body.staffId,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);
     }
   };
-  resolve: RequestHandler = async (q, r, n) => {
+  resolve: RequestHandler = async (q: AuthRequest, r, n) => {
     try {
       r.json({
         success: true,
         message: "Đã xử lý",
-        data: await this.s.resolve(q.params.id!, q.body),
+        data: await this.s.resolve(q.params.id!, q.body, auditContextFrom(q)),
       });
     } catch (e) {
       n(e);
     }
   };
-  cancel: RequestHandler = async (q, r, n) => {
+  cancel: RequestHandler = async (q: AuthRequest, r, n) => {
     try {
       r.json({
         success: true,
         message: "Đã hủy",
-        data: await this.s.adminCancel(q.params.id!, q.body.reason),
+        data: await this.s.adminCancel(
+          q.params.id!,
+          q.body.reason,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);

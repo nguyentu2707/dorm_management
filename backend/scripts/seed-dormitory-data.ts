@@ -43,7 +43,7 @@ async function main() {
   const br = new BuildingRepository(), tr = new RoomTypeRepository(), rr = new RoomRepository();
   const beds = new BedRepository(), equipment = new EquipmentItemRepository(), categoriesRepo = new EquipmentCategoryRepository();
   const transactionManager = new PostgresTransactionManager();
-  const bs = new BuildingService(br, rr),
+  const bs = new BuildingService(br, rr, transactionManager),
     ts = new RoomTypeService(tr, rr, transactionManager);
   const rs = new RoomService(rr, br, tr, beds, equipment, transactionManager);
   const categoryService = new EquipmentCategoryService(categoriesRepo, equipment);

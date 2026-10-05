@@ -82,6 +82,11 @@ import { RefreshSessionRepository } from "../repositories/implementations/refres
 import { StudentRegistryRepository } from "../repositories/implementations/student-registry.repository.js";
 import { StudentRegistryService } from "../services/admin/student-registry.service.js";
 import { StudentRegistryController } from "../controllers/admin/student-registry.controller.js";
+import { PostgresAuditLogRepository } from "../repositories/implementations/audit-log.repository.js";
+import { AuditLogService } from "../services/audit-log.service.js";
+import { AuditLogController } from "../controllers/admin/audit-log.controller.js";
+import { StaffService } from "../services/admin/staff.service.js";
+import { StaffController } from "../controllers/admin/staff.controller.js";
 const tokenService = new JwtTokenService(),
   passwordHasher = new BcryptPasswordHasher(),
   transactionManager = new PostgresTransactionManager();
@@ -113,6 +118,8 @@ const notificationService = new NotificationService(
   transactionManager,
 );
 const maintenanceRequestRepository = new MaintenanceRequestRepository();
+const staffRepository = new StaffRepository();
+const auditLogService = new AuditLogService(new PostgresAuditLogRepository());
 const roomPreferenceRepository = new RoomPreferenceRepository();
 const classScheduleRepository = new ClassScheduleRepository();
 const maintenanceRequestService = new MaintenanceRequestService(
@@ -120,7 +127,9 @@ const maintenanceRequestService = new MaintenanceRequestService(
   studentRepository,
   contractRepository,
   equipmentItemRepository,
-  new StaffRepository(),
+  staffRepository,
+  transactionManager,
+  auditLogService,
 );
 const contractService = new ContractService(
   contractRepository,
@@ -129,7 +138,9 @@ const contractService = new ContractService(
   roomRepository,
   transactionManager,
   checkoutRequestRepository,
+  roomTypeRepository,
   buildingRepository,
+  auditLogService,
 );
 const roomChangeRequestService = new RoomChangeRequestService(
   roomChangeRequestRepository,
@@ -139,7 +150,9 @@ const roomChangeRequestService = new RoomChangeRequestService(
   roomRepository,
   transactionManager,
   checkoutRequestRepository,
+  roomTypeRepository,
   buildingRepository,
+  auditLogService,
 );
 const checkoutRequestService = new CheckoutRequestService(
   checkoutRequestRepository,
@@ -149,6 +162,7 @@ const checkoutRequestService = new CheckoutRequestService(
   bedRepository,
   roomRepository,
   transactionManager,
+  auditLogService,
 );
 const residenceHistoryService = new ResidenceHistoryService(
   contractRepository,
@@ -178,6 +192,7 @@ const monthlyBillingService = new MonthlyBillingService(
     BILLING_FEE_CONFIG,
   ),
   transactionManager,
+  auditLogService,
 );
 const studentFacilityService = new StudentFacilityService(
   buildingRepository,
@@ -194,11 +209,16 @@ const studentProfileService = new StudentProfileService(
   refreshSessionRepository,
 );
 export const container = {
+  auditLogController: new AuditLogController(auditLogService),
+  staffController: new StaffController(
+    new StaffService(staffRepository, transactionManager, auditLogService),
+  ),
   paymentController: new PaymentController(
     new PaymentService(
       new PostgresPaymentRepository(),
       studentRepository,
       transactionManager,
+      auditLogService,
     ),
   ),
   userRepository,
@@ -263,10 +283,20 @@ export const container = {
     ),
   ),
   buildingController: new BuildingController(
-    new BuildingService(buildingRepository, roomRepository),
+    new BuildingService(
+      buildingRepository,
+      roomRepository,
+      transactionManager,
+      auditLogService,
+    ),
   ),
   roomTypeController: new RoomTypeController(
-      new RoomTypeService(roomTypeRepository, roomRepository, transactionManager),
+    new RoomTypeService(
+      roomTypeRepository,
+      roomRepository,
+      transactionManager,
+      auditLogService,
+    ),
   ),
   roomController: new RoomController(
     new RoomService(
@@ -276,6 +306,7 @@ export const container = {
       bedRepository,
       equipmentItemRepository,
       transactionManager,
+      auditLogService,
     ),
   ),
   bedController: new BedController(

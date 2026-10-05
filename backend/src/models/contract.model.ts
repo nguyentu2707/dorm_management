@@ -14,6 +14,7 @@ export interface Contract {
   startDate: Date;
   endDate: Date;
   status: ContractStatus;
+  roomPricePerMonthSnapshot: number | null;
   rejectReason?: string;
   cancelReason?: string;
   approvedBy?: string;

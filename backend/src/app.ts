@@ -4,11 +4,13 @@ import path from "node:path";
 import { apiRouter } from "./routes/index.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { env } from "./config/env.js";
+import { requestId } from "./middlewares/request-id.js";
 
 export const app = express();
 const frontendDist = path.resolve(process.cwd(), "../frontend/dist");
 
 app.disable("x-powered-by");
+app.use(requestId);
 app.use(
   cors({
     origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()),

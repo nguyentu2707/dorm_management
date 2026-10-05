@@ -7,6 +7,7 @@ import { ContractRepository } from "../src/repositories/implementations/contract
 import { CheckoutRequestRepository } from "../src/repositories/implementations/checkout-request.repository.js";
 import { BedRepository } from "../src/repositories/implementations/bed.repository.js";
 import { RoomRepository } from "../src/repositories/implementations/room.repository.js";
+import { RoomTypeRepository } from "../src/repositories/implementations/room-type.repository.js";
 import { BuildingRepository } from "../src/repositories/implementations/building.repository.js";
 import { RoomPreferenceRepository } from "../src/repositories/implementations/room-preference.repository.js";
 import { ClassScheduleRepository } from "../src/repositories/implementations/class-schedule.repository.js";
@@ -78,7 +79,8 @@ async function ensureStudent(
   }
   const student = await students.findByMssv(mssv);
   if (!user || !student) throw new Error(`Cannot ensure ${username}`);
-  if (student.gender !== gender) await students.updateProfile(student.id, { gender });
+  if (student.gender !== gender)
+    throw new Error(`Existing ${username} has a different gender; seed will not change it`);
   return { user, student: (await students.findByMssv(mssv))!, created };
 }
 async function ensureRecommendationStudent(
@@ -112,7 +114,8 @@ async function ensureRecommendationStudent(
   }
   const student = await students.findByMssv(mssv);
   if (!user || !student) throw new Error(`Cannot ensure ${username}`);
-  if (!student.gender) await students.updateProfile(student.id, { gender: kind === "morning" ? "MALE" : "FEMALE" });
+  if (!student.gender)
+    throw new Error(`Existing ${username} has no gender; seed will not change it`);
   return { user, student: (await students.findByMssv(mssv))! };
 }
 
@@ -147,14 +150,19 @@ async function main() {
     new RoomRepository(),
     tx,
     new CheckoutRequestRepository(),
+    new RoomTypeRepository(),
     new BuildingRepository(),
   );
   const before = await diagnostics.diagnostics();
   const stableBeds = await diagnostics.bedsStable();
   const eligibleBeds = stableBeds.filter(
-    (bed) => bed.buildingStatus === "ACTIVE" && ["AVAILABLE", "FULL"].includes(bed.roomStatus),
+    (bed) =>
+      bed.buildingStatus === "ACTIVE" &&
+      ["AVAILABLE", "FULL"].includes(bed.roomStatus),
   );
-  const occupiedEligible = eligibleBeds.filter((bed) => bed.status === "OCCUPIED").length;
+  const occupiedEligible = eligibleBeds.filter(
+    (bed) => bed.status === "OCCUPIED",
+  ).length;
   const target = Math.round(eligibleBeds.length * 0.55),
     needed = Math.max(0, target - occupiedEligible);
   console.log("===== Dormitory Capacity =====");
@@ -175,13 +183,23 @@ async function main() {
     process.env.ADMIN_USERNAME ?? "admin",
   );
   if (!admin || admin.role !== "ADMIN") throw new Error("Run seed:admin first");
-  const byGender = (gender: "MALE" | "FEMALE") => eligibleBeds.filter((bed) => bed.allowedGender === gender);
+  const byGender = (gender: "MALE" | "FEMALE") =>
+    eligibleBeds.filter((bed) => bed.allowedGender === gender);
   const selectedByGender = (["MALE", "FEMALE"] as const).map((gender) => {
-    const zone = byGender(gender), occupied = zone.filter((bed) => bed.status === "OCCUPIED").length;
+    const zone = byGender(gender),
+      occupied = zone.filter((bed) => bed.status === "OCCUPIED").length;
     const deficit = Math.max(0, Math.round(zone.length * 0.55) - occupied);
     return zone.filter((bed) => bed.status === "EMPTY").slice(0, deficit);
   });
-  const emptyBeds = Array.from({ length: Math.max(...selectedByGender.map((items) => items.length), 0) }, (_, index) => selectedByGender.flatMap((items) => items[index] ? [items[index]!] : [])).flat().slice(0, needed);
+  const emptyBeds = Array.from(
+    { length: Math.max(...selectedByGender.map((items) => items.length), 0) },
+    (_, index) =>
+      selectedByGender.flatMap((items) =>
+        items[index] ? [items[index]!] : [],
+      ),
+  )
+    .flat()
+    .slice(0, needed);
   const residentStudents: Array<{ id: string; index: number }> = [];
   let accounts = 0,
     activeCreated = 0;
@@ -193,7 +211,15 @@ async function main() {
     const bed = emptyBeds[activeCreated];
     if (!bed) break;
     const gender = bed.allowedGender === "FEMALE" ? "FEMALE" : "MALE";
-    const account = await ensureStudent(auth, users, students, registry, sessions, i, gender);
+    const account = await ensureStudent(
+      auth,
+      users,
+      students,
+      registry,
+      sessions,
+      i,
+      gender,
+    );
     if (account.created) accounts++;
     const open = await contracts.findPendingOrActiveByStudentId(
       account.student.id,

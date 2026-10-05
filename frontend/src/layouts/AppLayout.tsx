@@ -11,6 +11,8 @@ import {
   Bell,
   ReceiptText,
   ClipboardList,
+  UserCog,
+  ScrollText,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
@@ -41,24 +43,28 @@ const createGroups = (
     title: "Sinh viên & Hợp đồng",
     items: [
       { label: "Sinh viên", icon: UsersRound, to: "/admin/students" },
-      { label: "Xác minh sinh viên", icon: ClipboardList, to: "/admin/student-registry" },
+      {
+        label: "Xác minh sinh viên",
+        icon: ClipboardList,
+        to: "/admin/student-registry",
+      },
       {
         label: "Hợp đồng",
         icon: FileText,
         to: "/admin/contracts",
-        badge: summary?.contracts.pending,
+        badge: summary?.residence.pendingContracts,
       },
       {
         label: "Yêu cầu chuyển phòng",
         icon: RefreshCw,
         to: "/admin/room-change-requests",
-        badge: summary?.roomChangeRequests.pending,
+        badge: summary?.residence.pendingRoomChanges,
       },
       {
         label: "Yêu cầu trả phòng",
         icon: LogOut,
         to: "/admin/checkout-requests",
-        badge: summary?.checkoutRequests.pending,
+        badge: summary?.residence.pendingCheckouts,
       },
     ],
   },
@@ -73,8 +79,10 @@ const createGroups = (
         label: "Bảo trì",
         icon: RefreshCw,
         to: "/admin/maintenance",
-        badge: summary?.maintenanceRequests.pending,
+        badge: summary?.operations.pendingMaintenance,
       },
+      { label: "Nhân viên bảo trì", icon: UserCog, to: "/admin/staff" },
+      { label: "Nhật ký hệ thống", icon: ScrollText, to: "/admin/audit-logs" },
     ],
   },
   {
@@ -187,7 +195,12 @@ export function AdminLayout() {
   }, [location.pathname]);
 
   const groups = createGroups(summary);
-  const pendingTotal = summary?.studentRequests.pendingTotal ?? 0;
+  const pendingTotal = summary
+    ? summary.residence.pendingContracts +
+      summary.residence.pendingRoomChanges +
+      summary.residence.pendingCheckouts +
+      summary.operations.pendingMaintenance
+    : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">

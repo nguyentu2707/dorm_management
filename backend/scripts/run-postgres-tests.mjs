@@ -15,12 +15,17 @@ if (!valid) {
   );
   process.exitCode = 1;
 } else {
-  // Set the database BEFORE Node evaluates any static import in the test process.
+  const { DATABASE_URL: _developmentDatabaseUrl, ...safeEnvironment } =
+    process.env;
   const result = spawnSync(
     process.execPath,
     ["--test", "tests/postgres.integration.mjs"],
     {
-      env: { ...process.env, DATABASE_URL: value },
+      env: {
+        ...safeEnvironment,
+        TEST_DATABASE_URL: value,
+        DATABASE_URL_SOURCE: "TEST_DATABASE_URL",
+      },
       stdio: "inherit",
     },
   );

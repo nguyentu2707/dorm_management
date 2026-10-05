@@ -10,6 +10,8 @@ import type { IRoomRepository } from "../repositories/interfaces/room.repository
 import type { ITransactionManager } from "./transaction-manager.js";
 import { CheckoutRequestMapper } from "../mappers/checkout-request.mapper.js";
 import { AppError } from "../errors/AppError.js";
+import type { AuditContext } from "../models/audit-log.model.js";
+import type { AuditLogService } from "./audit-log.service.js";
 export class CheckoutRequestService {
   constructor(
     private requests: ICheckoutRequestRepository,
@@ -19,6 +21,7 @@ export class CheckoutRequestService {
     private beds: IBedRepository,
     private rooms: IRoomRepository,
     private tx: ITransactionManager,
+    private audit?: AuditLogService,
   ) {}
   private async student(userId: string) {
     const s = await this.students.findByUserId(userId);
@@ -47,18 +50,33 @@ export class CheckoutRequestService {
       await this.students.lockResidenceIntent(studentId, s);
       const contract = await this.contracts.findActiveByStudentId(studentId, s);
       if (!contract)
-        throw new AppError(409, "NO_ACTIVE_CONTRACT", "Sinh viên chưa có hợp đồng đang hoạt động");
+        throw new AppError(
+          409,
+          "NO_ACTIVE_CONTRACT",
+          "Sinh viên chưa có hợp đồng đang hoạt động",
+        );
       if (await this.requests.findPendingByStudentId(studentId, s))
-        throw new AppError(409, "CHECKOUT_REQUEST_ALREADY_PENDING", "Đã có yêu cầu trả phòng đang chờ xử lý");
+        throw new AppError(
+          409,
+          "CHECKOUT_REQUEST_ALREADY_PENDING",
+          "Đã có yêu cầu trả phòng đang chờ xử lý",
+        );
       if (await this.roomChanges.findPendingByStudentId(studentId, s))
-        throw new AppError(409, "CONFLICTING_PENDING_REQUEST", "Hãy hủy yêu cầu chuyển phòng trước khi trả phòng");
-      return this.requests.create({
-        studentId,
-        contractId: contract.id,
-        roomId: contract.roomId.toString(),
-        reason,
-        status: "PENDING",
-      }, s);
+        throw new AppError(
+          409,
+          "CONFLICTING_PENDING_REQUEST",
+          "Hãy hủy yêu cầu chuyển phòng trước khi trả phòng",
+        );
+      return this.requests.create(
+        {
+          studentId,
+          contractId: contract.id,
+          roomId: contract.roomId.toString(),
+          reason,
+          status: "PENDING",
+        },
+        s,
+      );
     });
     return this.response(created);
   }
@@ -101,28 +119,54 @@ export class CheckoutRequestService {
       );
     return this.response(request);
   }
-  async reject(id: string, adminId: string, rejectReason?: string) {
-    const updated = await this.requests.updatePending(id, "REJECTED", {
-      processedBy: adminId,
-      processedAt: new Date(),
-      rejectReason,
-    });
-    if (!updated) {
-      if (!(await this.requests.findById(id)))
-        throw new AppError(
-          404,
-          "CHECKOUT_REQUEST_NOT_FOUND",
-          "Không tìm thấy yêu cầu trả phòng",
-        );
-      throw new AppError(
-        409,
-        "CHECKOUT_REQUEST_NOT_PENDING",
-        "Yêu cầu không còn chờ xử lý",
+  async reject(
+    id: string,
+    adminId: string,
+    rejectReason?: string,
+    context?: AuditContext,
+  ) {
+    const updated = await this.tx.runInTransaction(async (s) => {
+      const previous = await this.requests.findById(id, s);
+      const result = await this.requests.updatePending(
+        id,
+        "REJECTED",
+        {
+          processedBy: adminId,
+          processedAt: new Date(),
+          rejectReason,
+        },
+        s,
       );
-    }
+      if (!result) {
+        if (!previous)
+          throw new AppError(
+            404,
+            "CHECKOUT_REQUEST_NOT_FOUND",
+            "Không tìm thấy yêu cầu trả phòng",
+          );
+        throw new AppError(
+          409,
+          "CHECKOUT_REQUEST_NOT_PENDING",
+          "Yêu cầu không còn chờ xử lý",
+        );
+      }
+      if (this.audit && context)
+        await this.audit.record(
+          {
+            action: "CHECKOUT_REJECTED",
+            entityType: "CHECKOUT_REQUEST",
+            entityId: id,
+            oldData: { status: previous!.status },
+            newData: { status: "REJECTED", rejectReason },
+          },
+          context,
+          s,
+        );
+      return result;
+    });
     return this.response(updated);
   }
-  async approve(id: string, adminId: string) {
+  async approve(id: string, adminId: string, context?: AuditContext) {
     const result = await this.tx.runInTransaction(async (s) => {
       const request = await this.requests.findById(id, s);
       if (!request)
@@ -193,6 +237,18 @@ export class CheckoutRequestService {
           409,
           "CHECKOUT_REQUEST_NOT_PENDING",
           "Yêu cầu không còn chờ xử lý",
+        );
+      if (this.audit && context)
+        await this.audit.record(
+          {
+            action: "CHECKOUT_APPROVED",
+            entityType: "CHECKOUT_REQUEST",
+            entityId: id,
+            oldData: { status: request.status, contractId: request.contractId },
+            newData: { status: "APPROVED" },
+          },
+          context,
+          s,
         );
       return approved;
     });

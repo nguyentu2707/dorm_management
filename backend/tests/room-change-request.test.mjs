@@ -76,6 +76,7 @@ function fixture(overrides = {}) {
     },
     students: {
       findByUserId: async () => ({ id: "student-1" }),
+      findById: async () => ({ id: "student-1", gender: "MALE" }),
       lockResidenceIntent: async () => {},
     },
     beds: {
@@ -95,7 +96,12 @@ function fixture(overrides = {}) {
       countEmptyByRoomId: async () => 1,
     },
     rooms: {
-      findById: async (id) => ({ id, status: "AVAILABLE" }),
+      findById: async (id) => ({
+        id,
+        buildingId: "building-1",
+        roomTypeId: "type-2",
+        status: "AVAILABLE",
+      }),
       updateStatus: async (_id, status) => {
         calls.push(`room:${status}`);
       },
@@ -106,6 +112,21 @@ function fixture(overrides = {}) {
       cancelPendingByContractId: async () => {
         calls.push("checkout:cancel");
       },
+    },
+    roomTypes: {
+      findById: async () => ({ id: "type-2", pricePerMonth: 2_000_000 }),
+    },
+    buildings: {
+      findById: async () => ({
+        id: "building-1",
+        status: "ACTIVE",
+        allowedGender: "MALE",
+      }),
+      findByIdForUpdate: async () => ({
+        id: "building-1",
+        status: "ACTIVE",
+        allowedGender: "MALE",
+      }),
     },
     calls,
     contractUpdates,
@@ -123,6 +144,8 @@ function fixture(overrides = {}) {
     dependencies.rooms,
     dependencies.tx,
     dependencies.checkout,
+    dependencies.roomTypes,
+    dependencies.buildings,
   );
   return { service, ...dependencies };
 }
@@ -179,6 +202,7 @@ test("approve creates one ACTIVE contract inheriting the old contract endDate", 
   assert.ok(f.contractUpdates[0].metadata.endedAt instanceof Date);
   assert.equal(f.createdContracts[0].status, "ACTIVE");
   assert.equal(f.createdContracts[0].endDate, f.oldEndDate);
+  assert.equal(f.createdContracts[0].roomPricePerMonthSnapshot, 2_000_000);
   assert.equal(f.calls.filter((call) => call === "contract:create").length, 1);
   assert.deepEqual(f.calls.slice(0, 5), [
     "bed:claim",
@@ -187,6 +211,52 @@ test("approve creates one ACTIVE contract inheriting the old contract endDate", 
     "bed:release",
     "contract:create",
   ]);
+});
+
+test("approve locks source and target rooms in sorted order before Building", async () => {
+  const locks = [];
+  const f = fixture();
+  const readRoom = f.rooms.findById;
+  f.rooms.findById = async (id, tx) => {
+    locks.push(id);
+    assert.ok(tx);
+    return readRoom(id);
+  };
+  const readBuilding = f.buildings.findByIdForUpdate;
+  f.buildings.findByIdForUpdate = async (id, tx) => {
+    locks.push(id);
+    assert.ok(tx);
+    return readBuilding(id);
+  };
+  await f.service.approveRequest("request-1", "admin-1");
+  assert.deepEqual(locks, ["room-old", "room-target", "building-1"]);
+});
+
+test("approve still sorts room locks when source ID is larger than target ID", async () => {
+  const locks = [];
+  const f = fixture();
+  const readContract = f.contracts.findById;
+  f.contracts.findById = async () => ({
+    ...(await readContract()),
+    roomId: "z-source",
+  });
+  f.beds.findById = async () => ({
+    id: "bed-target",
+    roomId: "a-target",
+    status: "EMPTY",
+  });
+  const readRoom = f.rooms.findById;
+  f.rooms.findById = async (id) => {
+    locks.push(id);
+    return readRoom(id);
+  };
+  const readBuilding = f.buildings.findByIdForUpdate;
+  f.buildings.findByIdForUpdate = async (id) => {
+    locks.push(id);
+    return readBuilding(id);
+  };
+  await f.service.approveRequest("request-1", "admin-1");
+  assert.deepEqual(locks, ["a-target", "z-source", "building-1"]);
 });
 
 test("approve revalidates and rejects a target room that is no longer AVAILABLE", async () => {

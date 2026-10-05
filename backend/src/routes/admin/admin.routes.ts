@@ -2,8 +2,14 @@ import { Router } from "express";
 import { container as c } from "../../config/container.js";
 import { validate } from "../../middlewares/validate.js";
 import * as v from "../../validators/admin/admin.validator.js";
+import { dashboardTrends } from "../../validators/admin/dashboard.validator.js";
 export const adminRouter = Router();
 adminRouter.get("/dashboard/summary", c.adminDashboardController.summary);
+adminRouter.get(
+  "/dashboard/trends",
+  validate(dashboardTrends),
+  c.adminDashboardController.trends,
+);
 adminRouter
   .get("/students", validate(v.studentList), c.adminStudentController.list)
   .get(

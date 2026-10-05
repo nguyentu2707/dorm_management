@@ -6,6 +6,9 @@ const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 export const apiClient = axios.create({ baseURL, timeout: 15000, withCredentials: true });
 let refreshPromise: Promise<string> | null = null;
 let redirectingToLogin = false;
+export const authRedirect = {
+  toLogin: () => window.location.assign("/login"),
+};
 
 apiClient.interceptors.request.use((config) => {
   const token = tokenStorage.getAccess();
@@ -48,7 +51,7 @@ apiClient.interceptors.response.use(
       tokenStorage.clear();
       if (!redirectingToLogin) {
         redirectingToLogin = true;
-        window.location.assign("/login");
+        authRedirect.toLogin();
       }
       return Promise.reject(normalizeApiError(refreshError));
     }

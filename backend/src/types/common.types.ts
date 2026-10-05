@@ -11,6 +11,7 @@ export type Pagination = {
 export type PaginatedResult<T> = { items: T[]; pagination: Pagination };
 export interface AuthRequest extends Request {
   user?: { userId: string; role: Role };
+  requestId?: string;
 }
 
 export const paginationFrom = (page = 1, limit = 20) => ({

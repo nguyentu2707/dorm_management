@@ -67,6 +67,7 @@ test("every mapped constraint is defined verbatim in migrations", async () => {
         "003_payments",
         "004_building_operations",
         "005_refresh_sessions_student_registry",
+        "006_staff_audit_logs",
       ].map((f) =>
         readFile(new URL(`../migrations/${f}.up.sql`, import.meta.url), "utf8"),
       ),

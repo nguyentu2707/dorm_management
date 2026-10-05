@@ -25,6 +25,8 @@ import { studentUtilityReadingRouter } from "./student/utility-reading.routes.js
 import { adminMonthlyBillingRouter } from "./admin/monthly-billing.routes.js";
 import { studentInvoiceRouter } from "./student/invoice.routes.js";
 import { adminStudentRegistryRouter } from "./admin/student-registry.routes.js";
+import { adminStaffRouter } from "./admin/staff.routes.js";
+import { adminAuditLogRouter } from "./admin/audit-log.routes.js";
 export const apiRouter = Router();
 apiRouter.use("/auth", authRouter);
 apiRouter.use(
@@ -58,5 +60,7 @@ apiRouter.use(
   adminMonthlyBillingRouter,
   adminPaymentRouter,
   adminStudentRegistryRouter,
+  adminStaffRouter,
+  adminAuditLogRouter,
   adminRouter,
 );

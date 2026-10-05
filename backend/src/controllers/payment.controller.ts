@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AuthRequest } from "../types/common.types.js";
 import type { PaymentService } from "../services/payment.service.js";
+import { auditContextFrom } from "../utils/audit-context.js";
 export class PaymentController {
   constructor(private service: PaymentService) {}
   private handle(
@@ -9,13 +10,11 @@ export class PaymentController {
   ): RequestHandler {
     return async (req, res, next) => {
       try {
-        res
-          .status(status)
-          .json({
-            success: true,
-            message: "Thao tác thành công",
-            data: await work(req as AuthRequest),
-          });
+        res.status(status).json({
+          success: true,
+          message: "Thao tác thành công",
+          data: await work(req as AuthRequest),
+        });
       } catch (e) {
         next(e);
       }
@@ -38,7 +37,13 @@ export class PaymentController {
   list = this.handle((req) => this.service.list(req.query as never));
   get = this.handle((req) => this.service.get(req.params.paymentId!));
   confirm = this.handle((req) =>
-    this.service.process(req.params.paymentId!, req.user!.userId, "confirm"),
+    this.service.process(
+      req.params.paymentId!,
+      req.user!.userId,
+      "confirm",
+      undefined,
+      auditContextFrom(req),
+    ),
   );
   reject = this.handle((req) =>
     this.service.process(
@@ -46,6 +51,7 @@ export class PaymentController {
       req.user!.userId,
       "reject",
       req.body.reason,
+      auditContextFrom(req),
     ),
   );
   void = this.handle((req) =>
@@ -54,6 +60,7 @@ export class PaymentController {
       req.user!.userId,
       "void",
       req.body.reason,
+      auditContextFrom(req),
     ),
   );
 }

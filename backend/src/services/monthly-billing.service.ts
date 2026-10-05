@@ -8,6 +8,8 @@ import type { IRoomBillingCursorRepository } from "../repositories/interfaces/ro
 import type { IRoomRepository } from "../repositories/interfaces/room.repository.interface.js";
 import type { IStudentRepository } from "../repositories/interfaces/student.repository.interface.js";
 import type { ITransactionManager } from "./transaction-manager.js";
+import type { AuditContext } from "../models/audit-log.model.js";
+import type { AuditLogService } from "./audit-log.service.js";
 import type { IUtilityReadingRepository } from "../repositories/interfaces/utility-reading.repository.interface.js";
 import { AppError } from "../errors/AppError.js";
 import { mapInvoice, mapMonthlyBilling } from "../mappers/billing.mapper.js";
@@ -37,6 +39,7 @@ export class MonthlyBillingService {
     private students: IStudentRepository,
     private calculator: MonthlyBillingCalculator,
     private tx: ITransactionManager,
+    private audit?: AuditLogService,
   ) {}
 
   private assertLedger(
@@ -190,7 +193,7 @@ export class MonthlyBillingService {
     return this.calculator.calculate(draft);
   }
 
-  async finalize(id: string, adminId: string) {
+  async finalize(id: string, adminId: string, context?: AuditContext) {
     const billingId = await this.tx.runInTransaction(async (session) => {
       let draft = await this.billings.findById(id, session);
       if (!draft)
@@ -329,7 +332,7 @@ export class MonthlyBillingService {
           mssvSnapshot: resident.mssv,
           residentDays: resident.residentDays,
           daysInMonth: calculated.daysInMonth,
-          roomMonthlyPrice: resident.roomMonthlyPrice,
+          roomMonthlyPrice: resident.roomPricePerMonthSnapshot!,
           roomFee: resident.roomFee,
           electricityShare: resident.electricityShare,
           waterShare: resident.waterShare,
@@ -349,7 +352,7 @@ export class MonthlyBillingService {
               type: "ROOM_FEE",
               description: "Tiền phòng",
               amount: resident.roomFee,
-              calculationNote: `${resident.roomMonthlyPrice} × ${resident.residentDays}/${calculated.daysInMonth} ngày`,
+              calculationNote: `${resident.roomPricePerMonthSnapshot} × ${resident.residentDays}/${calculated.daysInMonth} ngày`,
             },
             {
               invoiceId: invoice.id,
@@ -383,12 +386,34 @@ export class MonthlyBillingService {
         }),
         session,
       );
+      if (this.audit && context)
+        await this.audit.record(
+          {
+            action: "MONTHLY_BILLING_FINALIZED",
+            entityType: "MONTHLY_BILLING",
+            entityId: id,
+            oldData: { status: draft.status },
+            newData: {
+              status: "FINALIZED",
+              billingPeriod: finalized.billingPeriod,
+              totalInvoiceAmount: finalized.totalInvoiceAmount,
+            },
+            metadata: { invoiceCount: createdInvoices.length },
+          },
+          context,
+          session,
+        );
       return finalized.id;
     });
     return this.get(billingId);
   }
 
-  async cancel(id: string, adminId: string, reason?: string) {
+  async cancel(
+    id: string,
+    adminId: string,
+    reason?: string,
+    context?: AuditContext,
+  ) {
     await this.tx.runInTransaction(async (session) => {
       const billing = await this.billings.findById(id, session);
       if (!billing)
@@ -425,7 +450,23 @@ export class MonthlyBillingService {
           "Kỳ hóa đơn có thanh toán đã xác nhận; không thể hủy",
         );
       }
-      await this.invoices.cancelByMonthlyBilling(id, session);
+      const cancelledInvoiceCount = await this.invoices.cancelByMonthlyBilling(
+        id,
+        session,
+      );
+      if (this.audit && context)
+        await this.audit.record(
+          {
+            action: "MONTHLY_BILLING_CANCELLED",
+            entityType: "MONTHLY_BILLING",
+            entityId: id,
+            oldData: { status: billing.status },
+            newData: { status: "CANCELLED", cancelReason: reason },
+            metadata: { cancelledInvoiceCount },
+          },
+          context,
+          session,
+        );
     });
     return this.get(id);
   }

@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AuthRequest } from "../../types/common.types.js";
 import type { CheckoutRequestService } from "../../services/checkout-request.service.js";
+import { auditContextFrom } from "../../utils/audit-context.js";
 export class AdminCheckoutRequestController {
   constructor(private s: CheckoutRequestService) {}
   list: RequestHandler = async (q, r, n) => {
@@ -30,7 +31,11 @@ export class AdminCheckoutRequestController {
       r.json({
         success: true,
         message: "Duyệt trả phòng thành công",
-        data: await this.s.approve(q.params.requestId!, q.user!.userId),
+        data: await this.s.approve(
+          q.params.requestId!,
+          q.user!.userId,
+          auditContextFrom(q),
+        ),
       });
     } catch (e) {
       n(e);
@@ -45,6 +50,7 @@ export class AdminCheckoutRequestController {
           q.params.requestId!,
           q.user!.userId,
           q.body.rejectReason,
+          auditContextFrom(q),
         ),
       });
     } catch (e) {

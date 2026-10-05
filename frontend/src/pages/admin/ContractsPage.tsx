@@ -30,7 +30,12 @@ export function AdminContractsPage() {
     [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
   const page = Number(search.get("page") ?? 1),
-    status = search.get("status") ?? "";
+    status = search.get("status") ?? "",
+    sortBy =
+      search.get("sortBy") === "startDate" || search.get("sortBy") === "endDate"
+        ? (search.get("sortBy") as "startDate" | "endDate")
+        : "createdAt",
+    sortOrder = search.get("sortOrder") === "asc" ? "asc" : "desc";
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -42,8 +47,8 @@ export function AdminContractsPage() {
           status: status || undefined,
           studentId: search.get("studentId") || undefined,
           roomId: search.get("roomId") || undefined,
-          sortBy: "createdAt",
-          sortOrder: "desc",
+          sortBy,
+          sortOrder,
         }),
       );
     } catch (e) {
@@ -51,7 +56,7 @@ export function AdminContractsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, status, search]);
+  }, [page, status, sortBy, sortOrder, search]);
   useEffect(() => {
     void load();
   }, [load]);

@@ -9,6 +9,7 @@ export class ContractMapper {
       startDate: c.startDate,
       endDate: c.endDate,
       status: c.status,
+      roomPricePerMonthSnapshot: c.roomPricePerMonthSnapshot,
       rejectReason: c.rejectReason,
       cancelReason: c.cancelReason,
       approvedAt: c.approvedAt,

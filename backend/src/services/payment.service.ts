@@ -7,11 +7,14 @@ import type { IStudentRepository } from "../repositories/interfaces/student.repo
 import type { ITransactionManager } from "./transaction-manager.js";
 import { AppError } from "../errors/AppError.js";
 import { mapPayment } from "../mappers/payment.mapper.js";
+import type { AuditContext } from "../models/audit-log.model.js";
+import type { AuditLogService } from "./audit-log.service.js";
 export class PaymentService {
   constructor(
     private payments: IPaymentRepository,
     private students: IStudentRepository,
     private tx: ITransactionManager,
+    private audit?: AuditLogService,
   ) {}
   private async student(userId: string) {
     const s = await this.students.findByUserId(userId);
@@ -80,6 +83,7 @@ export class PaymentService {
     actor: string,
     action: "confirm" | "reject" | "void" | "cancel",
     reason?: string,
+    context?: AuditContext,
   ) {
     if (
       (action === "reject" || action === "void") &&
@@ -164,6 +168,28 @@ export class PaymentService {
             : total === invoice.totalAmount
               ? "PAID"
               : "PARTIALLY_PAID",
+          tx,
+        );
+      }
+      if (action !== "cancel" && this.audit && context) {
+        const code = {
+          confirm: "PAYMENT_CONFIRMED",
+          reject: "PAYMENT_REJECTED",
+          void: "PAYMENT_VOIDED",
+        } as const;
+        await this.audit.record(
+          {
+            action: code[action],
+            entityType: "PAYMENT",
+            entityId: id,
+            oldData: { status: payment.status },
+            newData: {
+              status: next[action],
+              amount: payment.amount,
+              ...(reason ? { reason } : {}),
+            },
+          },
+          context,
           tx,
         );
       }

@@ -28,25 +28,27 @@ export class PostgresMaintenanceRequestRepository implements IMaintenanceRequest
     );
   }
   async findById(
-    ...[id]: Parameters<IMaintenanceRequestRepository["findById"]>
+    ...[id, tx]: Parameters<IMaintenanceRequestRepository["findById"]>
   ): ReturnType<IMaintenanceRequestRepository["findById"]> {
     return one<MaintenanceRequestDocument>(
-      `SELECT * FROM maintenance_requests WHERE id=$1`,
+      `SELECT m.*,CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object('id',s.id,'staffCode',s.staff_code,'fullName',s.full_name,'status',s.status) END AS assigned_staff
+       FROM maintenance_requests m LEFT JOIN staff s ON s.id=m.assigned_staff_id WHERE m.id=$1`,
       [id],
-      undefined,
+      tx,
     );
   }
   async findByStudentId(
     ...[id]: Parameters<IMaintenanceRequestRepository["findByStudentId"]>
   ): ReturnType<IMaintenanceRequestRepository["findByStudentId"]> {
     return rows<MaintenanceRequestDocument>(
-      `SELECT * FROM maintenance_requests WHERE student_id=$1 ORDER BY created_at DESC,id`,
+      `SELECT m.*,CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object('id',s.id,'staffCode',s.staff_code,'fullName',s.full_name,'status',s.status) END AS assigned_staff
+       FROM maintenance_requests m LEFT JOIN staff s ON s.id=m.assigned_staff_id WHERE m.student_id=$1 ORDER BY m.created_at DESC,m.id`,
       [id],
       undefined,
     );
   }
   async update(
-    ...[id, d]: Parameters<IMaintenanceRequestRepository["update"]>
+    ...[id, d, tx]: Parameters<IMaintenanceRequestRepository["update"]>
   ): ReturnType<IMaintenanceRequestRepository["update"]> {
     return one<MaintenanceRequestDocument>(
       `UPDATE maintenance_requests
@@ -86,16 +88,17 @@ export class PostgresMaintenanceRequestRepository implements IMaintenanceRequest
         d.cancelReason !== undefined,
         d.cancelReason,
       ],
-      undefined,
+      tx,
     );
   }
   async findAll(
     ...[q]: Parameters<IMaintenanceRequestRepository["findAll"]>
   ): ReturnType<IMaintenanceRequestRepository["findAll"]> {
     return page<MaintenanceRequestDocument>(
-      `SELECT m.*
+      `SELECT m.*,CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object('id',s.id,'staffCode',s.staff_code,'fullName',s.full_name,'status',s.status) END AS assigned_staff
       FROM maintenance_requests m
       JOIN rooms r ON r.id=m.room_id
+      LEFT JOIN staff s ON s.id=m.assigned_staff_id
       WHERE ($1::text IS NULL OR m.status=$1) AND ($2::uuid IS NULL OR m.room_id=$2) AND ($3::text IS NULL OR m.category=$3) AND ($4::uuid IS NULL OR m.assigned_staff_id=$4) AND ($5::uuid IS NULL OR r.building_id=$5)`,
       [q.status, q.roomId, q.category, q.assignedStaffId, q.buildingId],
       q,

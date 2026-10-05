@@ -4,6 +4,7 @@ import type {
   MaintenanceStatus,
 } from "../../models/maintenance-request.model.js";
 import type { PaginatedResult } from "../../types/common.types.js";
+import type { TransactionContext } from "../../services/transaction-manager.js";
 export interface IMaintenanceRequestRepository {
   create(data: {
     studentId: string;
@@ -12,7 +13,7 @@ export interface IMaintenanceRequestRepository {
     category: MaintenanceCategory;
     description: string;
   }): Promise<MaintenanceRequestDocument>;
-  findById(id: string): Promise<MaintenanceRequestDocument | null>;
+  findById(id: string, tx?: TransactionContext): Promise<MaintenanceRequestDocument | null>;
   findByStudentId(id: string): Promise<MaintenanceRequestDocument[]>;
   findAll(q: {
     page: number;
@@ -26,6 +27,7 @@ export interface IMaintenanceRequestRepository {
   update(
     id: string,
     data: Record<string, unknown>,
+    tx?: TransactionContext,
   ): Promise<MaintenanceRequestDocument | null>;
   countOperational(): Promise<{ pending: number; inProgress: number }>;
 }

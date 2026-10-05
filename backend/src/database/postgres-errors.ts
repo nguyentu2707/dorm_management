@@ -38,6 +38,11 @@ const unique: Readonly<Record<string, Definition>> = {
     "STAFF_ALREADY_EXISTS",
     "Tài khoản đã có hồ sơ nhân viên",
   ],
+  uq_staff_staff_code: [
+    409,
+    "STAFF_CODE_ALREADY_EXISTS",
+    "Mã nhân viên đã tồn tại",
+  ],
   uq_rooms_building_room_number: [
     409,
     "ROOM_NUMBER_ALREADY_EXISTS",
