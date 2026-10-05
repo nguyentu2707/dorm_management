@@ -38,4 +38,4 @@ WORKDIR /app/backend
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node scripts/migrate.mjs up && node dist/server.js"]
+CMD ["sh", "-c", "node scripts/database/migrate.mjs up && node dist/server.js"]

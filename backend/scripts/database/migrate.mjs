@@ -7,7 +7,7 @@ import pg from "pg";
 export async function migrate(pool, direction = "up") {
   if (!["up", "down"].includes(direction))
     throw new Error("Expected up or down");
-  const directory = new URL("../migrations/", import.meta.url);
+  const directory = new URL("../../migrations/", import.meta.url);
   const files = (await readdir(directory))
     .filter((x) => /^\d+_.+\.up\.sql$/.test(x))
     .sort();

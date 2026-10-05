@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { requireTestDatabase } from "../scripts/test-database-url.mjs";
+import { requireTestDatabase } from "../scripts/testing/test-database-url.mjs";
 const cwd = fileURLToPath(new URL("../", import.meta.url));
 test("test bootstrap selects TEST_DATABASE_URL without rewriting DATABASE_URL", () => {
   const result = spawnSync(
@@ -50,7 +50,7 @@ test("runner refuses a non-test database before starting the destructive suite",
   );
   const result = spawnSync(
     process.execPath,
-    ["scripts/run-postgres-tests.mjs"],
+    ["scripts/testing/run-postgres-tests.mjs"],
     {
       cwd,
       encoding: "utf8",

@@ -2,9 +2,9 @@ import "dotenv/config";
 import {
   connectDatabase,
   disconnectDatabase,
-} from "../dist/config/database.js";
-import { UserRepository } from "../dist/repositories/implementations/user.repository.js";
-import { BcryptPasswordHasher } from "../dist/services/password-hasher.service.js";
+} from "../../dist/config/database.js";
+import { UserRepository } from "../../dist/repositories/implementations/user.repository.js";
+import { BcryptPasswordHasher } from "../../dist/services/password-hasher.service.js";
 try {
   if (process.env.NODE_ENV === "production")
     throw new Error("Demo seeds are disabled in production");

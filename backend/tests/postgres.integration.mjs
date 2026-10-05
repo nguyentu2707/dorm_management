@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { migrate } from "../scripts/migrate.mjs";
-import { requireTestDatabase } from "../scripts/test-database-url.mjs";
+import { migrate } from "../scripts/database/migrate.mjs";
+import { requireTestDatabase } from "../scripts/testing/test-database-url.mjs";
 
 const url = process.env.TEST_DATABASE_URL;
 // Recheck the suffix and explicit pool source before migrations or reset.
@@ -1954,7 +1954,7 @@ test(
           const seed = (file) =>
             spawnSync(
               process.execPath,
-              ["--import", "tsx", `scripts/${file}.ts`],
+              ["--import", "tsx", `scripts/seeds/${file}.ts`],
               {
                 encoding: "utf8",
                 timeout: 20000,

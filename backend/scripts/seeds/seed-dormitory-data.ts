@@ -1,16 +1,16 @@
-import { disconnectDatabase, connectDatabase } from "../src/config/database.js";
-import { BuildingRepository } from "../src/repositories/implementations/building.repository.js";
-import { RoomTypeRepository } from "../src/repositories/implementations/room-type.repository.js";
-import { RoomRepository } from "../src/repositories/implementations/room.repository.js";
-import { BedRepository } from "../src/repositories/implementations/bed.repository.js";
-import { EquipmentItemRepository } from "../src/repositories/implementations/equipment-item.repository.js";
-import { EquipmentCategoryRepository } from "../src/repositories/implementations/equipment-category.repository.js";
-import { BuildingService } from "../src/services/admin/building.service.js";
-import { RoomTypeService } from "../src/services/admin/room-type.service.js";
-import { RoomService } from "../src/services/admin/room.service.js";
-import { EquipmentItemService } from "../src/services/admin/equipment-item.service.js";
-import { EquipmentCategoryService } from "../src/services/admin/equipment-category.service.js";
-import { PostgresTransactionManager } from "../src/services/transaction-manager.js";
+import { disconnectDatabase, connectDatabase } from "../../src/config/database.js";
+import { BuildingRepository } from "../../src/repositories/implementations/building.repository.js";
+import { RoomTypeRepository } from "../../src/repositories/implementations/room-type.repository.js";
+import { RoomRepository } from "../../src/repositories/implementations/room.repository.js";
+import { BedRepository } from "../../src/repositories/implementations/bed.repository.js";
+import { EquipmentItemRepository } from "../../src/repositories/implementations/equipment-item.repository.js";
+import { EquipmentCategoryRepository } from "../../src/repositories/implementations/equipment-category.repository.js";
+import { BuildingService } from "../../src/services/admin/building.service.js";
+import { RoomTypeService } from "../../src/services/admin/room-type.service.js";
+import { RoomService } from "../../src/services/admin/room.service.js";
+import { EquipmentItemService } from "../../src/services/admin/equipment-item.service.js";
+import { EquipmentCategoryService } from "../../src/services/admin/equipment-category.service.js";
+import { PostgresTransactionManager } from "../../src/services/transaction-manager.js";
 
 const roomTypes = [
   { name: "Tiêu chuẩn 6 người", capacity: 6, price: 900_000 },

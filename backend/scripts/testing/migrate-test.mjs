@@ -1,6 +1,6 @@
 import "dotenv/config";
 import pg from "pg";
-import { migrate } from "./migrate.mjs";
+import { migrate } from "../database/migrate.mjs";
 import { requireTestDatabase } from "./test-database-url.mjs";
 
 const connectionString = process.env.TEST_DATABASE_URL;

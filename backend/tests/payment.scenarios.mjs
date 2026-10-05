@@ -346,7 +346,7 @@ export async function paymentScenarios(
         assert.equal(inv.remainingAmount, i.totalAmount);
         const before = (await pool.query("SELECT count(*) FROM payments"))
           .rows[0].count;
-        const { migrate } = await import("../scripts/migrate.mjs");
+        const { migrate } = await import("../scripts/database/migrate.mjs");
         // Roll back newer unrelated migrations first, then verify that the
         // payment migration itself refuses to destroy financial history.
         while (

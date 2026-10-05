@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { GuestRoute, ProtectedRoute, RoleRoute } from "./guards";
 import { AuthLayout } from "../../layouts/AuthLayout";
-import { AdminLayout } from "../../layouts/AppLayout";
+import { AdminLayout } from "../../layouts/AdminLayout";
 import { StudentLayout } from "../../layouts/StudentLayout";
 import { NotFoundPage, UnauthorizedPage } from "../../pages/SystemPages";
 import { useAuth } from "../../hooks/useAuth";

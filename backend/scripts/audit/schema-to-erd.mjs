@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 const [snapshot, output] = process.argv.slice(2);
 if (!snapshot || !output)
   throw new Error(
-    "Usage: node scripts/schema-to-erd.mjs snapshot.json output.md",
+    "Usage: npm run db:erd -- snapshot.json output.md",
   );
 const schema = JSON.parse(await readFile(snapshot, "utf8"));
 const business = schema.tables.filter((t) => t !== "schema_migrations");

@@ -1,24 +1,24 @@
-import { disconnectDatabase } from "../src/config/database.js";
-import { connectDatabase } from "../src/config/database.js";
-import { DemoSeedRepository } from "../src/repositories/implementations/demo-seed.repository.js";
-import { UserRepository } from "../src/repositories/implementations/user.repository.js";
-import { StudentRepository } from "../src/repositories/implementations/student.repository.js";
-import { ContractRepository } from "../src/repositories/implementations/contract.repository.js";
-import { CheckoutRequestRepository } from "../src/repositories/implementations/checkout-request.repository.js";
-import { BedRepository } from "../src/repositories/implementations/bed.repository.js";
-import { RoomRepository } from "../src/repositories/implementations/room.repository.js";
-import { RoomTypeRepository } from "../src/repositories/implementations/room-type.repository.js";
-import { BuildingRepository } from "../src/repositories/implementations/building.repository.js";
-import { RoomPreferenceRepository } from "../src/repositories/implementations/room-preference.repository.js";
-import { ClassScheduleRepository } from "../src/repositories/implementations/class-schedule.repository.js";
-import { AuthService } from "../src/services/auth.service.js";
-import { ContractService } from "../src/services/contract.service.js";
-import { BcryptPasswordHasher } from "../src/services/password-hasher.service.js";
-import { JwtTokenService } from "../src/services/token.service.js";
-import { PostgresTransactionManager } from "../src/services/transaction-manager.js";
-import { StudentRegistryRepository } from "../src/repositories/implementations/student-registry.repository.js";
-import { RefreshSessionRepository } from "../src/repositories/implementations/refresh-session.repository.js";
-import type { ScheduleEntry } from "../src/models/class-schedule.model.js";
+import { disconnectDatabase } from "../../src/config/database.js";
+import { connectDatabase } from "../../src/config/database.js";
+import { DemoSeedRepository } from "../../src/repositories/implementations/demo-seed.repository.js";
+import { UserRepository } from "../../src/repositories/implementations/user.repository.js";
+import { StudentRepository } from "../../src/repositories/implementations/student.repository.js";
+import { ContractRepository } from "../../src/repositories/implementations/contract.repository.js";
+import { CheckoutRequestRepository } from "../../src/repositories/implementations/checkout-request.repository.js";
+import { BedRepository } from "../../src/repositories/implementations/bed.repository.js";
+import { RoomRepository } from "../../src/repositories/implementations/room.repository.js";
+import { RoomTypeRepository } from "../../src/repositories/implementations/room-type.repository.js";
+import { BuildingRepository } from "../../src/repositories/implementations/building.repository.js";
+import { RoomPreferenceRepository } from "../../src/repositories/implementations/room-preference.repository.js";
+import { ClassScheduleRepository } from "../../src/repositories/implementations/class-schedule.repository.js";
+import { AuthService } from "../../src/services/auth.service.js";
+import { ContractService } from "../../src/services/contract.service.js";
+import { BcryptPasswordHasher } from "../../src/services/password-hasher.service.js";
+import { JwtTokenService } from "../../src/services/token.service.js";
+import { PostgresTransactionManager } from "../../src/services/transaction-manager.js";
+import { StudentRegistryRepository } from "../../src/repositories/implementations/student-registry.repository.js";
+import { RefreshSessionRepository } from "../../src/repositories/implementations/refresh-session.repository.js";
+import type { ScheduleEntry } from "../../src/models/class-schedule.model.js";
 
 const profiles: Record<string, ScheduleEntry[]> = {
   MORNING: [
